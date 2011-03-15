@@ -7,6 +7,7 @@
     <provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
     <class>com.datastax.hectorjpa.bean.SimpleTestBean</class>
     <class>com.datastax.hectorjpa.bean.User</class>
+    <class>com.datastax.hectorjps.bean.Follow</class>
     <!-- <class>me.prettyprint.hom.beans.MyBlueTestBean</class> <class>me.prettyprint.hom.beans.MyRedTestBean</class> 
       <class>com.datastax.openjpa.beans.SimpleTestBean</class> <class>me.prettyprint.hom.beans.SimpleRelationshipBean</class> 
       <class>me.prettyprint.hom.beans.MyPurpleTestBean</class> -->

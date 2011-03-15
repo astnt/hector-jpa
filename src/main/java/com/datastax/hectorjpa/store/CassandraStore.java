@@ -91,8 +91,10 @@ public class CassandraStore {
     ClassMetaData metaData = stateManager.getMetaData();       
     EntityFacade entityFacade = new EntityFacade(metaData);
     Object field;
+   
     for (Map.Entry<String,ColumnMeta<?>> entry : entityFacade.getColumnMeta().entrySet()) {
       field = stateManager.fetch(entry.getValue().fieldId);
+    
       if ( field != null ) {
         mutator.addInsertion(mappingUtils.getKeyBytes(idObj), entityFacade.getColumnFamilyName(), 
             new HColumnImpl(entry.getKey(), field, 

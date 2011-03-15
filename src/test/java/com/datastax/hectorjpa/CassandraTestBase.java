@@ -112,6 +112,15 @@ public class CassandraTestBase {
         cfDefList.add(new CfDef("TestKeyspace", "UserColumnFamily").setComparator_type(BytesType.class.getSimpleName())
                 .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
         
+        cfDefList.add(new CfDef("TestKeyspace", "UserColumnFamily").setComparator_type(BytesType.class.getSimpleName())
+            .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+
+        
+        cfDefList.add(new CfDef("TestKeyspace", "FollowColumnFamily").setComparator_type(BytesType.class.getSimpleName())
+            .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+
+        
+        
         
         cluster = HFactory.getOrCreateCluster("TestPool", "localhost:9161");
         createKeyspace(cluster, "TestKeyspace", "org.apache.cassandra.locator.SimpleStrategy", 1, cfDefList);
