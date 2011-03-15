@@ -35,6 +35,7 @@ public class EntityFacade implements Serializable {
     }
     this.keySerializer = MappingUtils.getSerializer(classMetaData
         .getPrimaryKeyFields()[0]);
+    
     columnMetas = new HashMap<String, ColumnMeta<?>>();
 
     FieldMetaData[] fmds = classMetaData.getFields();
