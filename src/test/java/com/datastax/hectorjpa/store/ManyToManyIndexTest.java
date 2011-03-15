@@ -70,6 +70,7 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
     assertFalse(found);
 
   }
+
   
   
   /**
