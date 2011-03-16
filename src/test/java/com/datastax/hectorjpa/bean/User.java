@@ -6,6 +6,7 @@ package com.datastax.hectorjpa.bean;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -16,6 +17,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.apache.openjpa.persistence.Persistent;
+import org.apache.openjpa.persistence.jdbc.Index;
 
 import com.eaio.uuid.UUID;
 
@@ -42,21 +44,22 @@ public class User {
   private String lastName;
 
   @Persistent
+  @Index
   private String email;
 
-  /**
-   * People who are following me (I.E graph edge into user's node)
-   */
-  @OneToMany(mappedBy = "following")
-  @OrderBy("follower.firstName, follower.lastName")
-  private List<Follow> followers;
-
-  /**
-   * People who I'm following (I.E graph edge out from user's node)
-   */
-  @OneToMany(mappedBy = "followers")
-  @OrderBy("following.firstName, following.lastName")
-  private List<Follow> following;
+//  /**
+//   * People who are following me (I.E graph edge into user's node)
+//   */
+//  @OneToMany(mappedBy = "following", cascade=CascadeType.ALL)
+//  @OrderBy("follower.firstName, follower.lastName")
+//  private List<Follow> followers;
+//
+//  /**
+//   * People who I'm following (I.E graph edge out from user's node)
+//   */
+//  @OneToMany(mappedBy = "followers", cascade=CascadeType.ALL)
+//  @OrderBy("following.firstName, following.lastName")
+//  private List<Follow> following;
 
   /**
    * @return the id
@@ -118,27 +121,27 @@ public class User {
    * 
    * @return the followers
    */
-  public List<Follow> getFollowers() {
-    if (followers == null) {
-      followers = new ArrayList<Follow>();
-    }
-    
-    return followers;
-  }
-
+//  public List<Follow> getFollowers() {
+//    if (followers == null) {
+//      followers = new ArrayList<Follow>();
+//    }
+//    
+//    return followers;
+//  }
+//
   /**
    * Null safe get, will always return an empty list if no elements are present
    * 
    * @return the following
    */
-  public List<Follow> getFollowing() {
-    if (following == null) {
-      following = new ArrayList<Follow>();
-    }
-    
-    return following;
-  }
-
+//  public List<Follow> getFollowing() {
+//    if (following == null) {
+//      following = new ArrayList<Follow>();
+//    }
+//    
+//    return following;
+//  }
+//
   /**
    * Follow the target user with the given state
    * 
@@ -146,19 +149,19 @@ public class User {
    * @param state
    */
   public void followUser(User target, FollowState state) {
-
-    // add the out bound edge to the following
-    Follow follow = new Follow();
-    follow.setFollowing(target);
-    follow.setFollower(this);
-    follow.setState(state);
-
-    // we're following
-    getFollowing().add(follow);
-
-    // notify the target they're followed
-    target.getFollowers().add(follow);
-
+//
+//    // add the out bound edge to the following
+//    Follow follow = new Follow();
+//    follow.setFollowing(target);
+//    follow.setFollower(this);
+//    follow.setState(state);
+//
+//    // we're following
+//    getFollowing().add(follow);
+//
+//    // notify the target they're followed
+//    target.getFollowers().add(follow);
+//
   }
 
   /*

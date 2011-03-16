@@ -1,36 +1,27 @@
 package com.datastax.hectorjpa.store;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.BitSet;
 import java.util.Map;
-
-import org.apache.openjpa.kernel.OpenJPAStateManager;
-import org.apache.openjpa.meta.ClassMetaData;
-import org.apache.openjpa.meta.FieldMetaData;
-import org.apache.openjpa.meta.JavaTypes;
-import org.apache.openjpa.util.OpenJPAId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.ColumnMapRowMapper;
-
-import com.datastax.hectorjpa.store.EntityFacade.ColumnMeta;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.model.MutatorImpl;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
-import me.prettyprint.cassandra.serializers.LongSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.utils.StringUtils;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
+
+import org.apache.openjpa.kernel.OpenJPAStateManager;
+import org.apache.openjpa.meta.ClassMetaData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.datastax.hectorjpa.meta.ColumnMeta;
 
 
 /**
@@ -43,10 +34,14 @@ public class CassandraStore {
 
   private static final Logger log = LoggerFactory.getLogger(CassandraStore.class);
   
+  //bitset used on deleting fields
+  private static final BitSet NONE = new BitSet();
+  
   private final Cluster cluster;
   private final CassandraStoreConfiguration conf;
   private Keyspace keyspace;
   private MappingUtils mappingUtils;
+  
   
   public CassandraStore(CassandraStoreConfiguration conf) {
     this.conf = conf;
@@ -62,11 +57,18 @@ public class CassandraStore {
     return this;
   }
   
-  public boolean getObject(OpenJPAStateManager stateManager) {
+  /**
+   * 
+   * @param stateManager
+   * @param fields The bitset of fields to load
+   * @return true if the object was found, false otherwise
+   */
+  public boolean getObject(OpenJPAStateManager stateManager, BitSet fields) {
 
     ClassMetaData metaData = stateManager.getMetaData();
-    EntityFacade entityFacade = new EntityFacade(metaData);
+    EntityFacade entityFacade = new EntityFacade(metaData, fields);
     Object idObj = stateManager.getId();
+        
     
     SliceQuery<byte[], String, byte[]> sliceQuery = mappingUtils.buildSliceQuery(idObj, entityFacade, keyspace);   
 
@@ -74,47 +76,57 @@ public class CassandraStore {
     
     QueryResult<ColumnSlice<String, byte[]>> result = sliceQuery.execute();
 
-    for (Map.Entry<String, ColumnMeta<?>> entry : entityFacade.getColumnMeta().entrySet()) {      
+    for (Map.Entry<String, ColumnMeta<?>> entry : entityFacade.getColumnMeta().entrySet()) {
       HColumn<String, byte[]> column = result.get().getColumnByName(entry.getKey());
       if ( column != null )
-        stateManager.storeObject(entry.getValue().fieldId, entry.getValue().serializer.fromBytes(column.getValue()));  
-    }            
-    return true;
+        
+        entry.getValue().storeObject(stateManager, column);
+    }        
+    
+    
+    return result.get().getColumns().size() > 0;
   }
   
-  public Mutator storeObject(Mutator mutator, OpenJPAStateManager stateManager, Object idObj) {
+  public Mutator storeObject(Mutator mutator, OpenJPAStateManager stateManager, BitSet fields) {
     if ( mutator == null )
       mutator = new MutatorImpl(keyspace, BytesArraySerializer.get());
     if ( log.isDebugEnabled() ) {
       log.debug("Adding mutation (insertion) for class {}", stateManager.getManagedInstance().getClass().getName());
     }
+    
     ClassMetaData metaData = stateManager.getMetaData();       
-    EntityFacade entityFacade = new EntityFacade(metaData);
+    EntityFacade entityFacade = new EntityFacade(metaData, fields);
     Object field;
+    
+    Object id = stateManager.getObjectId();
    
     for (Map.Entry<String,ColumnMeta<?>> entry : entityFacade.getColumnMeta().entrySet()) {
-      field = stateManager.fetch(entry.getValue().fieldId);
-    
+      
+      field = entry.getValue().fetchField(stateManager);
+      
       if ( field != null ) {
-        mutator.addInsertion(mappingUtils.getKeyBytes(idObj), entityFacade.getColumnFamilyName(), 
+        mutator.addInsertion(mappingUtils.getKeyBytes(id), entityFacade.getColumnFamilyName(), 
             new HColumnImpl(entry.getKey(), field, 
                 keyspace.createClock(), StringSerializer.get(),
-                entry.getValue().serializer));
+                entry.getValue().getSerializer()));
       }
           
     }    
+    
     return mutator;
   }
+ 
     
-  public Mutator removeObject(Mutator mutator, OpenJPAStateManager stateManager, Object idObj) {
+  public Mutator removeObject(Mutator mutator, OpenJPAStateManager stateManager) {
     if ( mutator == null )
       mutator = new MutatorImpl(keyspace, BytesArraySerializer.get());
     if ( log.isDebugEnabled() ) {
       log.debug("Adding mutation (deletion) for class {}", stateManager.getManagedInstance().getClass().getName());
     }
     ClassMetaData metaData = stateManager.getMetaData();       
-    EntityFacade entityFacade = new EntityFacade(metaData);
-    mutator.addDeletion(mappingUtils.getKeyBytes(idObj), entityFacade.getColumnFamilyName(),null,StringSerializer.get());                  
+    //use empty bitset
+    EntityFacade entityFacade = new EntityFacade(metaData, NONE);
+    mutator.addDeletion(mappingUtils.getKeyBytes(stateManager.getObjectId()), entityFacade.getColumnFamilyName(),null,StringSerializer.get());                  
     return mutator;
   }
   

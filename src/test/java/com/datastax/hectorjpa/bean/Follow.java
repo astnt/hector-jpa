@@ -5,6 +5,8 @@ package com.datastax.hectorjpa.bean;
 
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Id;
@@ -12,6 +14,8 @@ import javax.persistence.IdClass;
 import javax.persistence.Table;
 
 import org.apache.openjpa.persistence.Persistent;
+
+import com.eaio.uuid.UUID;
 
 /**
  * Represents the relationship between two users.  Essentially a link on the one side of a 
@@ -27,14 +31,15 @@ import org.apache.openjpa.persistence.Persistent;
  */
 @IdClass(Follow.FollowId.class)
 @Table(name = "FollowColumnFamily")
+@Entity
 public class Follow {
   
   
-  @Persistent(mappedBy="following")
+  @Persistent(mappedBy="following", cascade=CascadeType.PERSIST)
   @Id
   private User follower;
   
-  @Persistent(mappedBy="followers")
+  @Persistent(mappedBy="followers", cascade=CascadeType.PERSIST)
   @Id
   private User following;
   
@@ -92,9 +97,9 @@ public class Follow {
     private static final long serialVersionUID = 1L;
     
     
-    private User follower;
+    private UUID follower;
     
-    private User following;
+    private UUID following;
     
 
     /* (non-Javadoc)
