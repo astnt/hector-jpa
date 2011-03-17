@@ -53,11 +53,6 @@
       <version>0.7.3</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.cassandra.deps</groupId>
-      <artifactId>libthrift</artifactId>
-      <version>0.5.0</version>
-    </dependency>
-    <dependency>
       <groupId>me.prettyprint</groupId>
       <artifactId>hector-core</artifactId>
       <version>0.7.0-28</version>
