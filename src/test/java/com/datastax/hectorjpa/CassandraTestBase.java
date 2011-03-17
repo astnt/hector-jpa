@@ -1,5 +1,7 @@
 package com.datastax.hectorjpa;
 
+import indexedcollections.IndexedCollections;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -14,12 +16,16 @@ import me.prettyprint.hector.api.factory.HFactory;
 
 import org.apache.cassandra.contrib.utils.service.CassandraServiceDataCleaner;
 import org.apache.cassandra.db.marshal.BytesType;
+import org.apache.cassandra.db.marshal.LongType;
+import org.apache.cassandra.db.marshal.TimeUUIDType;
 import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.service.EmbeddedCassandraService;
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.BeforeClass;
+
+import compositecomparer.CompositeType;
 
 public class CassandraTestBase {
   protected static boolean cassandraStarted = false;
@@ -76,7 +82,7 @@ public class CassandraTestBase {
       System.out.println("exception while creating keyspace, " + name
           + " - probably already exists : " + e.getMessage());
     }
-
+    /*
     for (CfDef cfDef : cfDefList) {
       try {
         cluster.addColumnFamily(new ThriftCfDef(cfDef));
@@ -85,6 +91,7 @@ public class CassandraTestBase {
             + " - probably already exists : " + e.getMessage());
       }
     }
+    */
   }
 
   @BeforeClass
@@ -93,7 +100,7 @@ public class CassandraTestBase {
       InterruptedException, NoSuchMethodException, IllegalAccessException,
       InvocationTargetException {
     startCassandraInstance("tmp/var/lib/cassandra");
-
+    System.out.println("Creating TestKeyspace and columnfamilies");
     ArrayList<CfDef> cfDefList = new ArrayList<CfDef>(2);
     cfDefList.add(new CfDef("TestKeyspace", "TestBeanColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
@@ -126,10 +133,27 @@ public class CassandraTestBase {
     cfDefList.add(new CfDef("TestKeyspace", "FollowColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+    
+    cfDefList.add(new CfDef("TestKeyspace", IndexedCollections.DEFAULT_ITEM_CF)
+    .setComparator_type(BytesType.class.getSimpleName())
+    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
+    cfDefList.add(new CfDef("TestKeyspace", IndexedCollections.DEFAULT_CONTAINER_ITEMS_CF)
+    .setComparator_type(TimeUUIDType.class.getSimpleName())
+    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+
+    cfDefList.add(new CfDef("TestKeyspace", IndexedCollections.DEFAULT_CONTAINER_ITEMS_COLUMN_INDEX_CF)
+    .setComparator_type("compositecomparer.CompositeType")
+    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+
+    cfDefList.add(new CfDef("TestKeyspace", IndexedCollections.DEFAULT_CONTAINER_ITEM_INDEX_ENTRIES)
+    .setComparator_type(LongType.class.getSimpleName())
+    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+    
     cluster = HFactory.getOrCreateCluster("TestPool", "localhost:9161");
     createKeyspace(cluster, "TestKeyspace",
         "org.apache.cassandra.locator.SimpleStrategy", 1, cfDefList);
     keyspace = HFactory.createKeyspace("TestKeyspace", cluster);
+    System.out.println("TestKeyspace and columnfamilies creation is complete");
   }
 }

@@ -91,7 +91,7 @@ public class ManyEntityIndex extends AbstractEntityIndex {
     
     ContainerCollection<Object> container = new ContainerCollection<Object>(target, s, name);
     
-    int size  = stateManager.getContext().getFetchConfiguration().getFetchBatchSize();
+    int size  = stateManager.getContext().getFetchConfiguration().getFetchBatchSize() < 1 ? 100 : stateManager.getContext().getFetchConfiguration().getFetchBatchSize(); 
     
     List<?> results =  IndexedCollections.searchContainer(keyspace, container, DEFAULT_FIELD, null, null, null, size, false, DEFAULT_CF_SET, defaultIndex.getIndexedFields().get(0).getSerializer(), StringSerializer.get());
     
