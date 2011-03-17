@@ -3,8 +3,12 @@
  */
 package com.datastax.hectorjpa.index;
 
+import indexedcollections.IndexedCollections.CollectionCFSet;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import me.prettyprint.hector.api.Keyspace;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.FieldMetaData;
@@ -18,14 +22,18 @@ import com.datastax.hectorjpa.meta.OrderField;
  */
 public abstract class AbstractEntityIndex {
 
+  protected static final CollectionCFSet DEFAULT_CF_SET = new CollectionCFSet();
+  
   /**
    * the name of the relationship (usually property name)
    */
   protected int fieldIndex;
   protected List<Index> indexes;
+  protected String name;
 
   protected AbstractEntityIndex(FieldMetaData fmd) {
     this.fieldIndex = fmd.getIndex();
+    this.name = fmd.getName();
     indexes = new ArrayList<Index>();
   }
 
@@ -49,18 +57,26 @@ public abstract class AbstractEntityIndex {
   }
 
   /**
+   * Load the given index and return the object.  Either a proxy or a collection proxy
+   * @param stateManager
+   * @param the keyspace
+   * @return
+   */
+  public abstract void loadIndex(OpenJPAStateManager stateManager, Keyspace keyspace);
+  
+  /**
    * Construct all indexing operations from the given object
    * 
    * @param stateManager
    */
-  public abstract void writeIndex(OpenJPAStateManager stateManager);
+  public abstract void writeIndex(OpenJPAStateManager stateManager, Keyspace keyspace);
 
   /**
    * Delete this index
    * 
    * @param stateManager
    */
-  public abstract void deleteIndex(OpenJPAStateManager stateManager);
+  public abstract void deleteIndex(OpenJPAStateManager stateManager, Keyspace keyspace);
 
   /*
    * (non-Javadoc)
@@ -116,6 +132,17 @@ public abstract class AbstractEntityIndex {
       this.orderFields.add(order);
     }
 
+    public List<IndexField<?>> getIndexedFields() {
+      return indexedFields;
+    }
+
+    public List<OrderField> getOrderFields() {
+      return orderFields;
+    }
+    
+    
+
   }
+
 
 }

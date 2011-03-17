@@ -73,7 +73,7 @@
     <dependency>
       <groupId>cassandra-indexed-collections</groupId>
       <artifactId>cassandra-indexed-collections</artifactId>
-      <version>0.0.2</version>
+      <version>0.0.2-SNAPSHOT</version>
     </dependency>
 
     <dependency>

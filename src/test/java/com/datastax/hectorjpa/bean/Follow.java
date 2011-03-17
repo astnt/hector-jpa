@@ -12,6 +12,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.apache.openjpa.persistence.Persistent;
 
@@ -35,13 +36,29 @@ import com.eaio.uuid.UUID;
 public class Follow {
   
   
-  @Persistent(mappedBy="following", cascade=CascadeType.PERSIST)
+  @Persistent(mappedBy="following", cascade={CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH} )
   @Id
   private User follower;
   
-  @Persistent(mappedBy="followers", cascade=CascadeType.PERSIST)
+  @Persistent(mappedBy="followers", cascade={CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH} )
   @Id
   private User following;
+  
+  /**
+   * TODO TN, these are redundant, but OrderBy won't support non-embedded nested properties.  See line 1020 of MetaDataRepsitory from version 2.1.0 
+   */
+  @Persistent
+  private String followingFirstName;
+  
+  @Persistent
+  private String followingLastName;
+  
+  @Persistent
+  private String followerFirstName;
+  
+  @Persistent
+  private String followerLastName;
+  
   
   @Persistent
   @Enumerated(EnumType.STRING)
@@ -59,6 +76,8 @@ public class Follow {
    */
   public void setFollower(User follower) {
     this.follower = follower;
+    this.followerFirstName = follower.getFirstName();
+    this.followerLastName = follower.getLastName();
   }
 
   /**
@@ -73,6 +92,8 @@ public class Follow {
    */
   public void setFollowing(User following) {
     this.following = following;
+    this.followingFirstName = following.getFirstName();
+    this.followingLastName = following.getLastName();
   }
 
   /**
@@ -89,6 +110,34 @@ public class Follow {
     this.state = state;
   }
   
+  /**
+   * @return the followingFirstName
+   */
+  public String getFollowingFirstName() {
+    return followingFirstName;
+  }
+
+  /**
+   * @return the followingLastName
+   */
+  public String getFollowingLastName() {
+    return followingLastName;
+  }
+
+  /**
+   * @return the followerFirstName
+   */
+  public String getFollowerFirstName() {
+    return followerFirstName;
+  }
+
+  /**
+   * @return the followerLastName
+   */
+  public String getFollowerLastName() {
+    return followerLastName;
+  }
+
   public static class FollowId implements Serializable{
 
     /**

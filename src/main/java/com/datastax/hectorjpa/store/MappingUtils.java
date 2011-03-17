@@ -92,10 +92,11 @@ public class MappingUtils {
    * @return
    */
   public byte[] getKeyBytes(Object idObj) {
-    Serializer serializer = getSerializer(idObj);
-    if ( idObj instanceof OpenJPAId )
-      return serializer.toBytes(((OpenJPAId)idObj).getIdObject());
-    return serializer.toBytes(idObj);
+    Object target = getTargetObject(idObj);
+    
+    Serializer serializer = getSerializer(target);
+    
+    return serializer.toBytes(target);
   }
   
   /**
@@ -104,15 +105,23 @@ public class MappingUtils {
    * @param idObj
    */
   public Serializer getSerializer(Object idObj) {
-    Serializer serializer;
-    if ( idObj instanceof OpenJPAId ) {
-      serializer = SerializerTypeInferer.getSerializer(((OpenJPAId)idObj).getIdObject());
-    } else {
-      serializer = SerializerTypeInferer.getSerializer(idObj);
-    }    
-    return serializer;
+    return SerializerTypeInferer.getSerializer(getTargetObject(idObj));
   }
   
+  
+  /**
+   * If the object is an OpenJPAId, it will return the underlying identity object, if not, the passed value 
+   * is returned
+   * @param idObj
+   * @return
+   */
+  public Object getTargetObject(Object idObj){
+    if( idObj instanceof OpenJPAId){
+      return ((OpenJPAId)idObj).getIdObject();
+    }
+    
+    return idObj;
+  }
   /**
    * Return a list of field names for which there are a 1-1 mapping 
    * to Column names

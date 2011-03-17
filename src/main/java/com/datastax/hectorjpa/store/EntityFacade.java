@@ -40,7 +40,7 @@ public class EntityFacade implements Serializable {
   private final Map<String, ColumnMeta<?>> columnMetas;
   private final Set<AbstractEntityIndex> indexMetaData;
 
-  public EntityFacade(ClassMetaData classMetaData, BitSet fields) {
+  public EntityFacade(ClassMetaData classMetaData, BitSet fields, MappingUtils mappingUtils) {
 
     clazz = classMetaData.getDescribedType();
     this.columnFamilyName = clazz.getAnnotation(Table.class) != null ? clazz
@@ -71,7 +71,7 @@ public class EntityFacade implements Serializable {
       if (fmds[i].getAssociationType() == FieldMetaData.ONE_TO_MANY
           || fmds[i].getAssociationType() == FieldMetaData.MANY_TO_MANY) {
 
-        indexMetaData.add(new ManyEntityIndex(fmds[i]));
+        indexMetaData.add(new ManyEntityIndex(fmds[i], mappingUtils));
 
         continue;
       }
@@ -129,6 +129,13 @@ public class EntityFacade implements Serializable {
 
   public Map<String, ColumnMeta<?>> getColumnMeta() {
     return columnMetas;
+  }
+
+  /**
+   * @return the indexMetaData
+   */
+  public Set<AbstractEntityIndex> getIndexMetaData() {
+    return indexMetaData;
   }
 
   @Override

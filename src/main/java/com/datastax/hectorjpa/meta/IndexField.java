@@ -23,4 +23,20 @@ public class IndexField<V> extends FieldSerializer<V> {
     this.fieldIndex = fieldIndex;
 
   }
+
+  /**
+   * @return the indexFieldName
+   */
+  public String getIndexFieldName() {
+    return indexFieldName;
+  }
+
+  /**
+   * @return the fieldIndex
+   */
+  public int getFieldIndex() {
+    return fieldIndex;
+  }
+  
+  
 }
