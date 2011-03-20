@@ -1,18 +1,18 @@
 package com.datastax.hectorjpa.store;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.persistence.Table;
 
-import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.hector.api.Serializer;
-import me.prettyprint.hector.api.beans.HColumn;
+import me.prettyprint.hector.api.mutation.Mutator;
+import me.prettyprint.hector.api.query.QueryResult;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.ClassMetaData;
@@ -20,10 +20,8 @@ import org.apache.openjpa.meta.FieldMetaData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.hectorjpa.index.AbstractEntityIndex;
-import com.datastax.hectorjpa.index.ManyEntityIndex;
-import com.datastax.hectorjpa.meta.ColumnMeta;
-import com.datastax.hectorjpa.meta.StaticColumnMeta;
+import com.datastax.hectorjpa.meta.ColumnField;
+import com.datastax.hectorjpa.meta.StaticColumn;
 
 public class EntityFacade implements Serializable {
   private static final Logger log = LoggerFactory.getLogger(EntityFacade.class);
@@ -32,34 +30,51 @@ public class EntityFacade implements Serializable {
 
 
   // required so we always have at least 1 column to select
-  private static final String EMPTY_COL = "jpaholder";
+ 
   
   private final String columnFamilyName;
   private final Class<?> clazz;
   private final Serializer<?> keySerializer;
-  private final Map<String, ColumnMeta<?>> columnMetas;
-  private final Set<AbstractEntityIndex> indexMetaData;
+  private final MappingUtils mappingUtils;
+  
+  /**
+   * Fields indexed by id
+   */
+  private final Map<Integer, ColumnField<?>> fieldIds;
+    
 
-  public EntityFacade(ClassMetaData classMetaData, BitSet fields, MappingUtils mappingUtils) {
+  /**
+   * Default constructor
+   * @param classMetaData The class meta data
+   * @param mappingUtils The mapping utils to use for byte mapping
+   */
+  public EntityFacade(ClassMetaData classMetaData, MappingUtils mappingUtils) {
 
     clazz = classMetaData.getDescribedType();
+    
     this.columnFamilyName = clazz.getAnnotation(Table.class) != null ? clazz
         .getAnnotation(Table.class).name() : clazz.getSimpleName();
+        
     if (log.isDebugEnabled()) {
       log.debug("PK field name: {} and typeCode: {}",
           classMetaData.getPrimaryKeyFields()[0].getType(),
           classMetaData.getPrimaryKeyFields()[0].getObjectIdFieldTypeCode());
     }
+    
     this.keySerializer = MappingUtils.getSerializer(classMetaData
         .getPrimaryKeyFields()[0]);
 
-    columnMetas = new HashMap<String, ColumnMeta<?>>();
+    fieldIds = new HashMap<Integer, ColumnField<?>>();
+    
+    this.mappingUtils = mappingUtils;
 
-    indexMetaData = new HashSet<AbstractEntityIndex>();
+//    indexMetaData = new HashSet<AbstractEntityIndex>();
 
     FieldMetaData[] fmds = classMetaData.getFields();
+    ColumnField<?> field = null;
 
-    for (int i = fields.nextSetBit(0); i >= 0; i = fields.nextSetBit(i + 1)) {
+    //parse all columns, we only want to do this on the first inti
+    for (int i = 0; i < fmds.length; i ++) {
 
       // not in the bit set to use, isn't managed or saved, or is a primary key,
       // ignore
@@ -71,7 +86,7 @@ public class EntityFacade implements Serializable {
       if (fmds[i].getAssociationType() == FieldMetaData.ONE_TO_MANY
           || fmds[i].getAssociationType() == FieldMetaData.MANY_TO_MANY) {
 
-        indexMetaData.add(new ManyEntityIndex(fmds[i], mappingUtils));
+//        indexMetaData.add(new ManyEntityIndex(fmds[i], mappingUtils));
 
         continue;
       }
@@ -92,20 +107,22 @@ public class EntityFacade implements Serializable {
                 fmds[i].getElement().getDeclaredTypeMetaData() });
       }
 
+     field = new ColumnField(fmds[i], MappingUtils.getSerializer(fmds[i].getTypeCode()));
+      
       // TODO if fmds[i].getAssociationType() > 0 .. we found an attached entity
       // and need to find it's entityFacade
-      columnMetas.put(fmds[i].getName(), new ColumnMeta(fmds[i].getIndex(),
-          MappingUtils.getSerializer(fmds[i].getTypeCode())));
+     fieldIds.put(field.getFieldId(), field);
+     
     }
 
+    
+    field = new StaticColumn();
+    
     // always add the default "empty val" for read and write. This way if the pk
     // is the only field requested, we'll always get a result from cassandra
-    columnMetas.put(EMPTY_COL, new StaticColumnMeta());
+    fieldIds.put(field.getFieldId(), field);
   }
-
-  public String[] getColumnNames() {
-    return columnMetas.keySet().toArray(new String[] {});
-  }
+  
 
   public String getColumnFamilyName() {
     return columnFamilyName;
@@ -118,31 +135,95 @@ public class EntityFacade implements Serializable {
   public Serializer<?> getKeySerializer() {
     return keySerializer;
   }
-
-  public int getFieldId(String columnName) {
-    return columnMetas.get(columnName).getFieldId();
-  }
-
-  public Serializer<?> getSerializer(String columnName) {
-    return columnMetas.get(columnName).getSerializer();
-  }
-
-  public Map<String, ColumnMeta<?>> getColumnMeta() {
-    return columnMetas;
-  }
-
+  
   /**
-   * @return the indexMetaData
+   * Get a string array of columns that are within this entity's CF.  May not contain all
+   * fields if they are stored in a *to-many relationship
+   * 
+   * @param fields
+   * @return
    */
-  public Set<AbstractEntityIndex> getIndexMetaData() {
-    return indexMetaData;
+  public String[] getCfColumns(BitSet fieldSet){
+    
+    List<String> fields = new ArrayList<String>();
+    
+    ColumnField<?> field = null;
+    
+    for (int i = fieldSet.nextSetBit(0), j = 0; i >= 0; i = fieldSet.nextSetBit(i + 1), j++) {
+      field = fieldIds.get(i);
+      
+      if(field == null ){
+        continue;
+      }
+      
+      fields.add(field.getName());
+    }
+    
+    //always add the static column
+    fields.add(fieldIds.get(StaticColumn.HOLDER_FIELD_ID).getName());
+    
+    String[] result = new String[fields.size()];
+    
+    fields.toArray(result);
+    
+    return result;
+  }
+  
+  
+  /**
+   * Read the result set from column fields into our meta data
+   * @param stateManager
+   * @param query
+   * @param fields
+   */
+  public void readColumnResults(OpenJPAStateManager stateManager, QueryResult query,  BitSet fieldSet){
+    
+    for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet.nextSetBit(i + 1)) {
+      ColumnField field = fieldIds.get(i);
+      
+      if(field == null){
+        continue;
+      }
+      
+      field.readField(stateManager, query);
+    }
+    
+    
+  }
+  
+  /**
+   * Add the columns from the bit set to the mutator with the given time
+   * @param stateManager
+   * @param fieldSet
+   * @param m
+   * @param clockTime
+   */
+  public void addColumns(OpenJPAStateManager stateManager, BitSet fieldSet, Mutator<byte[]> m, long clockTime){
+    
+    
+    byte[] keyBytes = mappingUtils.getKeyBytes(stateManager.getObjectId());
+    
+    for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet.nextSetBit(i + 1)) {
+      ColumnField field = fieldIds.get(i);
+      
+      if(field == null){
+        continue;
+      }
+      
+      field.addField(stateManager, m, clockTime, keyBytes, this.columnFamilyName);
+    }
+    
+    //always add the placeholder field
+    fieldIds.get(StaticColumn.HOLDER_FIELD_ID).addField(stateManager, m, clockTime, keyBytes, this.columnFamilyName);
+    
   }
 
   @Override
   public String toString() {
+     
     return String.format(
         "EntityFacade[class: %s, columnFamily: %s, columnNames: %s]",
-        clazz.getName(), columnFamilyName, Arrays.toString(getColumnNames()));
+        clazz.getName(), columnFamilyName, Arrays.toString(fieldIds.entrySet().toArray()));
 
   }
 

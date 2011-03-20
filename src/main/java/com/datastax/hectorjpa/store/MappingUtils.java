@@ -2,6 +2,7 @@ package com.datastax.hectorjpa.store;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,11 +79,12 @@ public class MappingUtils {
     return serializer;
   }
   
-  public SliceQuery<byte[], String, byte[]> buildSliceQuery(Object idObj, EntityFacade entityFacade, Keyspace keyspace) {
+  public SliceQuery<byte[], String, byte[]> buildSliceQuery(Object idObj, String[] columns, String cfName,  Keyspace keyspace) {
     SliceQuery<byte[], String, byte[]> query = new ThriftSliceQuery(keyspace, BytesArraySerializer.get(), StringSerializer.get(), BytesArraySerializer.get());
-    query.setColumnNames(entityFacade.getColumnNames());
+   
+    query.setColumnNames(columns);
     query.setKey(getKeyBytes(idObj));
-    query.setColumnFamily(entityFacade.getColumnFamilyName());
+    query.setColumnFamily(cfName);
     return query;
   }
   

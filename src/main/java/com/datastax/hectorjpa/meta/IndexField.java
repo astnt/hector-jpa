@@ -11,7 +11,7 @@ import me.prettyprint.hector.api.Serializer;
  * @author Todd Nine
  * 
  */
-public class IndexField<V> extends FieldSerializer<V> {
+public class IndexField<V> extends Field<V> {
 
   private String indexFieldName;
 
