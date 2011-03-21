@@ -12,6 +12,8 @@ import com.datastax.hectorjpa.meta.CollectionField;
 /**
  * The proxy for large collections.  Need to use the Collection field to better fetch data and page
  * 
+ * TODO TN finish this and build a better interface into collectionfield for paging
+ * 
  * @author Todd Nine
  *
  */

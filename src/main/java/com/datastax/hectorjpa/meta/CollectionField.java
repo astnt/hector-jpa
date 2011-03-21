@@ -58,7 +58,6 @@ public class CollectionField<V> extends Field<V> {
 
   private OrderField[] orderBy;
   private String name;
-  private Serializer<?> targetIdSerializer;
   private Class<?> targetClass;
   private MappingUtils mappingUtils;
 
@@ -95,9 +94,6 @@ public class CollectionField<V> extends Field<V> {
     //set the class of the collection elements
     targetClass = elementClassMeta.getDescribedType();
 
-    
-    targetIdSerializer = MappingUtils.getSerializer(elementClassMeta
-        .getPrimaryKeyFields()[0]);
 
     // create our cached bytes for better performance
     fieldName = StringSerializer.get().toBytes(name);
@@ -120,8 +116,10 @@ public class CollectionField<V> extends Field<V> {
       return;
     }
 
-    Set<HColumn<Composite, byte[]>> newColumns = new HashSet<HColumn<Composite, byte[]>>();
+    Set<HColumn<Composite, byte[]>> newOrderColumns = new HashSet<HColumn<Composite, byte[]>>();
+    Set<HColumn<Composite, byte[]>> newIdColumns = new HashSet<HColumn<Composite, byte[]>>();
     Set<HColumn<Composite, byte[]>> deletedColumns = new HashSet<HColumn<Composite, byte[]>>();
+    Set<HColumn<Composite, byte[]>> deletedIdColumns = new HashSet<HColumn<Composite, byte[]>>();
 
     // not a proxy, it's the first time this has been saved
     if (field instanceof Proxy) {
@@ -129,17 +127,17 @@ public class CollectionField<V> extends Field<V> {
       Proxy proxy = (Proxy) field;
       ChangeTracker changes = proxy.getChangeTracker();
 
-      createColumns(stateManager, changes.getAdded(), newColumns, clock);
+      createColumns(stateManager, changes.getAdded(), newOrderColumns, newIdColumns,  clock);
 
       // TODO TN need to get the original value to delete old index on change
-      createColumns(stateManager, changes.getChanged(), newColumns, clock);
+      createColumns(stateManager, changes.getChanged(), newOrderColumns, newIdColumns,  clock);
 
       // add everything that needs removed
-      createColumns(stateManager, changes.getRemoved(), deletedColumns, clock);
+      createColumns(stateManager, changes.getRemoved(), deletedColumns, deletedIdColumns, clock);
     }
     // new item that hasn't been proxied, just write them as new columns
     else {
-      createColumns(stateManager, (Collection<?>) field, newColumns, clock);
+      createColumns(stateManager, (Collection<?>) field, newOrderColumns ,newIdColumns,  clock);
     }
 
     // construct the key
@@ -150,7 +148,19 @@ public class CollectionField<V> extends Field<V> {
 
       // same column exists on write, don't issue the delete since we don't want
       // to remove the write
-      if (newColumns.contains(current)) {
+      if (newOrderColumns.contains(current)) {
+        continue;
+      }
+
+      mutator.addDeletion(collectionKey, CF_NAME, current.getName(),
+          compositeSerializer, clock);
+    }
+    
+    for (HColumn<Composite, byte[]> current : deletedColumns) {
+
+      // same column exists on write, don't issue the delete since we don't want
+      // to remove the write
+      if (newIdColumns.contains(current)) {
         continue;
       }
 
@@ -158,8 +168,14 @@ public class CollectionField<V> extends Field<V> {
           compositeSerializer, clock);
     }
 
-    // write our updates
-    for (HColumn<Composite, byte[]> current : deletedColumns) {
+    // write our order updates
+    for (HColumn<Composite, byte[]> current : newOrderColumns) {
+
+      mutator.addInsertion(collectionKey, CF_NAME, current);
+    }
+    
+    // write our key updates
+    for (HColumn<Composite, byte[]> current : newIdColumns) {
 
       mutator.addInsertion(collectionKey, CF_NAME, current);
     }
@@ -179,10 +195,8 @@ public class CollectionField<V> extends Field<V> {
     
     StoreContext context = stateManager.getContext();
     
-    //fire up our proxy on load
-    CollectionProxy proxy = new CollectionProxy(targetClass, true, this);
-    proxy.stopTracking();
-   
+    //TODO TN use our CollectionProxy here
+    List<Object> results = new ArrayList<Object>(result.get().getColumns().size());
    
 
     for (HColumn<Composite, byte[]> col : result.get().getColumns()) {
@@ -190,21 +204,16 @@ public class CollectionField<V> extends Field<V> {
 
       //the id will always be the last value in a composite type, we only care about that value.
       Object nativeId = fields[fields.length-1];
-     
-      //load our entity from cassandra
-      proxy.add(context.find(context.newObjectId(targetClass, nativeId), true, null));
-     
       
+      results.add(context.find(context.newObjectId(targetClass, nativeId), true, null));
+       
     }
     
     //now load all the objects from the ids we were given.
-
-    //start tracking the proxy now that we have our intial result
-    proxy.startTracking();
    
     
     
-    stateManager.storeObject(fieldId, proxy);
+    stateManager.storeObject(fieldId, results);
 
   }
 
@@ -240,29 +249,50 @@ public class CollectionField<V> extends Field<V> {
    * 
    * @param stateManager
    * @param objects
-   * @param columns
+   * @param orders
    * @param clock
    */
   private void createColumns(OpenJPAStateManager stateManager,
-      Collection<?> objects, Set<HColumn<Composite, byte[]>> columns, long clock) {
+      Collection<?> objects, Set<HColumn<Composite, byte[]>> orders, Set<HColumn<Composite, byte[]>> keys, long clock) {
 
     StoreContext ctx = stateManager.getContext();
+    
+    Composite orderComposite = null;
+    Composite idComposite = null;
 
     for (Object current : objects) {
 
       Object currentId = mappingUtils.getTargetObject(ctx.getObjectId(current));
 
-      Composite composite = new Composite();
-
+      
+      //create our composite of the format of id+order*
+      idComposite = new Composite();
+      
+      //create our composite of the format order*+id
+      orderComposite = new Composite();
+      
+      byte[] idbytes = mappingUtils.getSerializer(currentId).toBytes(currentId);
+      
+      //add our id to the beginning of our id based composite
+      idComposite.addBytes(idbytes);
+     
       // now construct the composite with order by the ids at the end.
       for (OrderField order : orderBy) {
-        order.addField(composite, current);
+        order.addField(idComposite, current);
+        order.addField(orderComposite, current);
       }
-
-      composite.add(currentId);
-
-      columns.add(new HColumnImpl<Composite, byte[]>(composite, HOLDER, clock,
+      
+      //add our id to the end of our order based composite
+      orderComposite.addBytes(idbytes);
+      
+      //add our order based column to the columns
+      orders.add(new HColumnImpl<Composite, byte[]>(orderComposite, HOLDER, clock,
           compositeSerializer, BytesArraySerializer.get()));
+      
+      //add our key based column to the key columns
+      keys.add(new HColumnImpl<Composite, byte[]>(idComposite, HOLDER, clock,
+          compositeSerializer, BytesArraySerializer.get()));
+      
 
     }
 
