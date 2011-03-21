@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.datastax.hectorjpa.meta;
+package com.datastax.hectorjpa.meta.collection;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -25,17 +25,14 @@ import me.prettyprint.hector.api.query.SliceQuery;
 import org.apache.openjpa.enhance.PersistenceCapable;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
-import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.meta.Order;
 import org.apache.openjpa.util.ChangeTracker;
 import org.apache.openjpa.util.MetaDataException;
 import org.apache.openjpa.util.Proxy;
 
-import com.datastax.hectorjpa.proxy.CollectionProxy;
 import com.datastax.hectorjpa.store.MappingUtils;
 import compositecomparer.Composite;
-import compositecomparer.hector.CompositeSerializer;
 
 /**
  * A class that performs all operations related to collections for saving and
@@ -44,42 +41,19 @@ import compositecomparer.hector.CompositeSerializer;
  * @author Todd Nine
  * 
  */
-public class CollectionField<V> extends Field<V> {
+public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
 
-  public static final String CF_NAME = "Collection_Container";
+  // represents the end "ordered" in the key
+  private static final byte[] orderedMarker = StringSerializer.get().toBytes(
+      "o");
 
-  private static byte[] HOLDER = new byte[] { 0 };
-
-  //the default batch size when it hasn't been set into the context
-  private int DEFAULT_FETCH_SIZE = 100;
-  
-
-  private static final CompositeSerializer compositeSerializer = new CompositeSerializer();
+  // represents the end "id" in the key
+  private static final byte[] idMarker = StringSerializer.get().toBytes("i");
 
   private OrderField[] orderBy;
-  private String name;
-  private Class<?> targetClass;
-  private MappingUtils mappingUtils;
 
-  // The name of this entity serialzied as bytes
-  private byte[] entityName;
-
-  // the name of the field serialzied as bytes
-  private byte[] fieldName;
-
-  public CollectionField(FieldMetaData fmd, MappingUtils mappingUtils) {
-    super(fmd.getIndex());
-    
-    this.mappingUtils = mappingUtils;
-    
-    Class<?> clazz = fmd.getDeclaredType();
-
-    if (!Collection.class.isAssignableFrom(clazz)) {
-      throw new MetaDataException("Only collections are currently supported");
-    }
-    
-
-    this.name = fmd.getName();
+  public OrderedCollectionField(FieldMetaData fmd, MappingUtils mappingUtils) {
+    super(fmd, mappingUtils);
 
     Order[] orders = fmd.getOrders();
     orderBy = new OrderField[orders.length];
@@ -89,20 +63,17 @@ public class CollectionField<V> extends Field<V> {
       orderBy[i] = new OrderField(orders[i], fmd);
     }
 
-    ClassMetaData elementClassMeta = fmd.getElement().getDeclaredTypeMetaData();
-    
-    //set the class of the collection elements
-    targetClass = elementClassMeta.getDescribedType();
+  }
 
-
-    // create our cached bytes for better performance
-    fieldName = StringSerializer.get().toBytes(name);
-
-    //write our column family name of the owning side to our rowkey for scanning
-    String columnFamilyName = mappingUtils.getColumnFamily(fmd.getDeclaringType());
-
-    entityName = StringSerializer.get().toBytes(columnFamilyName);
-
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.datastax.hectorjpa.meta.collection.AbstractCollectionField#
+   * getDefaultSearchmarker()
+   */
+  @Override
+  protected byte[] getDefaultSearchmarker() {
+    return orderedMarker;
   }
 
   @Override
@@ -127,21 +98,26 @@ public class CollectionField<V> extends Field<V> {
       Proxy proxy = (Proxy) field;
       ChangeTracker changes = proxy.getChangeTracker();
 
-      createColumns(stateManager, changes.getAdded(), newOrderColumns, newIdColumns,  clock);
+      createColumns(stateManager, changes.getAdded(), newOrderColumns,
+          newIdColumns, clock);
 
       // TODO TN need to get the original value to delete old index on change
-      createColumns(stateManager, changes.getChanged(), newOrderColumns, newIdColumns,  clock);
+      createColumns(stateManager, changes.getChanged(), newOrderColumns,
+          newIdColumns, clock);
 
       // add everything that needs removed
-      createColumns(stateManager, changes.getRemoved(), deletedColumns, deletedIdColumns, clock);
+      createColumns(stateManager, changes.getRemoved(), deletedColumns,
+          deletedIdColumns, clock);
     }
     // new item that hasn't been proxied, just write them as new columns
     else {
-      createColumns(stateManager, (Collection<?>) field, newOrderColumns ,newIdColumns,  clock);
+      createColumns(stateManager, (Collection<?>) field, newOrderColumns,
+          newIdColumns, clock);
     }
 
     // construct the key
-    byte[] collectionKey = constructKey(key);
+    byte[] orderKey = constructKey(key, orderedMarker);
+    byte[] idKey = constructKey(key, idMarker);
 
     // write our updates and out deletes
     for (HColumn<Composite, byte[]> current : deletedColumns) {
@@ -152,11 +128,11 @@ public class CollectionField<V> extends Field<V> {
         continue;
       }
 
-      mutator.addDeletion(collectionKey, CF_NAME, current.getName(),
+      mutator.addDeletion(orderKey, CF_NAME, current.getName(),
           compositeSerializer, clock);
     }
-    
-    for (HColumn<Composite, byte[]> current : deletedColumns) {
+
+    for (HColumn<Composite, byte[]> current : deletedIdColumns) {
 
       // same column exists on write, don't issue the delete since we don't want
       // to remove the write
@@ -164,20 +140,20 @@ public class CollectionField<V> extends Field<V> {
         continue;
       }
 
-      mutator.addDeletion(collectionKey, CF_NAME, current.getName(),
+      mutator.addDeletion(idKey, CF_NAME, current.getName(),
           compositeSerializer, clock);
     }
 
     // write our order updates
     for (HColumn<Composite, byte[]> current : newOrderColumns) {
 
-      mutator.addInsertion(collectionKey, CF_NAME, current);
+      mutator.addInsertion(orderKey, CF_NAME, current);
     }
-    
+
     // write our key updates
     for (HColumn<Composite, byte[]> current : newIdColumns) {
 
-      mutator.addInsertion(collectionKey, CF_NAME, current);
+      mutator.addInsertion(idKey, CF_NAME, current);
     }
 
   }
@@ -192,27 +168,27 @@ public class CollectionField<V> extends Field<V> {
       QueryResult<ColumnSlice<Composite, byte[]>> result) {
 
     Object[] fields = null;
-    
+
     StoreContext context = stateManager.getContext();
-    
-    //TODO TN use our CollectionProxy here
-    List<Object> results = new ArrayList<Object>(result.get().getColumns().size());
-   
+
+    // TODO TN use our CollectionProxy here
+    List<Object> results = new ArrayList<Object>(result.get().getColumns()
+        .size());
 
     for (HColumn<Composite, byte[]> col : result.get().getColumns()) {
       fields = col.getName().toArray();
 
-      //the id will always be the last value in a composite type, we only care about that value.
-      Object nativeId = fields[fields.length-1];
-      
-      results.add(context.find(context.newObjectId(targetClass, nativeId), true, null));
-       
+      // the id will always be the last value in a composite type, we only care
+      // about that value.
+      Object nativeId = fields[fields.length - 1];
+
+      results.add(context.find(context.newObjectId(targetClass, nativeId),
+          true, null));
+
     }
-    
-    //now load all the objects from the ids we were given.
-   
-    
-    
+
+    // now load all the objects from the ids we were given.
+
     stateManager.storeObject(fieldId, results);
 
   }
@@ -228,17 +204,18 @@ public class CollectionField<V> extends Field<V> {
   public SliceQuery<byte[], Composite, byte[]> createQuery(Object objectId,
       Keyspace keyspace, String columnFamilyName, int count) {
 
-    //undefined value set it to something realistic
-    if(count < 0){
+    // undefined value set it to something realistic
+    if (count < 0) {
       count = DEFAULT_FETCH_SIZE;
     }
-    
+
     SliceQuery<byte[], Composite, byte[]> query = new ThriftSliceQuery(
         keyspace, BytesArraySerializer.get(), compositeSerializer,
         BytesArraySerializer.get());
 
     query.setRange(null, null, false, count);
-    query.setKey(constructKey(mappingUtils.getKeyBytes(objectId)));
+    query
+        .setKey(constructKey(mappingUtils.getKeyBytes(objectId), orderedMarker));
     query.setColumnFamily(columnFamilyName);
     return query;
 
@@ -253,10 +230,11 @@ public class CollectionField<V> extends Field<V> {
    * @param clock
    */
   private void createColumns(OpenJPAStateManager stateManager,
-      Collection<?> objects, Set<HColumn<Composite, byte[]>> orders, Set<HColumn<Composite, byte[]>> keys, long clock) {
+      Collection<?> objects, Set<HColumn<Composite, byte[]>> orders,
+      Set<HColumn<Composite, byte[]>> keys, long clock) {
 
     StoreContext ctx = stateManager.getContext();
-    
+
     Composite orderComposite = null;
     Composite idComposite = null;
 
@@ -264,61 +242,42 @@ public class CollectionField<V> extends Field<V> {
 
       Object currentId = mappingUtils.getTargetObject(ctx.getObjectId(current));
 
-      
-      //create our composite of the format of id+order*
+      // create our composite of the format of id+order*
       idComposite = new Composite();
-      
-      //create our composite of the format order*+id
+
+      // create our composite of the format order*+id
       orderComposite = new Composite();
-      
-      byte[] idbytes = mappingUtils.getSerializer(currentId).toBytes(currentId);
-      
-      //add our id to the beginning of our id based composite
-      idComposite.addBytes(idbytes);
-     
+
+         // add our id to the beginning of our id based composite
+      idComposite.add(currentId);
+
       // now construct the composite with order by the ids at the end.
       for (OrderField order : orderBy) {
         order.addField(idComposite, current);
         order.addField(orderComposite, current);
       }
-      
-      //add our id to the end of our order based composite
-      orderComposite.addBytes(idbytes);
-      
-      //add our order based column to the columns
-      orders.add(new HColumnImpl<Composite, byte[]>(orderComposite, HOLDER, clock,
-          compositeSerializer, BytesArraySerializer.get()));
-      
-      //add our key based column to the key columns
+
+      // add our id to the end of our order based composite
+      orderComposite.add(currentId);
+
+      // add our order based column to the columns
+      orders.add(new HColumnImpl<Composite, byte[]>(orderComposite, HOLDER,
+          clock, compositeSerializer, BytesArraySerializer.get()));
+
+      // add our key based column to the key columns
       keys.add(new HColumnImpl<Composite, byte[]>(idComposite, HOLDER, clock,
           compositeSerializer, BytesArraySerializer.get()));
-      
 
     }
 
   }
 
   /**
-   * Create our key byte array
+   * Inner class to encapsulate order field logic and meta data
    * 
-   * @param entityIdBytes
-   * @return
+   * @author Todd Nine
+   * 
    */
-  private byte[] constructKey(byte[] entityIdBytes) {
-
-    byte[] key = new byte[entityName.length + fieldName.length
-        + entityIdBytes.length];
-
-    ByteBuffer buff = ByteBuffer.wrap(key);
-
-    buff.put(entityName);
-    buff.put(entityIdBytes);
-    buff.put(fieldName);
-
-    return key;
-
-  }
-
   protected static class OrderField {
 
     private Order order;
@@ -335,38 +294,6 @@ public class CollectionField<V> extends Field<V> {
       this.serializer = MappingUtils.getSerializer(targetField);
 
       this.targetFieldIndex = targetField.getIndex();
-
-      // TODO, this will most likely need moved somewhere that is common access
-      // for both order and index fields
-      // since both could potentially be recursive
-
-      // String name = order.getName();
-      //
-      // String[] props = name.split(".");
-      //
-      // fieldIds = new int[props.length];
-      //
-      // ClassMetaData current = fmd.getDeclaredTypeMetaData();
-      //
-      // FieldMetaData meta = null;
-      //
-      // for (int i = 0; i < props.length; i++) {
-      // meta = current.getField(props[i]);
-      //
-      // // user has a value we can't find the field
-      // if (meta == null) {
-      // throw new MetaDataException(
-      // String
-      // .format(
-      // "Could not find the field with name '%s' on class '%s' in the order clause '%s'",
-      // props[i], current.getDescribedType().getName(), name));
-      // }
-      //
-      // fieldIds[i] = meta.getIndex();
-      //
-      // current = meta.getDeclaredTypeMetaData();
-      //
-      // }
 
     }
 

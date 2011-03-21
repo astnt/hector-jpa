@@ -7,7 +7,7 @@ import java.util.Iterator;
 
 import org.apache.openjpa.util.AbstractLRSProxyCollection;
 
-import com.datastax.hectorjpa.meta.CollectionField;
+import com.datastax.hectorjpa.meta.collection.OrderedCollectionField;
 
 /**
  * The proxy for large collections.  Need to use the Collection field to better fetch data and page
@@ -22,11 +22,11 @@ public class CollectionProxy extends AbstractLRSProxyCollection {
   /**
    * The backing collection field to perform all I/O for us
    */
-  private CollectionField field;
+  private OrderedCollectionField field;
   
   //TODO TN Update this to return real values
   
-  public CollectionProxy(Class elementType, boolean ordered, CollectionField field) {
+  public CollectionProxy(Class elementType, boolean ordered, OrderedCollectionField field) {
     super(elementType, ordered);
     
     this.field = field;
@@ -62,9 +62,9 @@ public class CollectionProxy extends AbstractLRSProxyCollection {
   
   private class CollectionIterator implements Iterator{
 
-    private CollectionField field;
+    private OrderedCollectionField field;
     
-    public CollectionIterator(CollectionField field){
+    public CollectionIterator(OrderedCollectionField field){
       this.field = field;
       
     

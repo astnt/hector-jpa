@@ -8,13 +8,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.persistence.Table;
-
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
-import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
@@ -25,9 +22,12 @@ import org.apache.openjpa.meta.FieldMetaData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.hectorjpa.meta.CollectionField;
 import com.datastax.hectorjpa.meta.ColumnField;
 import com.datastax.hectorjpa.meta.StaticColumn;
+import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
+import com.datastax.hectorjpa.meta.collection.OrderedCollectionField;
+import com.datastax.hectorjpa.meta.collection.UnorderedCollectionField;
+
 import compositecomparer.Composite;
 
 public class EntityFacade implements Serializable {
@@ -35,19 +35,16 @@ public class EntityFacade implements Serializable {
 
   private static final long serialVersionUID = 4777260639119126462L;
 
-
   private final String columnFamilyName;
   private final Class<?> clazz;
   private final Serializer<?> keySerializer;
   private final MappingUtils mappingUtils;
-  
-  
 
   /**
    * Fields indexed by id
    */
   private final Map<Integer, ColumnField<?>> columnFieldIds;
-  private final Map<Integer, CollectionField<?>> collectionFieldIds;
+  private final Map<Integer, AbstractCollectionField<?>> collectionFieldIds;
 
   /**
    * Default constructor
@@ -73,7 +70,7 @@ public class EntityFacade implements Serializable {
         .getPrimaryKeyFields()[0]);
 
     columnFieldIds = new HashMap<Integer, ColumnField<?>>();
-    collectionFieldIds = new HashMap<Integer, CollectionField<?>>();
+    collectionFieldIds = new HashMap<Integer, AbstractCollectionField<?>>();
 
     this.mappingUtils = mappingUtils;
 
@@ -95,8 +92,13 @@ public class EntityFacade implements Serializable {
       if (fmds[i].getAssociationType() == FieldMetaData.ONE_TO_MANY
           || fmds[i].getAssociationType() == FieldMetaData.MANY_TO_MANY) {
 
-        CollectionField<?> collection = new CollectionField(fmds[i],
-            mappingUtils);
+        AbstractCollectionField<?> collection = null;
+
+        if (fmds[i].getOrders().length > 0) {
+          collection = new OrderedCollectionField(fmds[i], mappingUtils);
+        } else {
+          collection = new UnorderedCollectionField(fmds[i], mappingUtils);
+        }
 
         // TODO if fmds[i].getAssociationType() > 0 .. we found an attached
         // entity
@@ -171,7 +173,7 @@ public class EntityFacade implements Serializable {
     List<String> fields = new ArrayList<String>();
 
     ColumnField<?> field = null;
-    CollectionField<?> collectionField = null;
+    AbstractCollectionField<?> collectionField = null;
     Object entityId = stateManager.getObjectId();
 
     // load all collections as we encounter them since they're seperate row
@@ -190,7 +192,6 @@ public class EntityFacade implements Serializable {
 
         int size = stateManager.getContext().getFetchConfiguration()
             .getFetchBatchSize();
-        
 
         // now query and load this field
         SliceQuery<byte[], Composite, byte[]> query = collectionField
@@ -248,7 +249,7 @@ public class EntityFacade implements Serializable {
 
       if (field == null) {
 
-        CollectionField<?> collection = collectionFieldIds.get(i);
+        AbstractCollectionField<?> collection = collectionFieldIds.get(i);
 
         // nothing to do
         if (collection == null) {

@@ -59,7 +59,7 @@ public class User {
   /**
    * People who I'm following (I.E graph edge out from user's node)
    */
-  @OneToMany(mappedBy = "followers", cascade = CascadeType.ALL)
+  @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL)
   @OrderBy("followingFirstName, followingLastName")
   private Set<Follow> following;
 
