@@ -3,6 +3,7 @@ package com.datastax.hectorjpa.store;
 import java.util.BitSet;
 
 import me.prettyprint.cassandra.model.MutatorImpl;
+import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Cluster;
@@ -25,6 +26,7 @@ import com.datastax.hectorjpa.meta.MetaCache;
  * accessing Cassandra
  * 
  * @author zznate
+ * @author Todd Nine
  */
 public class CassandraStore {
 
@@ -37,16 +39,13 @@ public class CassandraStore {
   private final Cluster cluster;
   private final CassandraStoreConfiguration conf;
   private Keyspace keyspace;
-  private MappingUtils mappingUtils;
-  private MetaCache metaCache;
 
   public CassandraStore(CassandraStoreConfiguration conf) {
     this.conf = conf;
     this.cluster = HFactory.getCluster(conf.getValue(
         EntityManagerConfigurator.CLUSTER_NAME_PROP).getOriginalValue());
     // TODO needs passthrough of other configuration
-    mappingUtils = new MappingUtils();
-    metaCache = new MetaCache(mappingUtils);
+
   }
 
   public CassandraStore open() {
@@ -57,7 +56,7 @@ public class CassandraStore {
   }
 
   /**
-   * 
+   * Load this object for the statemanager
    * @param stateManager
    * @param fields
    *          The bitset of fields to load
@@ -66,68 +65,67 @@ public class CassandraStore {
   public boolean getObject(OpenJPAStateManager stateManager, BitSet fields) {
 
     ClassMetaData metaData = stateManager.getMetaData();
-    EntityFacade entityFacade = metaCache.getFacade(metaData);
-    Object idObj = stateManager.getId();
+    EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
 
-    
-    String[] columns = entityFacade.getCfColumns(fields);
-    
-    SliceQuery<byte[], String, byte[]> sliceQuery = mappingUtils.buildSliceQuery(idObj, columns, entityFacade.getColumnFamilyName(), keyspace);
+    return entityFacade.loadColumns(stateManager, fields, keyspace);
 
-    // stateManager.storeObject(0, idObj);
 
-    QueryResult<ColumnSlice<String, byte[]>> result = sliceQuery.execute();
-
-    entityFacade.readColumnResults(stateManager, result, fields);
-    
-    return result.get().getColumns().size() > 0;
   }
 
-  public Mutator storeObject(Mutator mutator, OpenJPAStateManager stateManager,  BitSet fields) {
-    if (mutator == null)
+  /**
+   * Store this object using the given mutator
+   * @param mutator
+   * @param stateManager
+   * @param fields
+   * @return
+   */
+  public Mutator storeObject(Mutator mutator, OpenJPAStateManager stateManager,
+      BitSet fields) {
+    if (mutator == null) {
       mutator = new MutatorImpl(keyspace, BytesArraySerializer.get());
+    }
+
     if (log.isDebugEnabled()) {
       log.debug("Adding mutation (insertion) for class {}", stateManager
           .getManagedInstance().getClass().getName());
     }
 
     ClassMetaData metaData = stateManager.getMetaData();
-    EntityFacade entityFacade = metaCache.getFacade(metaData);
-    
+    EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
+
     long clock = keyspace.createClock();
-    
+
     entityFacade.addColumns(stateManager, fields, mutator, clock);
-    
+
     return mutator;
   }
-  
 
+  /**
+   * Remove this object
+   * @param mutator
+   * @param stateManager
+   * @return
+   */
   public Mutator removeObject(Mutator mutator, OpenJPAStateManager stateManager) {
-    if (mutator == null)
+    if (mutator == null) {
       mutator = new MutatorImpl(keyspace, BytesArraySerializer.get());
+    }
+
     if (log.isDebugEnabled()) {
       log.debug("Adding mutation (deletion) for class {}", stateManager
           .getManagedInstance().getClass().getName());
     }
     ClassMetaData metaData = stateManager.getMetaData();
-   
 
-    //TODO get collections to remove as well
-    
-    EntityFacade entityFacade = metaCache.getFacade(metaData);
-    
-    mutator.addDeletion(mappingUtils.getKeyBytes(stateManager.getObjectId()),
-        entityFacade.getColumnFamilyName(), null, StringSerializer.get());
-    
+    // TODO get collections to remove as well
+
+    EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
+
+    entityFacade.delete(stateManager, mutator);
+
     return mutator;
   }
 
-  public Cluster getCluster() {
-    return cluster;
-  }
 
-  public Keyspace getKeyspace() {
-    return keyspace;
-  }
 
 }

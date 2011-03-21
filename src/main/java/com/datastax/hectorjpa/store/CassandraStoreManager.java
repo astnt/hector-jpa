@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.index.AbstractEntityIndex;
+import com.datastax.hectorjpa.meta.MetaCache;
 
 public class CassandraStoreManager extends AbstractStoreManager {
 
@@ -27,6 +28,8 @@ public class CassandraStoreManager extends AbstractStoreManager {
       .getLogger(CassandraStoreManager.class);
 
   private CassandraStore cassandraStore;
+ 
+
 
   @Override
   public ResultObjectProvider executeExtent(ClassMetaData cMetaData,
@@ -210,6 +213,8 @@ public class CassandraStoreManager extends AbstractStoreManager {
     if (log.isDebugEnabled()) {
       log.debug("In newConfiguration with conf: {}", conf.toProperties(true));
     }
+    
+    
 
     return conf;
   }

@@ -10,9 +10,14 @@ import java.util.Map;
 
 import javax.persistence.Table;
 
+import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
+import me.prettyprint.hector.api.beans.ColumnSlice;
+import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
+import me.prettyprint.hector.api.query.SliceQuery;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.ClassMetaData;
@@ -23,18 +28,20 @@ import org.slf4j.LoggerFactory;
 import com.datastax.hectorjpa.meta.CollectionField;
 import com.datastax.hectorjpa.meta.ColumnField;
 import com.datastax.hectorjpa.meta.StaticColumn;
+import compositecomparer.Composite;
 
 public class EntityFacade implements Serializable {
   private static final Logger log = LoggerFactory.getLogger(EntityFacade.class);
 
   private static final long serialVersionUID = 4777260639119126462L;
 
-  // required so we always have at least 1 column to select
 
   private final String columnFamilyName;
   private final Class<?> clazz;
   private final Serializer<?> keySerializer;
   private final MappingUtils mappingUtils;
+  
+  
 
   /**
    * Fields indexed by id
@@ -88,7 +95,8 @@ public class EntityFacade implements Serializable {
       if (fmds[i].getAssociationType() == FieldMetaData.ONE_TO_MANY
           || fmds[i].getAssociationType() == FieldMetaData.MANY_TO_MANY) {
 
-        CollectionField<?> collection = new CollectionField(fmds[i], mappingUtils);
+        CollectionField<?> collection = new CollectionField(fmds[i],
+            mappingUtils);
 
         // TODO if fmds[i].getAssociationType() > 0 .. we found an attached
         // entity
@@ -132,71 +140,93 @@ public class EntityFacade implements Serializable {
     columnFieldIds.put(field.getFieldId(), field);
   }
 
-  public String getColumnFamilyName() {
-    return columnFamilyName;
-  }
+  // public String getColumnFamilyName() {
+  // return columnFamilyName;
+  // }
+  //
+  // public Class<?> getClazz() {
+  // return clazz;
+  // }
+  //
+  // public Serializer<?> getKeySerializer() {
+  // return keySerializer;
+  // }
 
-  public Class<?> getClazz() {
-    return clazz;
-  }
-
-  public Serializer<?> getKeySerializer() {
-    return keySerializer;
+  public void delete(OpenJPAStateManager stateManager, Mutator mutator) {
+    mutator.addDeletion(mappingUtils.getKeyBytes(stateManager.getObjectId()),
+        columnFamilyName, null, StringSerializer.get());
   }
 
   /**
-   * Get a string array of columns that are within this entity's CF. May not
-   * contain all fields if they are stored in a *to-many relationship
+   * Load all columns for this class specified in the bit set
    * 
-   * @param fields
-   * @return
+   * @param stateManager
+   * @param fieldSet
+   * @return true if the entity was present (I.E the marker column was found)
+   *         otherwise false is returned.
    */
-  public String[] getCfColumns(BitSet fieldSet) {
+  public boolean loadColumns(OpenJPAStateManager stateManager, BitSet fieldSet,
+      Keyspace keyspace) {
 
     List<String> fields = new ArrayList<String>();
 
     ColumnField<?> field = null;
+    CollectionField<?> collectionField = null;
+    Object entityId = stateManager.getObjectId();
 
-    for (int i = fieldSet.nextSetBit(0), j = 0; i >= 0; i = fieldSet
-        .nextSetBit(i + 1), j++) {
+    // load all collections as we encounter them since they're seperate row
+    // reads and construct columns for sliceQuery in primary CF
+    for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet.nextSetBit(i + 1)) {
       field = columnFieldIds.get(i);
 
       if (field == null) {
+
+        collectionField = collectionFieldIds.get(i);
+
+        // nothting to do
+        if (collectionField == null) {
+          continue;
+        }
+
+        int size = stateManager.getContext().getFetchConfiguration()
+            .getFetchBatchSize();
+        
+
+        // now query and load this field
+        SliceQuery<byte[], Composite, byte[]> query = collectionField
+            .createQuery(entityId, keyspace, columnFamilyName, size);
+
+        collectionField.readField(stateManager, query.execute());
+
         continue;
       }
 
       fields.add(field.getName());
     }
 
-    // always add the static column
     fields.add(columnFieldIds.get(StaticColumn.HOLDER_FIELD_ID).getName());
 
-    String[] result = new String[fields.size()];
+    // now load all the columns in the CF.
+    SliceQuery<byte[], String, byte[]> query = mappingUtils.buildSliceQuery(
+        entityId, fields, columnFamilyName, keyspace);
 
-    fields.toArray(result);
+    QueryResult<ColumnSlice<String, byte[]>> result = query.execute();
 
-    return result;
-  }
-
-  /**
-   * Read the result set from column fields into our meta data
-   * 
-   * @param stateManager
-   * @param query
-   * @param fields
-   */
-  public void readColumnResults(OpenJPAStateManager stateManager,
-      QueryResult query, BitSet fieldSet) {
-
+    // read the field
     for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet.nextSetBit(i + 1)) {
-      ColumnField field = columnFieldIds.get(i);
+      field = columnFieldIds.get(i);
 
       if (field == null) {
         continue;
       }
 
-      field.readField(stateManager, query);
+      field.readField(stateManager, result);
     }
+
+    // only need to check > 0. If the entity wasn't tombstoned then we would
+    // have loaded the static jpa marker column
+
+    return result.get().getColumns().size() > 0;
 
   }
 
@@ -217,26 +247,25 @@ public class EntityFacade implements Serializable {
       ColumnField field = columnFieldIds.get(i);
 
       if (field == null) {
-        
-        
+
         CollectionField<?> collection = collectionFieldIds.get(i);
-        
-        //nothing to do
-        if(collection == null){
+
+        // nothing to do
+        if (collection == null) {
           continue;
         }
-        
-        //we have a collection, persist it
-        collection.addField(stateManager, m, clockTime, keyBytes, this.columnFamilyName);
-        
+
+        // we have a collection, persist it
+        collection.addField(stateManager, m, clockTime, keyBytes,
+            this.columnFamilyName);
+
         continue;
-        
+
       }
 
       field.addField(stateManager, m, clockTime, keyBytes,
           this.columnFamilyName);
-      
-     
+
     }
 
     // always add the placeholder field

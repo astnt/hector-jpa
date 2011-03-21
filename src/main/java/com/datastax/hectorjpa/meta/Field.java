@@ -44,12 +44,5 @@ public abstract class Field<V> {
    */
   public abstract void addField(OpenJPAStateManager stateManager, Mutator<byte[]> mutator, long clock, byte[] key, String cfName);
   
-  
-  /**
-   * Read the field from the query
-   * @param stateManager
-   * @param result
-   */
-  public abstract void readField(OpenJPAStateManager stateManager,QueryResult<ColumnSlice<String, byte[]>> result);
-  
+   
 }

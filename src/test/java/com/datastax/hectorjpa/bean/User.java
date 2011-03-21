@@ -4,7 +4,9 @@
 package com.datastax.hectorjpa.bean;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -52,14 +54,14 @@ public class User {
    */
   @OneToMany(mappedBy = "following", cascade = CascadeType.ALL)
   @OrderBy("followerFirstName, followerLastName")
-  private List<Follow> followers;
+  private Set<Follow> followers;
 
   /**
    * People who I'm following (I.E graph edge out from user's node)
    */
   @OneToMany(mappedBy = "followers", cascade = CascadeType.ALL)
   @OrderBy("followingFirstName, followingLastName")
-  private List<Follow> following;
+  private Set<Follow> following;
 
   /**
    * @return the id
@@ -121,9 +123,11 @@ public class User {
    * 
    * @return the followers
    */
-  public List<Follow> getFollowers() {
+  public Set<Follow> getFollowers() {
     if (followers == null) {
-      followers = new ArrayList<Follow>();
+      //we use hash sets, this will get wrapped with a proxy and ordered after first save, the the first impl 
+      //we use is irrelevant since the set will really be a proxy after first save
+      followers = new HashSet<Follow>();
     }
 
     return followers;
@@ -134,9 +138,11 @@ public class User {
    * 
    * @return the following
    */
-  public List<Follow> getFollowing() {
+  public Set<Follow> getFollowing() {
     if (following == null) {
-      following = new ArrayList<Follow>();
+      //we use hash sets, this will get wrapped with a proxy and ordered after first save, the the first impl 
+      //we use is irrelevant since the set will really be a proxy after first save
+      following = new HashSet<Follow>();
     }
 
     return following;

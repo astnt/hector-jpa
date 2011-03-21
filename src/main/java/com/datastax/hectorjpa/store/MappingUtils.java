@@ -37,6 +37,8 @@ import org.apache.openjpa.util.OpenJPAId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.hectorjpa.serializer.TimeUUIDSerializer;
+
 /**
  * Utility class for bridging Hector/OpenJPA functionality
  * 
@@ -63,6 +65,7 @@ public class MappingUtils {
     classSerializerMap.put(UUID.class, UUIDSerializer.get());
     classSerializerMap.put(byte[].class, BytesArraySerializer.get());
     classSerializerMap.put(ByteBuffer.class, ByteBufferSerializer.get());
+    classSerializerMap.put(com.eaio.uuid.UUID.class, TimeUUIDSerializer.get());
 
   }
 
@@ -83,12 +86,16 @@ public class MappingUtils {
   }
 
   public SliceQuery<byte[], String, byte[]> buildSliceQuery(Object idObj,
-      String[] columns, String cfName, Keyspace keyspace) {
+      List<String> columns, String cfName, Keyspace keyspace) {
     SliceQuery<byte[], String, byte[]> query = new ThriftSliceQuery(keyspace,
         BytesArraySerializer.get(), StringSerializer.get(),
         BytesArraySerializer.get());
 
-    query.setColumnNames(columns);
+    String[] colArray = new String[columns.size()];
+
+    columns.toArray(colArray);
+
+    query.setColumnNames(colArray);
     query.setKey(getKeyBytes(idObj));
     query.setColumnFamily(cfName);
     return query;
@@ -126,7 +133,16 @@ public class MappingUtils {
    * @param idObj
    */
   public Serializer getSerializer(Object idObj) {
-    return SerializerTypeInferer.getSerializer(getTargetObject(idObj));
+
+    Object target = getTargetObject(idObj);
+
+    Serializer serializer = classSerializerMap.get(target.getClass());
+
+    if (serializer != null) {
+      return serializer;
+    }
+
+    return SerializerTypeInferer.getSerializer(target);
   }
 
   /**

@@ -17,6 +17,7 @@ import com.datastax.hectorjpa.store.MappingUtils;
  */
 public class MetaCache {
 
+  
   private final ConcurrentMap<ClassMetaData, EntityFacade> metaData = new ConcurrentHashMap<ClassMetaData, EntityFacade>();
   
   
@@ -38,6 +39,8 @@ public class MetaCache {
    * @return
    */
   public EntityFacade getFacade(ClassMetaData meta){
+    
+   
     EntityFacade facade = metaData.get(meta);
     
     if(facade != null){
