@@ -35,11 +35,12 @@ import com.eaio.uuid.UUID;
 @Entity
 public class Follow {
   
-  
+  //don't cascade delete
   @Persistent(mappedBy="following", cascade={CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH} )
   @Id
   private User follower;
   
+  //don't cascade delete
   @Persistent(mappedBy="followers", cascade={CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH} )
   @Id
   private User following;

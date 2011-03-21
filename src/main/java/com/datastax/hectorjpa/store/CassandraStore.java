@@ -111,7 +111,9 @@ public class CassandraStore {
     }
     ClassMetaData metaData = stateManager.getMetaData();
    
-    // use empty bitset
+
+    //TODO get collections to remove as well
+    
     EntityFacade entityFacade = metaCache.getFacade(metaData);
     
     mutator.addDeletion(mappingUtils.getKeyBytes(stateManager.getObjectId()),

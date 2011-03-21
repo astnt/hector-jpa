@@ -1,8 +1,5 @@
 package com.datastax.hectorjpa.meta;
 
-import org.apache.openjpa.kernel.OpenJPAStateManager;
-import org.apache.openjpa.meta.FieldMetaData;
-
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Serializer;
@@ -10,7 +7,9 @@ import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
-import me.prettyprint.hector.api.query.SliceQuery;
+
+import org.apache.openjpa.kernel.OpenJPAStateManager;
+import org.apache.openjpa.meta.FieldMetaData;
 
 /**
  * Class for serializing columns
@@ -80,29 +79,6 @@ public class ColumnField<V> extends Field<V> {
     stateManager.storeObject(fieldId, serializer.fromBytes(column.getValue()));
   }
 
-  // /**
-  // * Fetch the field from the column meta data. Will return null if this is
-  // the
-  // * placeholder field
-  // *
-  // * @param stateManager
-  // * @param metaData
-  // * @return
-  // */
-  // public Object fetchField(OpenJPAStateManager stateManager) {
-  // return stateManager.fetch(fieldId);
-  // }
-  //
-  // /**
-  // * Retreive the bytes and store them in the object passed by state manager
-  // *
-  // * @param stateManager
-  // * @param column
-  // */
-  // public void storeObject(OpenJPAStateManager stateManager,
-  // HColumn<?, byte[]> column) {
-  //
-  // stateManager.storeObject(fieldId, serializer.fromBytes(column.getValue()));
-  // }
+ 
 
 }

@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.persistence.Table;
+
 import me.prettyprint.cassandra.model.MutatorImpl;
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
@@ -36,17 +38,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utility class for bridging Hector/OpenJPA functionality 
- *
+ * Utility class for bridging Hector/OpenJPA functionality
+ * 
  * @author zznate
- *
+ * 
  */
 public class MappingUtils {
   private static final Logger log = LoggerFactory.getLogger(MappingUtils.class);
-  
+
   private static final Map<Integer, Serializer<?>> typeSerializerMap = new HashMap<Integer, Serializer<?>>();
   private static final Map<Class<?>, Serializer<?>> classSerializerMap = new HashMap<Class<?>, Serializer<?>>();
-  
+
   // TODO need to figure out UUID
   static {
     typeSerializerMap.put(JavaTypes.STRING, StringSerializer.get());
@@ -57,149 +59,89 @@ public class MappingUtils {
     typeSerializerMap.put(JavaTypes.LONG_OBJ, LongSerializer.get());
     typeSerializerMap.put(JavaTypes.DOUBLE, DoubleSerializer.get());
     typeSerializerMap.put(JavaTypes.DOUBLE_OBJ, DoubleSerializer.get());
-    
+
     classSerializerMap.put(UUID.class, UUIDSerializer.get());
     classSerializerMap.put(byte[].class, BytesArraySerializer.get());
     classSerializerMap.put(ByteBuffer.class, ByteBufferSerializer.get());
-    
+
   }
-  
+
   public static Serializer<?> getSerializer(int javaType) {
-    return typeSerializerMap.get(javaType) != null ? typeSerializerMap.get(javaType) : ObjectSerializer.get(); 
+    return typeSerializerMap.get(javaType) != null ? typeSerializerMap
+        .get(javaType) : ObjectSerializer.get();
   }
-  
+
   public static Serializer<?> getSerializer(FieldMetaData fieldMetaData) {
     Serializer serializer = getSerializer(fieldMetaData.getTypeCode());
-    if ( serializer instanceof ObjectSerializer ) {
+    if (serializer instanceof ObjectSerializer) {
       Class<?> clazz = fieldMetaData.getType();
-      if ( classSerializerMap.get(clazz) != null ) {
+      if (classSerializerMap.get(clazz) != null) {
         serializer = classSerializerMap.get(clazz);
       }
     }
     return serializer;
   }
-  
-  public SliceQuery<byte[], String, byte[]> buildSliceQuery(Object idObj, String[] columns, String cfName,  Keyspace keyspace) {
-    SliceQuery<byte[], String, byte[]> query = new ThriftSliceQuery(keyspace, BytesArraySerializer.get(), StringSerializer.get(), BytesArraySerializer.get());
-   
+
+  public SliceQuery<byte[], String, byte[]> buildSliceQuery(Object idObj,
+      String[] columns, String cfName, Keyspace keyspace) {
+    SliceQuery<byte[], String, byte[]> query = new ThriftSliceQuery(keyspace,
+        BytesArraySerializer.get(), StringSerializer.get(),
+        BytesArraySerializer.get());
+
     query.setColumnNames(columns);
     query.setKey(getKeyBytes(idObj));
     query.setColumnFamily(cfName);
     return query;
   }
-  
+
+  /**
+   * Get the column family for this class
+   * 
+   * @param clazz
+   * @return
+   */
+  public String getColumnFamily(Class<?> clazz) {
+    return clazz.getAnnotation(Table.class) != null ? clazz.getAnnotation(
+        Table.class).name() : clazz.getSimpleName();
+  }
+
   /**
    * Get the byte[] representing this Id object
+   * 
    * @param idObj
    * @return
    */
   public byte[] getKeyBytes(Object idObj) {
     Object target = getTargetObject(idObj);
-    
+
     Serializer serializer = getSerializer(target);
-    
+
     return serializer.toBytes(target);
   }
-  
+
   /**
-   * Retrieve the {@link Serializer} implementation for the id Object. 
+   * Retrieve the {@link Serializer} implementation for the id Object.
+   * 
    * @see {@link SerializerTypeInferer} for specifics.
    * @param idObj
    */
   public Serializer getSerializer(Object idObj) {
     return SerializerTypeInferer.getSerializer(getTargetObject(idObj));
   }
-  
-  
+
   /**
-   * If the object is an OpenJPAId, it will return the underlying identity object, if not, the passed value 
-   * is returned
+   * If the object is an OpenJPAId, it will return the underlying identity
+   * object, if not, the passed value is returned
+   * 
    * @param idObj
    * @return
    */
-  public Object getTargetObject(Object idObj){
-    if( idObj instanceof OpenJPAId){
-      return ((OpenJPAId)idObj).getIdObject();
+  public Object getTargetObject(Object idObj) {
+    if (idObj instanceof OpenJPAId) {
+      return ((OpenJPAId) idObj).getIdObject();
     }
-    
+
     return idObj;
   }
-  /**
-   * Return a list of field names for which there are a 1-1 mapping 
-   * to Column names
-   * 
-   * @param metaData
-   * @return
-   */
-  List<String> buildColumnList(ClassMetaData metaData) {    
-    FieldMetaData[] fmds = metaData.getFields();
-    List<String> cols = new ArrayList<String>(fmds.length);
-    for (int i = 0; i < fmds.length; i++) {
-      if (fmds[i].getManagement() != fmds[i].MANAGE_PERSISTENT || fmds[i].isPrimaryKey())
-        continue;
 
-      log.debug("fmd.name: {}",fmds[i].getName());
-      cols.add(fmds[i].getName());
-    }
-    return cols;
-  }
-  
-  /**
-   * Map the column names to their respective serializers
-   * TODO cache this
-   * @param metaData
-   * @return
-   */
-  Map<String, Serializer> buildColumnSerializerMap(ClassMetaData metaData) {
-    Map<String, Serializer> serMap = new HashMap<String, Serializer>();
-    
-    FieldMetaData[] fmds = metaData.getFields();
-    for (int i = 0; i < fmds.length; i++) {
-      if (fmds[i].getManagement() != fmds[i].MANAGE_PERSISTENT || fmds[i].isPrimaryKey())
-        continue;
-      switch (fmds[i].getTypeCode()) {
-      case JavaTypes.STRING:
-        serMap.put(fmds[i].getName(), StringSerializer.get());
-        break;
-      case JavaTypes.INT:
-        serMap.put(fmds[i].getName(), IntegerSerializer.get());
-        break;
-      case JavaTypes.INT_OBJ:
-        serMap.put(fmds[i].getName(), IntegerSerializer.get());
-        break;
-      case JavaTypes.DATE:
-        serMap.put(fmds[i].getName(), DateSerializer.get());
-        break;
-      case JavaTypes.LONG:
-        serMap.put(fmds[i].getName(), LongSerializer.get());
-        break;
-      case JavaTypes.LONG_OBJ:
-        serMap.put(fmds[i].getName(), LongSerializer.get());
-        break;
-      case JavaTypes.DOUBLE:
-        serMap.put(fmds[i].getName(), DoubleSerializer.get());
-        break;
-      case JavaTypes.DOUBLE_OBJ:
-        serMap.put(fmds[i].getName(), DoubleSerializer.get());
-        break;        
-      default:
-        serMap.put(fmds[i].getName(), ObjectSerializer.get());
-        break;
-      }
-    }    
-    return serMap;
-  }
-  
-  
-
-  public Mutator addMutation(Mutator mutator, Object idObj, OpenJPAStateManager stateManager, Keyspace keyspace) {
-    ClassMetaData metaData = stateManager.getMetaData();       
-    Map<String,Serializer> serMap = buildColumnSerializerMap(metaData);
-    for (Map.Entry<String, Serializer> entry : serMap.entrySet()) {
-      mutator.addInsertion(getKeyBytes(idObj), "TestBeanColumnFamily", 
-          HFactory.createColumn(entry.getKey(), stateManager.fetch(metaData.getField(entry.getKey()).getIndex()), 
-              StringSerializer.get(), entry.getValue()));
-    }
-    return mutator;
-  }
 }

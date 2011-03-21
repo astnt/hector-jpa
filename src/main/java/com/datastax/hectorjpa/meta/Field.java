@@ -3,7 +3,7 @@
  */
 package com.datastax.hectorjpa.meta;
 
-import me.prettyprint.hector.api.beans.HColumn;
+import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 
@@ -33,5 +33,23 @@ public abstract class Field<V> {
     return fieldId;
   }
 
+  
+  /**
+   * Add this field the the mutator
+   * @param stateManager
+   * @param mutator
+   * @param clock
+   * @param key
+   * @param cfName
+   */
+  public abstract void addField(OpenJPAStateManager stateManager, Mutator<byte[]> mutator, long clock, byte[] key, String cfName);
+  
+  
+  /**
+   * Read the field from the query
+   * @param stateManager
+   * @param result
+   */
+  public abstract void readField(OpenJPAStateManager stateManager,QueryResult<ColumnSlice<String, byte[]>> result);
   
 }

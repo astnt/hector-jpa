@@ -3,18 +3,6 @@
  */
 package com.datastax.hectorjpa.index;
 
-import indexedcollections.IndexedCollections.CollectionCFSet;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import me.prettyprint.hector.api.Keyspace;
-
-import org.apache.openjpa.kernel.OpenJPAStateManager;
-import org.apache.openjpa.meta.FieldMetaData;
-
-import com.datastax.hectorjpa.meta.IndexField;
-import com.datastax.hectorjpa.meta.OrderField;
 
 /**
  * @author Todd Nine

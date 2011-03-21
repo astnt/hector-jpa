@@ -47,13 +47,13 @@ public class User {
   @Index
   private String email;
 
-  // /**
-  // * People who are following me (I.E graph edge into user's node)
-  // */
-  // @OneToMany(mappedBy = "following", cascade=CascadeType.ALL)
-  // @OrderBy("follower.firstName, follower.lastName")
-  // private List<Follow> followers;
-  //
+  /**
+   * People who are following me (I.E graph edge into user's node)
+   */
+  @OneToMany(mappedBy = "following", cascade = CascadeType.ALL)
+  @OrderBy("followerFirstName, followerLastName")
+  private List<Follow> followers;
+
   /**
    * People who I'm following (I.E graph edge out from user's node)
    */
@@ -121,14 +121,14 @@ public class User {
    * 
    * @return the followers
    */
-  // public List<Follow> getFollowers() {
-  // if (followers == null) {
-  // followers = new ArrayList<Follow>();
-  // }
-  //
-  // return followers;
-  // }
-  //
+  public List<Follow> getFollowers() {
+    if (followers == null) {
+      followers = new ArrayList<Follow>();
+    }
+
+    return followers;
+  }
+
   /**
    * Null safe get, will always return an empty list if no elements are present
    * 
@@ -160,8 +160,8 @@ public class User {
     getFollowing().add(follow);
 
     // // notify the target they're followed
-    // target.getFollowers().add(follow);
-    //
+     target.getFollowers().add(follow);
+    
   }
 
   /*
