@@ -3,22 +3,18 @@
  */
 package com.datastax.hectorjpa.meta.collection;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
-import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.ColumnSlice;
+import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
-import me.prettyprint.hector.api.query.SliceQuery;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
@@ -26,10 +22,7 @@ import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.util.ChangeTracker;
 import org.apache.openjpa.util.Proxy;
 
-import com.datastax.hectorjpa.meta.collection.OrderedCollectionField.OrderField;
 import com.datastax.hectorjpa.store.MappingUtils;
-
-import compositecomparer.Composite;
 
 /**
  * Represents an unordered collection
@@ -60,7 +53,7 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
 
   @Override
   public void readField(OpenJPAStateManager stateManager,
-      QueryResult<ColumnSlice<Composite, byte[]>> result) {
+      QueryResult<ColumnSlice<DynamicComposite, byte[]>> result) {
     
     Object[] fields = null;
 
@@ -70,10 +63,10 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     Collection<Object> collection = (Collection<Object>) stateManager.newProxy(fieldId);
     
     
-    for (HColumn<Composite, byte[]> col : result.get().getColumns()) {
+    for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
       fields = col.getName().toArray();
 
-      // the id will always be the first value in a composite type, we only care
+      // the id will always be the first value in a DynamicComposite type, we only care
       // about that value.
       Object nativeId = fields[0];
 
@@ -100,8 +93,8 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       return;
     }
 
-    Set<HColumn<Composite, byte[]>> newIdColumns = new HashSet<HColumn<Composite, byte[]>>();
-    Set<HColumn<Composite, byte[]>> deletedIdColumns = new HashSet<HColumn<Composite, byte[]>>();
+    Set<HColumn<DynamicComposite, byte[]>> newIdColumns = new HashSet<HColumn<DynamicComposite, byte[]>>();
+    Set<HColumn<DynamicComposite, byte[]>> deletedIdColumns = new HashSet<HColumn<DynamicComposite, byte[]>>();
 
     // not a proxy, it's the first time this has been saved
     if (field instanceof Proxy) {
@@ -126,7 +119,7 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     byte[] idKey = constructKey(key, unorderedMarker);
 
    
-    for (HColumn<Composite, byte[]> current : deletedIdColumns) {
+    for (HColumn<DynamicComposite, byte[]> current : deletedIdColumns) {
 
       // same column exists on write, don't issue the delete since we don't want
       // to remove the write
@@ -139,7 +132,7 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     }
 
     // write our key updates
-    for (HColumn<Composite, byte[]> current : newIdColumns) {
+    for (HColumn<DynamicComposite, byte[]> current : newIdColumns) {
 
       mutator.addInsertion(idKey, CF_NAME, current);
     }
@@ -156,24 +149,24 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
    * @param clock
    */
   private void createColumns(OpenJPAStateManager stateManager,
-      Collection<?> objects, Set<HColumn<Composite, byte[]>> keys, long clock) {
+      Collection<?> objects, Set<HColumn<DynamicComposite, byte[]>> keys, long clock) {
 
     StoreContext ctx = stateManager.getContext();
 
-    Composite idComposite = null;
+    DynamicComposite idComposite = null;
 
     for (Object current : objects) {
 
       Object currentId = mappingUtils.getTargetObject(ctx.getObjectId(current));
 
-      // create our composite of the format of id+order*
-      idComposite = new Composite();
+      // create our DynamicComposite of the format of id+order*
+      idComposite = new DynamicComposite();
       
-      // add our id to the beginning of our id based composite
+      // add our id to the beginning of our id based DynamicComposite
       idComposite.add(currentId);
 
       // add our key based column to the key columns
-      keys.add(new HColumnImpl<Composite, byte[]>(idComposite, HOLDER, clock,
+      keys.add(new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
           compositeSerializer, BytesArraySerializer.get()));
 
     }

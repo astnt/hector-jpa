@@ -5,7 +5,6 @@ import java.util.BitSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import me.prettyprint.hector.api.mutation.Mutator;
 
@@ -18,9 +17,6 @@ import org.apache.openjpa.lib.rop.ResultObjectProvider;
 import org.apache.openjpa.meta.ClassMetaData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.datastax.hectorjpa.index.AbstractEntityIndex;
-import com.datastax.hectorjpa.meta.MetaCache;
 
 public class CassandraStoreManager extends AbstractStoreManager {
 

@@ -29,7 +29,7 @@ public class StaticColumn<V> extends ColumnField<byte[]> {
   private static final byte[] EMPTY_VAL = new byte[] { 0 };
 
   public StaticColumn() {
-    super(HOLDER_FIELD_ID, EMPTY_COL, BytesArraySerializer.get());
+    super(HOLDER_FIELD_ID, EMPTY_COL, false, false, BytesArraySerializer.get());
   }
 
 

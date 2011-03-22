@@ -14,23 +14,21 @@ import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
+import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
 
-import org.apache.openjpa.enhance.PersistenceCapable;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.meta.Order;
 import org.apache.openjpa.util.ChangeTracker;
-import org.apache.openjpa.util.MetaDataException;
 import org.apache.openjpa.util.Proxy;
 import org.apache.openjpa.util.UserException;
 
 import com.datastax.hectorjpa.store.MappingUtils;
-import compositecomparer.Composite;
 
 /**
  * A class that performs all operations related to collections for saving and
@@ -85,10 +83,10 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       return;
     }
 
-    Set<HColumn<Composite, byte[]>> newOrderColumns = new HashSet<HColumn<Composite, byte[]>>();
-    Set<HColumn<Composite, byte[]>> newIdColumns = new HashSet<HColumn<Composite, byte[]>>();
-    Set<HColumn<Composite, byte[]>> deletedColumns = new HashSet<HColumn<Composite, byte[]>>();
-    Set<HColumn<Composite, byte[]>> deletedIdColumns = new HashSet<HColumn<Composite, byte[]>>();
+    Set<HColumn<DynamicComposite, byte[]>> newOrderColumns = new HashSet<HColumn<DynamicComposite, byte[]>>();
+    Set<HColumn<DynamicComposite, byte[]>> newIdColumns = new HashSet<HColumn<DynamicComposite, byte[]>>();
+    Set<HColumn<DynamicComposite, byte[]>> deletedColumns = new HashSet<HColumn<DynamicComposite, byte[]>>();
+    Set<HColumn<DynamicComposite, byte[]>> deletedIdColumns = new HashSet<HColumn<DynamicComposite, byte[]>>();
 
     // not a proxy, it's the first time this has been saved
     if (field instanceof Proxy) {
@@ -118,7 +116,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     byte[] idKey = constructKey(key, idMarker);
 
     // write our updates and out deletes
-    for (HColumn<Composite, byte[]> current : deletedColumns) {
+    for (HColumn<DynamicComposite, byte[]> current : deletedColumns) {
 
       // same column exists on write, don't issue the delete since we don't want
       // to remove the write
@@ -130,7 +128,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
           compositeSerializer, clock);
     }
 
-    for (HColumn<Composite, byte[]> current : deletedIdColumns) {
+    for (HColumn<DynamicComposite, byte[]> current : deletedIdColumns) {
 
       // same column exists on write, don't issue the delete since we don't want
       // to remove the write
@@ -143,13 +141,13 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     }
 
     // write our order updates
-    for (HColumn<Composite, byte[]> current : newOrderColumns) {
+    for (HColumn<DynamicComposite, byte[]> current : newOrderColumns) {
 
       mutator.addInsertion(orderKey, CF_NAME, current);
     }
 
     // write our key updates
-    for (HColumn<Composite, byte[]> current : newIdColumns) {
+    for (HColumn<DynamicComposite, byte[]> current : newIdColumns) {
 
       mutator.addInsertion(idKey, CF_NAME, current);
     }
@@ -163,7 +161,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
    * @param result
    */
   public void readField(OpenJPAStateManager stateManager,
-      QueryResult<ColumnSlice<Composite, byte[]>> result) {
+      QueryResult<ColumnSlice<DynamicComposite, byte[]>> result) {
 
     Object[] fields = null;
 
@@ -172,7 +170,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     // TODO TN use our CollectionProxy here
     Collection<Object> collection = (Collection<Object>) stateManager.newProxy(fieldId);
 
-    for (HColumn<Composite, byte[]> col : result.get().getColumns()) {
+    for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
       fields = col.getName().toArray();
 
       // the id will always be the last value in a composite type, we only care
@@ -198,7 +196,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
    * @param count
    * @return
    */
-  public SliceQuery<byte[], Composite, byte[]> createQuery(Object objectId,
+  public SliceQuery<byte[], DynamicComposite, byte[]> createQuery(Object objectId,
       Keyspace keyspace, String columnFamilyName, int count) {
 
     // undefined value set it to something realistic
@@ -206,7 +204,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       count = DEFAULT_FETCH_SIZE;
     }
 
-    SliceQuery<byte[], Composite, byte[]> query = new ThriftSliceQuery(
+    SliceQuery<byte[], DynamicComposite, byte[]> query = new ThriftSliceQuery(
         keyspace, BytesArraySerializer.get(), compositeSerializer,
         BytesArraySerializer.get());
 
@@ -227,23 +225,23 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
    * @param clock
    */
   private void createColumns(OpenJPAStateManager stateManager,
-      Collection<?> objects, Set<HColumn<Composite, byte[]>> orders,
-      Set<HColumn<Composite, byte[]>> keys, long clock) {
+      Collection<?> objects, Set<HColumn<DynamicComposite, byte[]>> orders,
+      Set<HColumn<DynamicComposite, byte[]>> keys, long clock) {
 
     StoreContext ctx = stateManager.getContext();
 
-    Composite orderComposite = null;
-    Composite idComposite = null;
+    DynamicComposite orderComposite = null;
+    DynamicComposite idComposite = null;
 
     for (Object current : objects) {
 
       Object currentId = mappingUtils.getTargetObject(ctx.getObjectId(current));
 
       // create our composite of the format of id+order*
-      idComposite = new Composite();
+      idComposite = new DynamicComposite();
 
       // create our composite of the format order*+id
-      orderComposite = new Composite();
+      orderComposite = new DynamicComposite();
 
          // add our id to the beginning of our id based composite
       idComposite.add(currentId);
@@ -258,11 +256,11 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       orderComposite.add(currentId);
 
       // add our order based column to the columns
-      orders.add(new HColumnImpl<Composite, byte[]>(orderComposite, HOLDER,
+      orders.add(new HColumnImpl<DynamicComposite, byte[]>(orderComposite, HOLDER,
           clock, compositeSerializer, BytesArraySerializer.get()));
 
       // add our key based column to the key columns
-      keys.add(new HColumnImpl<Composite, byte[]>(idComposite, HOLDER, clock,
+      keys.add(new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
           compositeSerializer, BytesArraySerializer.get()));
 
     }
@@ -301,7 +299,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
      * @param composite
      * @param instance
      */
-    protected void addField(OpenJPAStateManager manager, Composite composite, Object instance) {
+    protected void addField(OpenJPAStateManager manager, DynamicComposite composite, Object instance) {
 
       if (instance == null) {
         return;

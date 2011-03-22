@@ -3,9 +3,7 @@
  */
 package com.datastax.hectorjpa.meta;
 
-import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.mutation.Mutator;
-import me.prettyprint.hector.api.query.QueryResult;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 

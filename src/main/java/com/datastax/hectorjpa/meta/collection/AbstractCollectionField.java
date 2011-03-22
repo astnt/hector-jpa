@@ -8,7 +8,8 @@ import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.ColumnSlice;
-import me.prettyprint.hector.api.mutation.Mutator;
+import me.prettyprint.hector.api.beans.DynamicComposite;
+import me.prettyprint.hector.api.beans.DynamicCompositeSerialzier;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
 
@@ -19,9 +20,6 @@ import org.apache.openjpa.util.MetaDataException;
 
 import com.datastax.hectorjpa.meta.Field;
 import com.datastax.hectorjpa.store.MappingUtils;
-
-import compositecomparer.Composite;
-import compositecomparer.hector.CompositeSerializer;
 
 /**
  * Base class for all collection operations
@@ -38,7 +36,7 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
   // the default batch size when it hasn't been set into the context
   protected int DEFAULT_FETCH_SIZE = 100;
 
-  protected static final CompositeSerializer compositeSerializer = new CompositeSerializer();
+  protected static final DynamicCompositeSerialzier compositeSerializer = new DynamicCompositeSerialzier();
 
   protected String name;
   protected Class<?> targetClass;
@@ -112,7 +110,7 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
    * @param count
    * @return
    */
-  public SliceQuery<byte[], Composite, byte[]> createQuery(Object objectId,
+  public SliceQuery<byte[], DynamicComposite, byte[]> createQuery(Object objectId,
       Keyspace keyspace, String columnFamilyName, int count) {
     
     //undefined value set it to something realistic
@@ -120,7 +118,7 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
       count = DEFAULT_FETCH_SIZE;
     }
     
-    SliceQuery<byte[], Composite, byte[]> query = new ThriftSliceQuery(
+    SliceQuery<byte[], DynamicComposite, byte[]> query = new ThriftSliceQuery(
         keyspace, BytesArraySerializer.get(), compositeSerializer,
         BytesArraySerializer.get());
 
@@ -136,7 +134,7 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
    * @param stateManager
    * @param result
    */
-  public abstract void readField(OpenJPAStateManager stateManager,   QueryResult<ColumnSlice<Composite, byte[]>> result);
+  public abstract void readField(OpenJPAStateManager stateManager,   QueryResult<ColumnSlice<DynamicComposite, byte[]>> result);
   
   
   /**

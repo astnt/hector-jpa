@@ -12,6 +12,7 @@ import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
+import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
@@ -19,7 +20,6 @@ import me.prettyprint.hector.api.query.SliceQuery;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
-import org.apache.openjpa.util.OpenJPAId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,8 +29,6 @@ import com.datastax.hectorjpa.meta.ToOneColumnField;
 import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 import com.datastax.hectorjpa.meta.collection.OrderedCollectionField;
 import com.datastax.hectorjpa.meta.collection.UnorderedCollectionField;
-
-import compositecomparer.Composite;
 
 public class EntityFacade implements Serializable {
   private static final Logger log = LoggerFactory.getLogger(EntityFacade.class);
@@ -209,7 +207,7 @@ public class EntityFacade implements Serializable {
             .getFetchBatchSize();
 
         // now query and load this field
-        SliceQuery<byte[], Composite, byte[]> query = collectionField
+        SliceQuery<byte[], DynamicComposite, byte[]> query = collectionField
             .createQuery(entityId, keyspace, columnFamilyName, size);
 
         collectionField.readField(stateManager, query.execute());

@@ -24,14 +24,19 @@ public class ColumnField<V> extends Field<V> {
 
   protected Serializer<?> serializer;
   protected String name;
+  protected boolean indexed;
+  protected boolean ordered;
 
   public ColumnField(FieldMetaData fmd) {
-    this(fmd.getIndex(), fmd.getName(),  MappingUtils.getSerializer(fmd.getTypeCode()));
+    //TODO finish this for indexing
+    this(fmd.getIndex(), fmd.getName(), false,fmd.isUsedInOrderBy(), MappingUtils.getSerializer(fmd.getTypeCode()));
   }
 
-  public ColumnField(int fieldId, String fieldName, Serializer<?> serializer) {
+  public ColumnField(int fieldId, String fieldName, boolean indexed, boolean ordered, Serializer<?> serializer) {
     super(fieldId);
     this.name = fieldName;
+    this.indexed = indexed;
+    this.ordered = ordered;
     this.serializer = serializer;
   }
   
