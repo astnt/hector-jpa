@@ -15,6 +15,7 @@ import me.prettyprint.hector.api.factory.HFactory;
 
 import org.apache.cassandra.contrib.utils.service.CassandraServiceDataCleaner;
 import org.apache.cassandra.db.marshal.BytesType;
+import org.apache.cassandra.db.marshal.DynamicCompositeType;
 import org.apache.cassandra.db.marshal.LongType;
 import org.apache.cassandra.db.marshal.TimeUUIDType;
 import org.apache.cassandra.io.util.FileUtils;
@@ -142,20 +143,9 @@ public class CassandraTestBase {
 
     
     cfDefList.add(new CfDef("TestKeyspace", "Collection_Container")
-    .setComparator_type(BytesType.class.getSimpleName())
+    .setComparator_type(DynamicCompositeType.class.getName())
     .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
-    cfDefList.add(new CfDef("TestKeyspace", IndexedCollections.DEFAULT_CONTAINER_ITEMS_CF)
-    .setComparator_type(TimeUUIDType.class.getSimpleName())
-    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
-
-    cfDefList.add(new CfDef("TestKeyspace", IndexedCollections.DEFAULT_CONTAINER_ITEMS_COLUMN_INDEX_CF)
-    .setComparator_type("org.apache.cassandra.db.marshal.DynamicCompositeType")
-    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
-
-    cfDefList.add(new CfDef("TestKeyspace", IndexedCollections.DEFAULT_CONTAINER_ITEM_INDEX_ENTRIES)
-    .setComparator_type(LongType.class.getSimpleName())
-    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
     
     cluster = HFactory.getOrCreateCluster("TestPool", "localhost:9161");
     createKeyspace(cluster, "TestKeyspace",
