@@ -250,8 +250,8 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
 
       // now construct the composite with order by the ids at the end.
       for (OrderField order : orderBy) {
-        order.addField(idComposite, current);
-        order.addField(orderComposite, current);
+        order.addField(stateManager, idComposite, current);
+        order.addField(stateManager, orderComposite, current);
       }
 
       // add our id to the end of our order based composite
@@ -301,22 +301,14 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
      * @param composite
      * @param instance
      */
-    protected void addField(Composite composite, Object instance) {
+    protected void addField(OpenJPAStateManager manager, Composite composite, Object instance) {
 
       if (instance == null) {
         return;
       }
 
-      if (!(instance instanceof PersistenceCapable)) {
-        throw new MetaDataException(
-            String
-                .format(
-                    "You specified class '%s' as your collection element but it does not implement %s",
-                    instance.getClass(), PersistenceCapable.class));
-      }
-
-      OpenJPAStateManager stateManager = (OpenJPAStateManager) ((PersistenceCapable) instance)
-          .pcGetStateManager();
+      
+      OpenJPAStateManager stateManager =  manager.getContext().getStateManager(instance);
       
       //no state, we can't get the order value
       if(stateManager == null){
