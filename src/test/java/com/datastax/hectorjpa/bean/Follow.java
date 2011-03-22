@@ -47,6 +47,7 @@ public class Follow {
 
   
   //don't cascade delete
+
   @ManyToOne(cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH} )
   private User follower;
   

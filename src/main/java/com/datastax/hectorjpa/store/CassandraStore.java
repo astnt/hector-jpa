@@ -98,7 +98,6 @@ public class CassandraStore {
   public void storeObject(Mutator mutator, OpenJPAStateManager stateManager,
       BitSet fields, long clock) {
 
-
     if (log.isDebugEnabled()) {
       log.debug("Adding mutation (insertion) for class {}", stateManager
           .getManagedInstance().getClass().getName());
@@ -119,7 +118,6 @@ public class CassandraStore {
    */
   public void removeObject(Mutator mutator, OpenJPAStateManager stateManager, long clock) {
    
-
     if (log.isDebugEnabled()) {
       log.debug("Adding mutation (deletion) for class {}", stateManager
           .getManagedInstance().getClass().getName());

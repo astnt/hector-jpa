@@ -89,7 +89,7 @@ public class CassandraStoreManager extends AbstractStoreManager {
     
     long clock = cassandraStore.getClock();
     
-    
+
     OpenJPAConfiguration conf = ctx.getConfiguration();
     Mutator mutator = cassandraStore.createMutator();
 
@@ -97,6 +97,7 @@ public class CassandraStoreManager extends AbstractStoreManager {
       // create new object data for instance
       OpenJPAStateManager sm = (OpenJPAStateManager) itr.next();
       cassandraStore.storeObject(mutator, sm, sm.getDirty(), clock);
+
     }
     // TODO combine pNewUpdated and pDirty and use sm.getDirty for bitmask of
     // field
@@ -114,6 +115,7 @@ public class CassandraStoreManager extends AbstractStoreManager {
         // create new object data for instance
         OpenJPAStateManager sm = (OpenJPAStateManager) itr.next();
         cassandraStore.removeObject(mutator, sm, clock);
+
       }
     }
     mutator.execute();
