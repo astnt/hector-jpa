@@ -19,11 +19,13 @@ import me.prettyprint.hector.api.query.SliceQuery;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
+import org.apache.openjpa.util.OpenJPAId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.meta.ColumnField;
 import com.datastax.hectorjpa.meta.StaticColumn;
+import com.datastax.hectorjpa.meta.ToOneColumnField;
 import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 import com.datastax.hectorjpa.meta.collection.OrderedCollectionField;
 import com.datastax.hectorjpa.meta.collection.UnorderedCollectionField;
@@ -113,7 +115,10 @@ public class EntityFacade implements Serializable {
       if (fmds[i].getAssociationType() == FieldMetaData.MANY_TO_ONE
           || fmds[i].getAssociationType() == FieldMetaData.ONE_TO_ONE) {
 
-        // TODO one to many
+        ToOneColumnField<?> toOne = new ToOneColumnField(fmds[i], mappingUtils);
+
+        columnFieldIds.put(i, toOne);
+
         continue;
       }
 
@@ -126,8 +131,7 @@ public class EntityFacade implements Serializable {
                 fmds[i].getElement().getDeclaredTypeMetaData() });
       }
 
-      field = new ColumnField(fmds[i], MappingUtils.getSerializer(fmds[i]
-          .getTypeCode()));
+      field = new ColumnField(fmds[i]);
 
       // TODO if fmds[i].getAssociationType() > 0 .. we found an attached entity
       // and need to find it's entityFacade
@@ -154,7 +158,13 @@ public class EntityFacade implements Serializable {
   // return keySerializer;
   // }
 
-  public void delete(OpenJPAStateManager stateManager, Mutator mutator) {
+  /**
+   * Delete the entity with the given statemanager.  The given clock time is used for the delete of indexes
+   * @param stateManager
+   * @param mutator
+   * @param clock
+   */
+  public void delete(OpenJPAStateManager stateManager, Mutator mutator, long clock) {
     mutator.addDeletion(mappingUtils.getKeyBytes(stateManager.getObjectId()),
         columnFamilyName, null, StringSerializer.get());
   }
@@ -175,6 +185,11 @@ public class EntityFacade implements Serializable {
     ColumnField<?> field = null;
     AbstractCollectionField<?> collectionField = null;
     Object entityId = stateManager.getObjectId();
+    
+    //This entity has never been persisted, we can't possibly load it
+    if(mappingUtils.getTargetObject(entityId) == null){
+      return false;
+    }
 
     // load all collections as we encounter them since they're seperate row
     // reads and construct columns for sliceQuery in primary CF
@@ -237,13 +252,13 @@ public class EntityFacade implements Serializable {
    * @param stateManager
    * @param fieldSet
    * @param m
-   * @param clockTime
+   * @param clockTime The time to use for write and deletes
    */
   public void addColumns(OpenJPAStateManager stateManager, BitSet fieldSet,
       Mutator<byte[]> m, long clockTime) {
 
     byte[] keyBytes = mappingUtils.getKeyBytes(stateManager.getObjectId());
-
+    
     for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet.nextSetBit(i + 1)) {
       ColumnField field = columnFieldIds.get(i);
 

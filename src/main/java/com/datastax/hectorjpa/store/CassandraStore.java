@@ -56,6 +56,22 @@ public class CassandraStore {
   }
 
   /**
+   * Create a clock value to be passed to all operations
+   * @return
+   */
+  public long getClock(){
+    return keyspace.createClock();
+  }
+  
+  /**
+   * Return a new mutator for the keyspace with a byte array.
+   * @return
+   */
+  public Mutator createMutator(){
+    return new MutatorImpl(keyspace, BytesArraySerializer.get());
+  }
+  
+  /**
    * Load this object for the statemanager
    * @param stateManager
    * @param fields
@@ -79,11 +95,9 @@ public class CassandraStore {
    * @param fields
    * @return
    */
-  public Mutator storeObject(Mutator mutator, OpenJPAStateManager stateManager,
-      BitSet fields) {
-    if (mutator == null) {
-      mutator = new MutatorImpl(keyspace, BytesArraySerializer.get());
-    }
+  public void storeObject(Mutator mutator, OpenJPAStateManager stateManager,
+      BitSet fields, long clock) {
+
 
     if (log.isDebugEnabled()) {
       log.debug("Adding mutation (insertion) for class {}", stateManager
@@ -93,11 +107,8 @@ public class CassandraStore {
     ClassMetaData metaData = stateManager.getMetaData();
     EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
 
-    long clock = keyspace.createClock();
-
     entityFacade.addColumns(stateManager, fields, mutator, clock);
 
-    return mutator;
   }
 
   /**
@@ -106,10 +117,8 @@ public class CassandraStore {
    * @param stateManager
    * @return
    */
-  public Mutator removeObject(Mutator mutator, OpenJPAStateManager stateManager) {
-    if (mutator == null) {
-      mutator = new MutatorImpl(keyspace, BytesArraySerializer.get());
-    }
+  public void removeObject(Mutator mutator, OpenJPAStateManager stateManager, long clock) {
+   
 
     if (log.isDebugEnabled()) {
       log.debug("Adding mutation (deletion) for class {}", stateManager
@@ -121,9 +130,8 @@ public class CassandraStore {
 
     EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
 
-    entityFacade.delete(stateManager, mutator);
+    entityFacade.delete(stateManager, mutator, clock);
 
-    return mutator;
   }
 
 

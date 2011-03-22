@@ -158,15 +158,21 @@ public class User {
 
     // add the out bound edge to the following
     Follow follow = new Follow();
+ 
+    //link to the target
     follow.setFollowing(target);
+    target.getFollowers().add(follow);
+    
     follow.setFollower(this);
-    follow.setState(state);
-
     // we're following
     getFollowing().add(follow);
+    
+    
+    follow.setState(state);
+    
+    
 
-    // // notify the target they're followed
-     target.getFollowers().add(follow);
+ 
     
   }
 

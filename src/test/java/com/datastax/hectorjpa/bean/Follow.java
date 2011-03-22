@@ -9,8 +9,12 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
@@ -30,19 +34,24 @@ import com.eaio.uuid.UUID;
  * @author Todd Nine
  *
  */
-@IdClass(Follow.FollowId.class)
+//@IdClass(Follow.FollowId.class)
 @Table(name = "FollowColumnFamily")
 @Entity
+@SequenceGenerator(name = "timeuuid", allocationSize = 100, sequenceName = "com.datastax.hectorjpa.sequence.TimeUuid()")
 public class Follow {
   
-  //don't cascade delete
-  @Persistent(mappedBy="following", cascade={CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH} )
   @Id
+  @Persistent
+  @GeneratedValue(generator = "timeuuid", strategy = GenerationType.SEQUENCE)
+  private UUID id;
+
+  
+  //don't cascade delete
+  @ManyToOne(cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH} )
   private User follower;
   
   //don't cascade delete
-  @Persistent(mappedBy="followers", cascade={CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH} )
-  @Id
+  @ManyToOne(cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH} )
   private User following;
   
   /**
@@ -64,7 +73,17 @@ public class Follow {
   @Persistent
   @Enumerated(EnumType.STRING)
   private FollowState state;
+  
+  
+  /**
+   * @return the id
+   */
+  public UUID getId() {
+    return id;
+  }
 
+  
+  
   /**
    * @return the follower
    */
@@ -77,6 +96,13 @@ public class Follow {
    */
   public void setFollower(User follower) {
     this.follower = follower;
+    
+    if(follower == null){
+      this.followerFirstName = null;
+      this.followerLastName = null;
+      return;
+    }
+    
     this.followerFirstName = follower.getFirstName();
     this.followerLastName = follower.getLastName();
   }
@@ -93,8 +119,16 @@ public class Follow {
    */
   public void setFollowing(User following) {
     this.following = following;
-    this.followingFirstName = following.getFirstName();
-    this.followingLastName = following.getLastName();
+    
+    if(following == null){
+      followingFirstName = null;
+      followingLastName = null;
+      
+      return;
+    }
+    
+    followingFirstName = following.getFirstName();
+    followingLastName = following.getLastName();
   }
 
   /**
@@ -139,60 +173,97 @@ public class Follow {
     return followerLastName;
   }
 
-  public static class FollowId implements Serializable{
 
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 1L;
-    
-    
-    private UUID follower;
-    
-    private UUID following;
-    
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((follower == null) ? 0 : follower.hashCode());
-      result = prime * result
-          + ((following == null) ? 0 : following.hashCode());
-      return result;
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj)
-        return true;
-      if (obj == null)
-        return false;
-      if (getClass() != obj.getClass())
-        return false;
-      FollowId other = (FollowId) obj;
-      if (follower == null) {
-        if (other.follower != null)
-          return false;
-      } else if (!follower.equals(other.follower))
-        return false;
-      if (following == null) {
-        if (other.following != null)
-          return false;
-      } else if (!following.equals(other.following))
-        return false;
-      return true;
-    }
-    
-    
-    
+  /* (non-Javadoc)
+   * @see java.lang.Object#hashCode()
+   */
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((id == null) ? 0 : id.hashCode());
+    return result;
   }
+
+
+
+  /* (non-Javadoc)
+   * @see java.lang.Object#equals(java.lang.Object)
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (!(obj instanceof Follow))
+      return false;
+    Follow other = (Follow) obj;
+    if (id == null) {
+      if (other.id != null)
+        return false;
+    } else if (!id.equals(other.id))
+      return false;
+    return true;
+  }
+  
+  
+
+//  public static class FollowId implements Serializable{
+//
+//    /**
+//     * 
+//     */
+//    private static final long serialVersionUID = 1L;
+//    
+//    
+//    private UUID follower;
+//    
+//    private UUID following;
+//    
+//
+//    /* (non-Javadoc)
+//     * @see java.lang.Object#hashCode()
+//     */
+//    @Override
+//    public int hashCode() {
+//      final int prime = 31;
+//      int result = 1;
+//      result = prime * result + ((follower == null) ? 0 : follower.hashCode());
+//      result = prime * result
+//          + ((following == null) ? 0 : following.hashCode());
+//      return result;
+//    }
+//
+//    /* (non-Javadoc)
+//     * @see java.lang.Object#equals(java.lang.Object)
+//     */
+//    @Override
+//    public boolean equals(Object obj) {
+//      if (this == obj)
+//        return true;
+//      if (obj == null)
+//        return false;
+//      if (getClass() != obj.getClass())
+//        return false;
+//      FollowId other = (FollowId) obj;
+//      if (follower == null) {
+//        if (other.follower != null)
+//          return false;
+//      } else if (!follower.equals(other.follower))
+//        return false;
+//      if (following == null) {
+//        if (other.following != null)
+//          return false;
+//      } else if (!following.equals(other.following))
+//        return false;
+//      return true;
+//    }
+//    
+//    
+//    
+//  }
   
 
 }

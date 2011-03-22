@@ -172,8 +172,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     StoreContext context = stateManager.getContext();
 
     // TODO TN use our CollectionProxy here
-    List<Object> results = new ArrayList<Object>(result.get().getColumns()
-        .size());
+    Collection<Object> collection = (Collection<Object>) stateManager.newProxy(fieldId);
 
     for (HColumn<Composite, byte[]> col : result.get().getColumns()) {
       fields = col.getName().toArray();
@@ -182,14 +181,14 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       // about that value.
       Object nativeId = fields[fields.length - 1];
 
-      results.add(context.find(context.newObjectId(targetClass, nativeId),
+      collection.add(context.find(context.newObjectId(targetClass, nativeId),
           true, null));
 
     }
 
     // now load all the objects from the ids we were given.
 
-    stateManager.storeObject(fieldId, results);
+    stateManager.storeObject(fieldId, collection);
 
   }
 

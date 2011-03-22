@@ -28,8 +28,6 @@ public class CassandraStoreManager extends AbstractStoreManager {
       .getLogger(CassandraStoreManager.class);
 
   private CassandraStore cassandraStore;
- 
-
 
   @Override
   public ResultObjectProvider executeExtent(ClassMetaData cMetaData,
@@ -88,14 +86,17 @@ public class CassandraStoreManager extends AbstractStoreManager {
     // _updates = new ArrayList(pNew.size() + pDirty.size());
     // _deletes = new ArrayList(pDeleted.size());
     cassandraStore.open();
+    
+    long clock = cassandraStore.getClock();
+    
+    
     OpenJPAConfiguration conf = ctx.getConfiguration();
-    Mutator mutator = null;
+    Mutator mutator = cassandraStore.createMutator();
 
     for (Iterator itr = pNew.iterator(); itr.hasNext();) {
       // create new object data for instance
       OpenJPAStateManager sm = (OpenJPAStateManager) itr.next();
-      Object oid = sm.getObjectId();
-      mutator = cassandraStore.storeObject(mutator, sm, sm.getDirty());
+      cassandraStore.storeObject(mutator, sm, sm.getDirty(), clock);
     }
     // TODO combine pNewUpdated and pDirty and use sm.getDirty for bitmask of
     // field
@@ -112,7 +113,7 @@ public class CassandraStoreManager extends AbstractStoreManager {
       for (Iterator itr = deletes.iterator(); itr.hasNext();) {
         // create new object data for instance
         OpenJPAStateManager sm = (OpenJPAStateManager) itr.next();
-        mutator = cassandraStore.removeObject(mutator, sm);
+        cassandraStore.removeObject(mutator, sm, clock);
       }
     }
     mutator.execute();
@@ -123,14 +124,18 @@ public class CassandraStoreManager extends AbstractStoreManager {
   @Override
   public boolean initialize(OpenJPAStateManager stateManager, PCState pcState,
       FetchConfiguration fetchConfiguration, Object obj) {
+
     log.debug("In initialize operation...");
     cassandraStore.open();
     stateManager.initialize(stateManager.getMetaData().getDescribedType(),
         pcState);
     cassandraStore.getObject(stateManager,
         stateManager.getUnloaded(fetchConfiguration));
-    // TODO need to add the not-found case
+    
+    //TODO TN, this should be returning the result from above, however returning false for new entities 
+    //caused duplicate object exceptions on cascades.
     return true;
+
   }
 
   @Override
@@ -213,8 +218,6 @@ public class CassandraStoreManager extends AbstractStoreManager {
     if (log.isDebugEnabled()) {
       log.debug("In newConfiguration with conf: {}", conf.toProperties(true));
     }
-    
-    
 
     return conf;
   }
