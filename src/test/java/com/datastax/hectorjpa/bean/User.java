@@ -161,12 +161,12 @@ public class User {
     follow.setFollowing(target);
     follow.setFollower(this);
     follow.setState(state);
+    
+    //link to the target
+    target.getFollowers().add(follow);
 
     // we're following
     getFollowing().add(follow);
-
-    // // notify the target they're followed
-     target.getFollowers().add(follow);
     
   }
 

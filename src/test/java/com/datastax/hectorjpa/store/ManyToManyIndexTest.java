@@ -99,7 +99,6 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
     bob.followUser(frank, FollowState.PENDING);
     
     
-
     em.persist(bob);
     em.getTransaction().commit();
     em.close();

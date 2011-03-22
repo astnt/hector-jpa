@@ -9,48 +9,39 @@ import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
+import org.apache.openjpa.kernel.StoreContext;
+import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 
 import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
- * Class for serializing columns
+ * Class for serializing columns that reprsent many to one and one to one relationships
  * 
  * @author Todd Nine
  * 
  * @param <V>
  */
-public class ColumnField<V> extends Field<V> {
+public class ToOneColumnField<V> extends ColumnField<V> {
 
-  protected Serializer<?> serializer;
-  protected String name;
-
-  public ColumnField(FieldMetaData fmd) {
-    this(fmd.getIndex(), fmd.getName(),  MappingUtils.getSerializer(fmd.getTypeCode()));
-  }
-
-  public ColumnField(int fieldId, String fieldName, Serializer<?> serializer) {
-    super(fieldId);
-    this.name = fieldName;
-    this.serializer = serializer;
-  }
+  protected Class<?> targetClass;
+  protected MappingUtils mappingUtils;
   
-  /**
-   * Only invoked from subclasses that can't determine serializer
-   * @param fieldId
-   * @param name
-   */
-  protected ColumnField(int fieldId, String name){
-    super(fieldId);
-    this.name = name;
+
+  public ToOneColumnField(FieldMetaData fmd, MappingUtils mappingUtils) {
+    super(fmd.getIndex(), fmd.getName());
+    
+    targetClass = fmd.getDeclaredType();
+    
+    ClassMetaData targetClass = fmd.getDeclaredTypeMetaData();
+        
+    serializer = MappingUtils.getSerializer(targetClass.getPrimaryKeyFields()[0]);
+    
+    this.mappingUtils = mappingUtils;
+    
+
   }
 
-  /**
-   * @return the name
-   */
-  public String getName() {
-    return name;
-  }
 
   /**
    * Adds this field to the mutation with the given clock
@@ -66,9 +57,18 @@ public class ColumnField<V> extends Field<V> {
   public void addField(OpenJPAStateManager stateManager,
       Mutator<byte[]> mutator, long clock, byte[] key, String cfName) {
 
-    Object value = stateManager.fetch(fieldId);
+    Object instance = stateManager.fetch(fieldId);
 
-    mutator.addInsertion(key, cfName, new HColumnImpl(name, value, clock,
+    //value is null remove it
+    if(instance == null){
+      mutator.addDeletion(key, cfName, this.name, StringSerializer.get(), clock);
+      return;
+    }
+
+    Object targetId = mappingUtils.getTargetObject(stateManager.getContext().getObjectId(instance));
+  
+    
+    mutator.addInsertion(key, cfName, new HColumnImpl(name, targetId, clock,
         StringSerializer.get(), serializer));
   }
 
@@ -85,10 +85,19 @@ public class ColumnField<V> extends Field<V> {
     HColumn<String, byte[]> column = result.get().getColumnByName(name);
 
     if (column == null) {
+      stateManager.storeObject(fieldId, null);
       return;
     }
 
-    stateManager.storeObject(fieldId, serializer.fromBytes(column.getValue()));
+    Object id = serializer.fromBytes(column.getValue());
+        
+    StoreContext context = stateManager.getContext();
+
+    Object entityId = context.newObjectId(targetClass, id);
+    
+    Object returned = context.find(entityId, true, null);
+    
+    stateManager.storeObject(fieldId, returned);
   }
 
  

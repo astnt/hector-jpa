@@ -56,6 +56,14 @@ public class CassandraStore {
   }
 
   /**
+   * Create a clock value to be passed to all operations
+   * @return
+   */
+  public long getClock(){
+    return keyspace.createClock();
+  }
+  
+  /**
    * Load this object for the statemanager
    * @param stateManager
    * @param fields
@@ -80,7 +88,7 @@ public class CassandraStore {
    * @return
    */
   public Mutator storeObject(Mutator mutator, OpenJPAStateManager stateManager,
-      BitSet fields) {
+      BitSet fields, long clock) {
     if (mutator == null) {
       mutator = new MutatorImpl(keyspace, BytesArraySerializer.get());
     }
@@ -93,8 +101,6 @@ public class CassandraStore {
     ClassMetaData metaData = stateManager.getMetaData();
     EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
 
-    long clock = keyspace.createClock();
-
     entityFacade.addColumns(stateManager, fields, mutator, clock);
 
     return mutator;
@@ -106,7 +112,7 @@ public class CassandraStore {
    * @param stateManager
    * @return
    */
-  public Mutator removeObject(Mutator mutator, OpenJPAStateManager stateManager) {
+  public Mutator removeObject(Mutator mutator, OpenJPAStateManager stateManager, long clock) {
     if (mutator == null) {
       mutator = new MutatorImpl(keyspace, BytesArraySerializer.get());
     }
@@ -121,7 +127,7 @@ public class CassandraStore {
 
     EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
 
-    entityFacade.delete(stateManager, mutator);
+    entityFacade.delete(stateManager, mutator, clock);
 
     return mutator;
   }
