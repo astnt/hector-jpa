@@ -13,6 +13,8 @@ import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.util.UserException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.store.MappingUtils;
 
@@ -24,6 +26,8 @@ import com.datastax.hectorjpa.store.MappingUtils;
  * @param <V>
  */
 public class ToOneColumnField<V> extends ColumnField<V> {
+  
+  private static final Logger log = LoggerFactory.getLogger(ToOneColumnField.class);
 
   protected Class<?> targetClass;
   protected MappingUtils mappingUtils;
@@ -65,14 +69,17 @@ public class ToOneColumnField<V> extends ColumnField<V> {
       mutator.addDeletion(key, cfName, this.name, StringSerializer.get(), clock);
       return;
     }
-    
+    if ( log.isDebugEnabled() ) {
+      log.debug("Instance: {} fieldId: {} clss: {}", new Object[]{ 
+          instance.getClass().getName(), fieldId, stateManager.getManagedInstance()});
+    }
     OpenJPAStateManager targetStateManager = stateManager.getContext().getStateManager(instance);
 
     //no state, we can't get the order value
-    if(stateManager == null){
-      throw new UserException(String.format("You attempted to store field '%s' on entity '%s'.  However the entity does not have a state manager.  Make sure you enable cascade for this operation or explicity persist it with the entity manager", name, instance));
+    if(targetStateManager == null){
+      throw new UserException(String.format("You attempted to store field '%s' on entity '%s'.  However the entity does not have a state manager.  Make sure you enable cascade for this operation or explicity persist it with the entity manager", name, stateManager.getManagedInstance()));
     }
-    
+    mappingUtils = new MappingUtils();
     Object targetId = mappingUtils.getTargetObject(targetStateManager.getObjectId());
 
     

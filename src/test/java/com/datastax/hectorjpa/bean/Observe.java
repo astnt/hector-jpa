@@ -45,13 +45,11 @@ public class Observe {
   /**
    * the user observing the target
    */
-  @ManyToOne(cascade = { CascadeType.DETACH, CascadeType.MERGE,
-      CascadeType.PERSIST, CascadeType.REFRESH })
+  @ManyToOne
   private User owner;
 
   // don't cascade delete
-  @ManyToOne(cascade = { CascadeType.DETACH, CascadeType.MERGE,
-      CascadeType.PERSIST, CascadeType.REFRESH })
+  @ManyToOne
   private User target;
 
   /**

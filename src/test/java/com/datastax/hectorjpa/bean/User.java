@@ -162,19 +162,13 @@ public class User {
  
     //link to the target
     observe.setTarget(target);
-    target.getObservers().add(observe);
-    
     observe.setOwner(this);
+    observe.setState(state);
+    
+    target.getObservers().add(observe);        
     // we're following
     getObserving().add(observe);
     
-    
-    observe.setState(state);
-    
-    
-
- 
-
     
   }
 
