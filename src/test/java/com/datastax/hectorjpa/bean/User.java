@@ -52,16 +52,16 @@ public class User {
   /**
    * People who are following me (I.E graph edge into user's node)
    */
-  @OneToMany(mappedBy = "following", cascade = CascadeType.ALL)
-  @OrderBy("followerFirstName, followerLastName")
-  private Set<Follow> followers;
+  @OneToMany(mappedBy = "target", cascade = CascadeType.ALL)
+  @OrderBy("ownerFirstName, ownerLastName")
+  private Set<Observe> observers;
 
   /**
    * People who I'm following (I.E graph edge out from user's node)
    */
-  @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL)
-  @OrderBy("followingFirstName, followingLastName")
-  private Set<Follow> following;
+  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
+  @OrderBy("targetFirstName, targetLastName")
+  private Set<Observe> observing;
 
   /**
    * @return the id
@@ -121,31 +121,32 @@ public class User {
   /**
    * Null safe get, will always return an empty list if no elements are present
    * 
-   * @return the followers
+   * @return Users who are observing me
    */
-  public Set<Follow> getFollowers() {
-    if (followers == null) {
+  public Set<Observe> getObservers() {
+    if (observers == null) {
       //we use hash sets, this will get wrapped with a proxy and ordered after first save, the the first impl 
       //we use is irrelevant since the set will really be a proxy after first save
-      followers = new HashSet<Follow>();
+      observers = new HashSet<Observe>();
     }
 
-    return followers;
+    return observers;
   }
 
   /**
    * Null safe get, will always return an empty list if no elements are present
    * 
-   * @return the following
+   * @return Users I am observing
+   * 
    */
-  public Set<Follow> getFollowing() {
-    if (following == null) {
+  public Set<Observe> getObserving() {
+    if (observing == null) {
       //we use hash sets, this will get wrapped with a proxy and ordered after first save, the the first impl 
       //we use is irrelevant since the set will really be a proxy after first save
-      following = new HashSet<Follow>();
+      observing = new HashSet<Observe>();
     }
 
-    return following;
+    return observing;
   }
 
   /**
@@ -154,21 +155,21 @@ public class User {
    * @param target
    * @param state
    */
-  public void followUser(User target, FollowState state) {
+  public void observeUser(User target, FollowState state) {
 
     // add the out bound edge to the following
-    Follow follow = new Follow();
+    Observe observe = new Observe();
  
     //link to the target
-    follow.setFollowing(target);
-    target.getFollowers().add(follow);
+    observe.setTarget(target);
+    target.getObservers().add(observe);
     
-    follow.setFollower(this);
+    observe.setOwner(this);
     // we're following
-    getFollowing().add(follow);
+    getObserving().add(observe);
     
     
-    follow.setState(state);
+    observe.setState(state);
     
     
 

@@ -96,7 +96,7 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
     frank.setEmail("frank.smith@testing.com");
     
     
-    bob.followUser(frank, FollowState.PENDING);
+    bob.observeUser(frank, FollowState.PENDING);
     
 
     em.persist(bob);
@@ -153,7 +153,7 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
     frank.setEmail("frank.smith@testing.com");
     
     
-    bob.followUser(frank, FollowState.PENDING);
+    bob.observeUser(frank, FollowState.PENDING);
     
     
 
