@@ -32,7 +32,7 @@ import com.eaio.uuid.UUID;
  * 
  */
 // @IdClass(Follow.FollowId.class)
-@Table(name = "FollowColumnFamily")
+@Table(name = "ObserveColumnFamily")
 @Entity
 @SequenceGenerator(name = "timeuuid", allocationSize = 100, sequenceName = "com.datastax.hectorjpa.sequence.TimeUuid()")
 public class Observe {

@@ -96,12 +96,18 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
     frank.setEmail("frank.smith@testing.com");
     
     
-    bob.observeUser(frank, FollowState.PENDING);
-    
 
+    bob.observeUser(frank, FollowState.PENDING);
+
+    //TODO on commit we're only getting 2 entities in the graph, bob and Observer, yet the graph of bob <-> Follower <-> Frank is build.  Is this a bug?
     em.persist(bob);
   
-    //TODO on commit we're only getting 2 entities in the graph, bob and frank, yet the graph of bob <-> Follower <-> Frank is build.  Is this a bug?
+    
+//    em.persist(bob);
+//    em.persist(frank);
+//    
+  
+   
     em.getTransaction().commit();
     em.close();
 
