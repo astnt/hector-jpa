@@ -152,6 +152,11 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.openjpa</groupId>
+			<artifactId>openjpa-jdbc</artifactId>
+			<version>2.1.0</version>
+		</dependency>		
+		<dependency>
+			<groupId>org.apache.openjpa</groupId>
 			<artifactId>openjpa-persistence-jdbc</artifactId>
 			<version>2.1.0</version>
 			<scope>test</scope>
