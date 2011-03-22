@@ -8,7 +8,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.prettyprint.cassandra.service.ThriftCfDef;
 import me.prettyprint.cassandra.service.ThriftKsDef;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
@@ -24,8 +23,6 @@ import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.BeforeClass;
-
-import compositecomparer.CompositeType;
 
 public class CassandraTestBase {
   protected static boolean cassandraStarted = false;
@@ -129,6 +126,16 @@ public class CassandraTestBase {
     cfDefList.add(new CfDef("TestKeyspace", "ObserveColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+    
+    cfDefList.add(new CfDef("TestKeyspace", "CustomerColumnFamily")
+    .setComparator_type(BytesType.class.getSimpleName())
+    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+
+    
+    cfDefList.add(new CfDef("TestKeyspace", "StoreColumnFamily")
+    .setComparator_type(BytesType.class.getSimpleName())
+    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+
     
     cfDefList.add(new CfDef("TestKeyspace", IndexedCollections.DEFAULT_ITEM_CF)
     .setComparator_type(BytesType.class.getSimpleName())

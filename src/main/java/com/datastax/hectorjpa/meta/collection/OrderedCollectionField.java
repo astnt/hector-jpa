@@ -3,11 +3,8 @@
  */
 package com.datastax.hectorjpa.meta.collection;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
@@ -30,6 +27,7 @@ import org.apache.openjpa.meta.Order;
 import org.apache.openjpa.util.ChangeTracker;
 import org.apache.openjpa.util.MetaDataException;
 import org.apache.openjpa.util.Proxy;
+import org.apache.openjpa.util.UserException;
 
 import com.datastax.hectorjpa.store.MappingUtils;
 import compositecomparer.Composite;
@@ -282,6 +280,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     private Order order;
     private Serializer<?> serializer;
     private int targetFieldIndex;
+    private String targetFieldName;
 
     public OrderField(Order order, FieldMetaData fmd) {
       super();
@@ -293,9 +292,15 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       this.serializer = MappingUtils.getSerializer(targetField);
 
       this.targetFieldIndex = targetField.getIndex();
+      this.targetFieldName = targetField.getName();
 
     }
 
+    /**
+     * Add the field this order represents to the composite
+     * @param composite
+     * @param instance
+     */
     protected void addField(Composite composite, Object instance) {
 
       if (instance == null) {
@@ -312,6 +317,12 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
 
       OpenJPAStateManager stateManager = (OpenJPAStateManager) ((PersistenceCapable) instance)
           .pcGetStateManager();
+      
+      //no state, we can't get the order value
+      if(stateManager == null){
+        throw new UserException(String.format("You attempted to specify field '%s' on entity '%s'.  However the entity does not have a state manager.  Make sure you enable cascade for this operation or explicity persist it with the entity manager", targetFieldName, instance));
+      }
+      
       Object value = stateManager.fetch(targetFieldIndex);
 
       composite.add(value);
