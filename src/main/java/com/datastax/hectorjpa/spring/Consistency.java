@@ -7,7 +7,7 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import org.apache.cassandra.thrift.ConsistencyLevel;
+import me.prettyprint.hector.api.HConsistencyLevel;
 
 /**
  * Annotates methods and sets the consistency level on the current thread of execute for all callers.
@@ -20,7 +20,7 @@ import org.apache.cassandra.thrift.ConsistencyLevel;
 @Retention(RUNTIME)
 public @interface Consistency {
 	
-	ConsistencyLevel value();
+  HConsistencyLevel value();
 
 }
 

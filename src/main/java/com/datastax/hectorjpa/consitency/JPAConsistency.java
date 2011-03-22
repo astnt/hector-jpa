@@ -17,11 +17,13 @@ Contributors :
  ***********************************************************************/
 package com.datastax.hectorjpa.consitency;
 
+import me.prettyprint.hector.api.HConsistencyLevel;
+
 import org.apache.cassandra.thrift.ConsistencyLevel;
 
 /**
  * Class that is used similar to a transaction to set the consistency level for
- * a given operation. If none is set on the thread, ConsistencyLevel.ONE is used as the default
+ * a given operation. If none is set on the thread, HConsistencyLevel.ONE is used as the default
  * 
  * 
  * @author Todd Nine
@@ -29,20 +31,20 @@ import org.apache.cassandra.thrift.ConsistencyLevel;
  */
 public class JPAConsistency {
 
-	private static final ThreadLocal<ConsistencyLevel> level = new ThreadLocal<ConsistencyLevel>();
+	private static final ThreadLocal<HConsistencyLevel> level = new ThreadLocal<HConsistencyLevel>();
 	
-	private static ConsistencyLevel defaultLevel;
+	private static HConsistencyLevel defaultLevel;
 
 	
 	static {
-		defaultLevel = ConsistencyLevel.QUORUM;
+		defaultLevel = HConsistencyLevel.QUORUM;
 	}
 	
 	/**
 	 * Set the default level for all threads
 	 * @param c
 	 */
-	public static void setDefault(ConsistencyLevel c){
+	public static void setDefault(HConsistencyLevel c){
 		defaultLevel = c;
 	}
 	
@@ -51,7 +53,7 @@ public class JPAConsistency {
 	 * 
 	 * @param c
 	 */
-	public static void set(ConsistencyLevel c) {
+	public static void set(HConsistencyLevel c) {
 		level.set(c);
 	}
 
@@ -68,8 +70,8 @@ public class JPAConsistency {
 	 * 
 	 * @return
 	 */
-	public static ConsistencyLevel get() {
-		ConsistencyLevel l = level.get();
+	public static HConsistencyLevel get() {
+	  HConsistencyLevel l = level.get();
 
 		if (l == null) {
 			return defaultLevel;

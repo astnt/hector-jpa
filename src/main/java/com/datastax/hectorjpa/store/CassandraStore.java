@@ -6,7 +6,10 @@ import me.prettyprint.cassandra.model.MutatorImpl;
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.cassandra.service.OperationType;
 import me.prettyprint.hector.api.Cluster;
+import me.prettyprint.hector.api.ConsistencyLevelPolicy;
+import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.factory.HFactory;
@@ -19,6 +22,7 @@ import org.apache.openjpa.meta.ClassMetaData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.hectorjpa.consitency.JPAConsistency;
 import com.datastax.hectorjpa.meta.MetaCache;
 
 /**
@@ -52,6 +56,13 @@ public class CassandraStore {
     this.keyspace = HFactory.createKeyspace(
         conf.getValue(EntityManagerConfigurator.KEYSPACE_PROP)
             .getOriginalValue(), cluster);
+    
+    
+    this.keyspace.setConsistencyLevelPolicy(new JPAConsistencyPolicy());
+    
+    
+   
+    
     return this;
   }
 
@@ -132,6 +143,23 @@ public class CassandraStore {
 
   }
 
+  /**
+   * Inner class that delegates to the JPAConsistency value for consistency
+   * @author Todd Nine
+   *
+   */
+  private class JPAConsistencyPolicy implements ConsistencyLevelPolicy {
+
+    @Override
+    public HConsistencyLevel get(OperationType op) {
+      return JPAConsistency.get();
+    }
+
+    @Override
+    public HConsistencyLevel get(OperationType op, String cfName) {
+      return JPAConsistency.get();
+    }
+  }
 
 
 }

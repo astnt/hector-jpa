@@ -5,6 +5,8 @@ package com.datastax.hectorjpa.spring.service;
 
 import static org.junit.Assert.assertEquals;
 
+import me.prettyprint.hector.api.HConsistencyLevel;
+
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,14 +41,14 @@ public class ComplexServiceImpl implements ComplexService {
 	 * .datanucleus.spring.model.Model)
 	 */
 	@Override
-	@Consistency(ConsistencyLevel.ONE)
+	@Consistency(HConsistencyLevel.ONE)
 	public void doOp(Model m) {
-		assertEquals(ConsistencyLevel.ONE,
+		assertEquals(HConsistencyLevel.ONE,
 				JPAConsistency.get());
 
 		s.doOp(m);
 
-		assertEquals(ConsistencyLevel.ONE,
+		assertEquals(HConsistencyLevel.ONE,
 				JPAConsistency.get());
 
 		s2.doOp(m);
@@ -54,7 +56,7 @@ public class ComplexServiceImpl implements ComplexService {
 		doOp = true;
 		doOpChild = false;
 
-		assertEquals(ConsistencyLevel.ONE,
+		assertEquals(HConsistencyLevel.ONE,
 				JPAConsistency.get());
 
 	}
@@ -67,19 +69,19 @@ public class ComplexServiceImpl implements ComplexService {
 	 * .datanucleus.spring.model.ModelChild)
 	 */
 	@Override
-	@Consistency(ConsistencyLevel.EACH_QUORUM)
+	@Consistency(HConsistencyLevel.EACH_QUORUM)
 	public void doOp(ModelChild m) {
-		assertEquals(ConsistencyLevel.EACH_QUORUM,
+		assertEquals(HConsistencyLevel.EACH_QUORUM,
 				JPAConsistency.get());
 
 		s.doOp(m);
 
-		assertEquals(ConsistencyLevel.EACH_QUORUM,
+		assertEquals(HConsistencyLevel.EACH_QUORUM,
 				JPAConsistency.get());
 
 		s2.doOp(m);
 
-		assertEquals(ConsistencyLevel.EACH_QUORUM,
+		assertEquals(HConsistencyLevel.EACH_QUORUM,
 				JPAConsistency.get());
 
 		doOp = false;
@@ -88,15 +90,15 @@ public class ComplexServiceImpl implements ComplexService {
 	}
 
 	@Override
-	@Consistency(ConsistencyLevel.EACH_QUORUM)
+	@Consistency(HConsistencyLevel.EACH_QUORUM)
 	public void doOpChildException(ModelChild m) {
 		
-		assertEquals(ConsistencyLevel.EACH_QUORUM,
+		assertEquals(HConsistencyLevel.EACH_QUORUM,
 				JPAConsistency.get());
 
 		s2.doOp(m);
 
-		assertEquals(ConsistencyLevel.EACH_QUORUM,
+		assertEquals(HConsistencyLevel.EACH_QUORUM,
 				JPAConsistency.get());
 
 		

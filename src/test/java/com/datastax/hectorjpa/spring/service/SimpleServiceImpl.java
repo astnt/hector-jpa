@@ -5,6 +5,8 @@ package com.datastax.hectorjpa.spring.service;
 
 import static org.junit.Assert.assertEquals;
 
+import me.prettyprint.hector.api.HConsistencyLevel;
+
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.springframework.stereotype.Service;
 
@@ -22,9 +24,9 @@ public class SimpleServiceImpl implements SimpleService {
 	boolean doOp;
 	
 	@Override
-	@Consistency(ConsistencyLevel.LOCAL_QUORUM)
+	@Consistency(HConsistencyLevel.LOCAL_QUORUM)
 	public void doOp(Model m) {
-		assertEquals(ConsistencyLevel.LOCAL_QUORUM, JPAConsistency.get());
+		assertEquals(HConsistencyLevel.LOCAL_QUORUM, JPAConsistency.get());
 
 		doOp = true;
 	}
@@ -35,9 +37,9 @@ public class SimpleServiceImpl implements SimpleService {
 	}
 
 	@Override
-	@Consistency(ConsistencyLevel.LOCAL_QUORUM)
+	@Consistency(HConsistencyLevel.LOCAL_QUORUM)
 	public void doOpWithException(Model m) {
-		assertEquals(ConsistencyLevel.LOCAL_QUORUM, JPAConsistency.get());
+		assertEquals(HConsistencyLevel.LOCAL_QUORUM, JPAConsistency.get());
 
 		throw new RuntimeException("Texting exception!");
 	}

@@ -24,6 +24,8 @@ import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import me.prettyprint.hector.api.HConsistencyLevel;
+
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.commons.beanutils.MethodUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -58,7 +60,7 @@ public class ConsistencyLevelAspect {
 	 * Cache for each invocation target and it's params to increase speed after
 	 * first invocation
 	 */
-	private static final ConcurrentMap<TargetKey, ConsistencyLevel> consistencyAnnotation = new ConcurrentHashMap<TargetKey, ConsistencyLevel>();
+	private static final ConcurrentMap<TargetKey, HConsistencyLevel> consistencyAnnotation = new ConcurrentHashMap<TargetKey, HConsistencyLevel>();
 
 	/**
 	 * Cache to check if we have the annotation
@@ -68,11 +70,11 @@ public class ConsistencyLevelAspect {
 	/**
 	 * Our thread local stack for invoking this interceptor
 	 */
-	private static final ThreadLocal<Stack<ConsistencyLevel>> threadStack = new ThreadLocal<Stack<ConsistencyLevel>>() {
+	private static final ThreadLocal<Stack<HConsistencyLevel>> threadStack = new ThreadLocal<Stack<HConsistencyLevel>>() {
 
 		@Override
-		protected Stack<ConsistencyLevel> initialValue() {
-			return new Stack<ConsistencyLevel>();
+		protected Stack<HConsistencyLevel> initialValue() {
+			return new Stack<HConsistencyLevel>();
 		}
 
 	};
@@ -120,14 +122,14 @@ public class ConsistencyLevelAspect {
 
 		// check if this is annotated, if not proceed and execute it
 
-		ConsistencyLevel level = consistency(runtimeClass,
+		HConsistencyLevel level = consistency(runtimeClass,
 				signatureMethod.getName(), runtimeArgs);
 
 		if (level == null) {
 			return pjp.proceed(args);
 		}
 
-		Stack<ConsistencyLevel> stack = threadStack.get();
+		Stack<HConsistencyLevel> stack = threadStack.get();
 
 		stack.push(level);
 		JPAConsistency.set(level);
@@ -160,7 +162,7 @@ public class ConsistencyLevelAspect {
 	 * @param paramTypes
 	 * @return
 	 */
-	private ConsistencyLevel consistency(Class<?> target, String methodName,
+	private HConsistencyLevel consistency(Class<?> target, String methodName,
 			Class<?>[] paramTypes) {
 
 		TargetKey key = new TargetKey(target, methodName, paramTypes);
@@ -183,7 +185,7 @@ public class ConsistencyLevelAspect {
 		for (int i = 0; i < annotations.length; i++) {
 			if (annotations[i] instanceof Consistency) {
 
-				ConsistencyLevel level = ((Consistency) annotations[i]).value();
+			  HConsistencyLevel level = ((Consistency) annotations[i]).value();
 
 				consistencyAnnotation.putIfAbsent(key, level);
 				hasAnnotation.putIfAbsent(key, true);
