@@ -19,34 +19,34 @@ import org.slf4j.LoggerFactory;
 import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
- * Class for serializing columns that reprsent many to one and one to one relationships
+ * Class for serializing columns that reprsent many to one and one to one
+ * relationships
  * 
  * @author Todd Nine
  * 
  * @param <V>
  */
 public class ToOneColumnField<V> extends ColumnField<V> {
-  
-  private static final Logger log = LoggerFactory.getLogger(ToOneColumnField.class);
+
+  private static final Logger log = LoggerFactory
+      .getLogger(ToOneColumnField.class);
 
   protected Class<?> targetClass;
   protected MappingUtils mappingUtils;
-  
 
   public ToOneColumnField(FieldMetaData fmd, MappingUtils mappingUtils) {
     super(fmd.getIndex(), fmd.getName());
-    
+
     targetClass = fmd.getDeclaredType();
-    
+
     ClassMetaData targetClass = fmd.getDeclaredTypeMetaData();
-        
-    serializer = MappingUtils.getSerializer(targetClass.getPrimaryKeyFields()[0]);
-    
+
+    serializer = MappingUtils
+        .getSerializer(targetClass.getPrimaryKeyFields()[0]);
+
     this.mappingUtils = mappingUtils;
-    
 
   }
-
 
   /**
    * Adds this field to the mutation with the given clock
@@ -64,25 +64,38 @@ public class ToOneColumnField<V> extends ColumnField<V> {
 
     Object instance = stateManager.fetch(fieldId);
 
-    //value is null remove it
-    if(instance == null){
-      mutator.addDeletion(key, cfName, this.name, StringSerializer.get(), clock);
+    // value is null remove it
+    if (instance == null) {
+      mutator
+          .addDeletion(key, cfName, this.name, StringSerializer.get(), clock);
       return;
     }
-    if ( log.isDebugEnabled() ) {
-      log.debug("Instance: {} fieldId: {} clss: {}", new Object[]{ 
-          instance.getClass().getName(), fieldId, stateManager.getManagedInstance()});
-    }
-    OpenJPAStateManager targetStateManager = stateManager.getContext().getStateManager(instance);
-
-    //no state, we can't get the order value
-    if(targetStateManager == null){
-      throw new UserException(String.format("You attempted to store field '%s' on entity '%s'.  However the entity does not have a state manager.  Make sure you enable cascade for this operation or explicity persist it with the entity manager", name, stateManager.getManagedInstance()));
-    }
-    mappingUtils = new MappingUtils();
-    Object targetId = mappingUtils.getTargetObject(targetStateManager.getObjectId());
-
     
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "Instance: {} fieldId: {} clss: {}",
+          new Object[] { instance.getClass().getName(), fieldId,
+              stateManager.getManagedInstance() });
+    }
+    
+    
+    OpenJPAStateManager targetStateManager = stateManager.getContext()
+        .getStateManager(instance);
+
+    // no state, we can't get the order value
+    if (targetStateManager == null) {
+      throw new UserException(
+          String
+              .format(
+                  "You attempted to store field '%s' on entity '%s'.  However the entity does not have a state manager.  Make sure you enable cascade for this operation or explicity persist it with the entity manager",
+                  name, stateManager.getManagedInstance()));
+    }
+    
+    
+    mappingUtils = new MappingUtils();
+    Object targetId = mappingUtils.getTargetObject(targetStateManager
+        .getObjectId());
+
     mutator.addInsertion(key, cfName, new HColumnImpl(name, targetId, clock,
         StringSerializer.get(), serializer));
   }
@@ -105,16 +118,14 @@ public class ToOneColumnField<V> extends ColumnField<V> {
     }
 
     Object id = serializer.fromBytes(column.getValue());
-        
+
     StoreContext context = stateManager.getContext();
 
     Object entityId = context.newObjectId(targetClass, id);
-    
+
     Object returned = context.find(entityId, true, null);
-    
+
     stateManager.storeObject(fieldId, returned);
   }
-
- 
 
 }

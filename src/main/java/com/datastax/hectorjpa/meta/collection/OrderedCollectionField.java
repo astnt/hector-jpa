@@ -40,8 +40,7 @@ import com.datastax.hectorjpa.store.MappingUtils;
 public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
 
   // represents the end "ordered" in the key
-  private static final byte[] orderedMarker = StringSerializer.get().toBytes(
-      "o");
+  private static final byte[] orderedMarker = StringSerializer.get().toBytes("o");
 
   // represents the end "id" in the key
   private static final byte[] idMarker = StringSerializer.get().toBytes("i");
@@ -244,7 +243,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       orderComposite = new DynamicComposite();
 
          // add our id to the beginning of our id based composite
-      idComposite.add(currentId);
+      idComposite.add(currentId, idSerizlizer);
 
       // now construct the composite with order by the ids at the end.
       for (OrderField order : orderBy) {
@@ -253,7 +252,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       }
 
       // add our id to the end of our order based composite
-      orderComposite.add(currentId);
+      orderComposite.add(currentId, idSerizlizer);
 
       // add our order based column to the columns
       orders.add(new HColumnImpl<DynamicComposite, byte[]>(orderComposite, HOLDER,
@@ -276,7 +275,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
   protected static class OrderField {
 
     private Order order;
-    private Serializer<?> serializer;
+    private Serializer<Object> serializer;
     private int targetFieldIndex;
     private String targetFieldName;
 
@@ -315,7 +314,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       
       Object value = stateManager.fetch(targetFieldIndex);
 
-      composite.add(value);
+      composite.add(value, serializer);
 
     }
   }

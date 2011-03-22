@@ -7,6 +7,7 @@ import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.beans.DynamicCompositeSerialzier;
@@ -38,6 +39,7 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
 
   protected static final DynamicCompositeSerialzier compositeSerializer = new DynamicCompositeSerialzier();
 
+  protected Serializer<Object> idSerizlizer;
   protected String name;
   protected Class<?> targetClass;
   protected MappingUtils mappingUtils;
@@ -65,6 +67,8 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
     this.name = fmd.getName();
 
     ClassMetaData elementClassMeta = fmd.getElement().getDeclaredTypeMetaData();
+    
+    this.idSerizlizer = MappingUtils.getSerializer(elementClassMeta.getPrimaryKeyFields()[0]);
 
     // set the class of the collection elements
     targetClass = elementClassMeta.getDescribedType();

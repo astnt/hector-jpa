@@ -74,7 +74,7 @@ public class MappingUtils {
         .get(javaType) : ObjectSerializer.get();
   }
 
-  public static Serializer<?> getSerializer(FieldMetaData fieldMetaData) {
+  public static Serializer<Object> getSerializer(FieldMetaData fieldMetaData) {
     Serializer serializer = getSerializer(fieldMetaData.getTypeCode());
     if (serializer instanceof ObjectSerializer) {
       Class<?> clazz = fieldMetaData.getType();
