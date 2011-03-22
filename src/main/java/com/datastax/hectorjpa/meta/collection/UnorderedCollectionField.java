@@ -28,17 +28,18 @@ import com.datastax.hectorjpa.store.MappingUtils;
  * Represents an unordered collection
  * 
  * @author Todd Nine
- *
+ * 
  */
 public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
 
-  //represents the end "id" in the key
-  private static final byte[] unorderedMarker = StringSerializer.get().toBytes("u");
-  
+  // represents the end "id" in the key
+  private static final byte[] unorderedMarker = StringSerializer.get().toBytes(
+      "u");
+
   public UnorderedCollectionField(FieldMetaData fmd, MappingUtils mappingUtils) {
     super(fmd, mappingUtils);
   }
-  
+
   /*
    * (non-Javadoc)
    * 
@@ -50,23 +51,29 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     return unorderedMarker;
   }
 
-
   @Override
   public void readField(OpenJPAStateManager stateManager,
       QueryResult<ColumnSlice<DynamicComposite, byte[]>> result) {
-    
+
     Object[] fields = null;
 
     StoreContext context = stateManager.getContext();
 
     // TODO TN use our CollectionProxy here
-    Collection<Object> collection = (Collection<Object>) stateManager.newProxy(fieldId);
-    
-    
-    for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
-      fields = col.getName().toArray();
+    Collection<Object> collection = (Collection<Object>) stateManager
+        .newProxy(fieldId);
 
-      // the id will always be the first value in a DynamicComposite type, we only care
+    DynamicComposite dynamicCol = null;
+
+    for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
+      
+      //TODO TN set the serializers in the columns before deserailizing
+      dynamicCol = col.getName();
+     
+      fields = dynamicCol.toArray();
+
+      // the id will always be the first value in a DynamicComposite type, we
+      // only care
       // about that value.
       Object nativeId = fields[0];
 
@@ -78,14 +85,13 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     // now load all the objects from the ids we were given.
 
     stateManager.storeObject(fieldId, collection);
-    
+
   }
 
   @Override
   public void addField(OpenJPAStateManager stateManager,
       Mutator<byte[]> mutator, long clock, byte[] key, String cfName) {
 
-   
     Object field = stateManager.fetch(fieldId);
 
     // nothing to do
@@ -105,20 +111,19 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       createColumns(stateManager, changes.getAdded(), newIdColumns, clock);
 
       // TODO TN need to get the original value to delete old index on change
-      createColumns(stateManager, changes.getChanged(),  newIdColumns, clock);
+      createColumns(stateManager, changes.getChanged(), newIdColumns, clock);
 
       // add everything that needs removed
       createColumns(stateManager, changes.getRemoved(), deletedIdColumns, clock);
     }
     // new item that hasn't been proxied, just write them as new columns
     else {
-      createColumns(stateManager, (Collection<?>) field,  newIdColumns, clock);
+      createColumns(stateManager, (Collection<?>) field, newIdColumns, clock);
     }
 
     // construct the key
     byte[] idKey = constructKey(key, unorderedMarker);
 
-   
     for (HColumn<DynamicComposite, byte[]> current : deletedIdColumns) {
 
       // same column exists on write, don't issue the delete since we don't want
@@ -137,7 +142,6 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       mutator.addInsertion(idKey, CF_NAME, current);
     }
 
-    
   }
 
   /**
@@ -149,7 +153,8 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
    * @param clock
    */
   private void createColumns(OpenJPAStateManager stateManager,
-      Collection<?> objects, Set<HColumn<DynamicComposite, byte[]>> keys, long clock) {
+      Collection<?> objects, Set<HColumn<DynamicComposite, byte[]>> keys,
+      long clock) {
 
     StoreContext ctx = stateManager.getContext();
 
@@ -161,17 +166,16 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
 
       // create our DynamicComposite of the format of id+order*
       idComposite = new DynamicComposite();
-      
+
       // add our id to the beginning of our id based DynamicComposite
-      idComposite.add(currentId);
+      idComposite.add(currentId, idSerizlizer);
 
       // add our key based column to the key columns
-      keys.add(new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
-          compositeSerializer, BytesArraySerializer.get()));
+      keys.add(new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER,
+          clock, compositeSerializer, BytesArraySerializer.get()));
 
     }
 
   }
 
-  
 }

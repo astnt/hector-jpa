@@ -169,8 +169,14 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     // TODO TN use our CollectionProxy here
     Collection<Object> collection = (Collection<Object>) stateManager.newProxy(fieldId);
 
+    DynamicComposite dynamicCol = null;
+
     for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
-      fields = col.getName().toArray();
+      
+      //TODO TN set the serializers in the columns before deserailizing
+      dynamicCol = col.getName();
+      
+      fields = dynamicCol.toArray();
 
       // the id will always be the last value in a composite type, we only care
       // about that value.
