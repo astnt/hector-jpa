@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.FollowState;
+import com.datastax.hectorjpa.bean.Observe;
 import com.datastax.hectorjpa.bean.User;
 
 /**
@@ -100,11 +101,22 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
     
     
 
-    bob.observeUser(frank, FollowState.PENDING);
+    //bob.observeUser(frank, FollowState.PENDING);
 
     //TODO on commit we're only getting 2 entities in the graph, bob and Observer, yet the graph of bob <-> Follower <-> Frank is build.  Is this a bug?
+    //em.persist(bob);
+    Observe observe = new Observe();
+    observe.setOwner(bob);
+    observe.setTarget(frank);
+    observe.setState(FollowState.PENDING);
+    //bob.observeUser(frank, FollowState.PENDING);
+    bob.getObserving().add(observe);
+    frank.getObservers().add(observe);
+        
     em.persist(bob);
-  
+    em.persist(frank);
+    em.persist(observe);
+    
     
 //    em.persist(bob);
 //    em.persist(frank);
@@ -146,7 +158,7 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
    * without indexing
    */
   @Test
-  @Ignore
+  @Ignore  
   public void basicFollowingDelete() {
 
     EntityManager em = entityManagerFactory.createEntityManager();
@@ -162,12 +174,11 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
     frank.setLastName("Smith");
     frank.setEmail("frank.smith@testing.com");
     
-    
     bob.observeUser(frank, FollowState.PENDING);
-    
-    
-
+        
     em.persist(bob);
+
+    
     em.getTransaction().commit();
     em.close();
 
