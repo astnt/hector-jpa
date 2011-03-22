@@ -9,6 +9,7 @@ import javax.persistence.Persistence;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.SimpleTestBean;
 
 public class StandaloneEntityManagerFactoryTest extends ManagedEntityTestBase {

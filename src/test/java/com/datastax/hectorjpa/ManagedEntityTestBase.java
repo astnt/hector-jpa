@@ -1,11 +1,10 @@
-package com.datastax.hectorjpa.store;
+package com.datastax.hectorjpa;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
 import org.junit.BeforeClass;
 
-import com.datastax.hectorjpa.CassandraTestBase;
 
 public abstract class ManagedEntityTestBase extends CassandraTestBase {
   

@@ -9,6 +9,7 @@ import javax.persistence.EntityManager;
 
 import org.junit.Test;
 
+import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.Customer;
 import com.datastax.hectorjpa.bean.Store;
 

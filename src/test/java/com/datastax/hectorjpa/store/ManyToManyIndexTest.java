@@ -8,8 +8,10 @@ import static org.junit.Assert.assertNull;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
+import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.FollowState;
 import com.datastax.hectorjpa.bean.User;
 
@@ -28,6 +30,7 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
    * without indexing
    */
   @Test
+  @Ignore  
   public void basicCasePersistence() {
 
     EntityManager em = entityManagerFactory.createEntityManager();
@@ -143,6 +146,7 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
    * without indexing
    */
   @Test
+  @Ignore
   public void basicFollowingDelete() {
 
     EntityManager em = entityManagerFactory.createEntityManager();
