@@ -99,12 +99,15 @@ public class CassandraTestBase {
     startCassandraInstance("tmp/var/lib/cassandra");
     System.out.println("Creating TestKeyspace and columnfamilies");
     ArrayList<CfDef> cfDefList = new ArrayList<CfDef>(2);
+    
     cfDefList.add(new CfDef("TestKeyspace", "TestBeanColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+    
     cfDefList.add(new CfDef("TestKeyspace", "CustomIdColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+    
     cfDefList.add(new CfDef("TestKeyspace", "SimpleTestBeanColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
@@ -115,6 +118,7 @@ public class CassandraTestBase {
     cfDefList.add(new CfDef("TestKeyspace", "NoAnonymousColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+    
     cfDefList.add(new CfDef("TestKeyspace", "ComplexColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
@@ -137,7 +141,7 @@ public class CassandraTestBase {
     .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
     
-    cfDefList.add(new CfDef("TestKeyspace", IndexedCollections.DEFAULT_ITEM_CF)
+    cfDefList.add(new CfDef("TestKeyspace", "Collection_Container")
     .setComparator_type(BytesType.class.getSimpleName())
     .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
@@ -146,7 +150,7 @@ public class CassandraTestBase {
     .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
     cfDefList.add(new CfDef("TestKeyspace", IndexedCollections.DEFAULT_CONTAINER_ITEMS_COLUMN_INDEX_CF)
-    .setComparator_type("compositecomparer.CompositeType")
+    .setComparator_type("org.apache.cassandra.db.marshal.DynamicCompositeType")
     .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
     cfDefList.add(new CfDef("TestKeyspace", IndexedCollections.DEFAULT_CONTAINER_ITEM_INDEX_ENTRIES)

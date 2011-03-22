@@ -12,6 +12,7 @@ import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
+import org.apache.openjpa.util.UserException;
 
 import com.datastax.hectorjpa.store.MappingUtils;
 
@@ -64,9 +65,16 @@ public class ToOneColumnField<V> extends ColumnField<V> {
       mutator.addDeletion(key, cfName, this.name, StringSerializer.get(), clock);
       return;
     }
+    
+    OpenJPAStateManager targetStateManager = stateManager.getContext().getStateManager(instance);
 
-    Object targetId = mappingUtils.getTargetObject(stateManager.getContext().getObjectId(instance));
-  
+    //no state, we can't get the order value
+    if(stateManager == null){
+      throw new UserException(String.format("You attempted to store field '%s' on entity '%s'.  However the entity does not have a state manager.  Make sure you enable cascade for this operation or explicity persist it with the entity manager", name, instance));
+    }
+    
+    Object targetId = mappingUtils.getTargetObject(targetStateManager.getObjectId());
+
     
     mutator.addInsertion(key, cfName, new HColumnImpl(name, targetId, clock,
         StringSerializer.get(), serializer));
