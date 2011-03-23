@@ -1,5 +1,7 @@
 package com.datastax.hectorjpa.meta;
 
+import java.util.Collection;
+
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Serializer;
@@ -10,6 +12,7 @@ import me.prettyprint.hector.api.query.QueryResult;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.FieldMetaData;
+import org.apache.openjpa.util.Proxy;
 
 import com.datastax.hectorjpa.store.MappingUtils;
 
@@ -92,8 +95,15 @@ public class ColumnField<V> extends Field<V> {
     if (column == null) {
       return;
     }
+    
+    Object value = serializer.fromBytes(column.getValue());
+    
+    if(ordered || indexed){
+      //TODO TN generate a proxy here.
+    }
 
-    stateManager.storeObject(fieldId, serializer.fromBytes(column.getValue()));
+
+    stateManager.storeObject(fieldId, value);
   }
 
  

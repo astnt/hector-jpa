@@ -5,19 +5,21 @@ import java.util.Collection;
 
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
+import me.prettyprint.cassandra.serializers.DynamicCompositeSerialzier;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.DynamicComposite;
-import me.prettyprint.hector.api.beans.DynamicCompositeSerialzier;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
+import org.apache.openjpa.util.ChangeTracker;
 import org.apache.openjpa.util.MetaDataException;
+import org.apache.openjpa.util.Proxy;
 
 import com.datastax.hectorjpa.meta.Field;
 import com.datastax.hectorjpa.store.MappingUtils;
@@ -115,24 +117,62 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
    * @return
    */
   public SliceQuery<byte[], DynamicComposite, byte[]> createQuery(Object objectId,
-      Keyspace keyspace, String columnFamilyName, int count) {
+      Keyspace keyspace, int count) {
     
     //undefined value set it to something realistic
     if(count < 0){
       count = DEFAULT_FETCH_SIZE;
     }
     
+    byte[] rowKey = constructKey(mappingUtils.getKeyBytes(objectId), getDefaultSearchmarker());
+    
     SliceQuery<byte[], DynamicComposite, byte[]> query = new ThriftSliceQuery(
         keyspace, BytesArraySerializer.get(), compositeSerializer,
         BytesArraySerializer.get());
 
     query.setRange(null, null, false, count);
-    query.setKey(constructKey(mappingUtils.getKeyBytes(objectId), getDefaultSearchmarker()));
-    query.setColumnFamily(columnFamilyName);
+    query.setKey(rowKey);
+    query.setColumnFamily(CF_NAME);
     return query;
 
   }
   
+
+  /**
+   * Useful for proxy fields.  The index 0 is the original value the index 1 is the new value.
+   * If no proxy is present only index 1 will contain a value
+   * 
+   * @param value
+   * @return
+   */
+  protected Object[] getDelta(Object value){
+    Object[] values = new Object[2];
+    
+    if(!(value instanceof Proxy)){
+      values[1] = value;
+      return values;
+    }
+    
+    ChangeTracker tracker = ((Proxy) value).getChangeTracker();
+    
+    Collection<?> objects = tracker.getRemoved();
+    
+    for(Object removed: objects){
+      values[0] = removed;
+      break;
+    }
+
+    objects = tracker.getAdded();
+    
+    for(Object added: objects){
+      values[1] = added;
+      break;
+    }
+    
+    
+    return values;
+  
+  }
   /**
    * Read this field from the data store from the queryresult
    * @param stateManager

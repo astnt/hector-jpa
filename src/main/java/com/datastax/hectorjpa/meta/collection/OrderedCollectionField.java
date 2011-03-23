@@ -5,6 +5,7 @@ package com.datastax.hectorjpa.meta.collection;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
@@ -40,7 +41,8 @@ import com.datastax.hectorjpa.store.MappingUtils;
 public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
 
   // represents the end "ordered" in the key
-  private static final byte[] orderedMarker = StringSerializer.get().toBytes("o");
+  private static final byte[] orderedMarker = StringSerializer.get().toBytes(
+      "o");
 
   // represents the end "id" in the key
   private static final byte[] idMarker = StringSerializer.get().toBytes("i");
@@ -82,74 +84,14 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       return;
     }
 
-    Set<HColumn<DynamicComposite, byte[]>> newOrderColumns = new HashSet<HColumn<DynamicComposite, byte[]>>();
-    Set<HColumn<DynamicComposite, byte[]>> newIdColumns = new HashSet<HColumn<DynamicComposite, byte[]>>();
-    Set<HColumn<DynamicComposite, byte[]>> deletedColumns = new HashSet<HColumn<DynamicComposite, byte[]>>();
-    Set<HColumn<DynamicComposite, byte[]>> deletedIdColumns = new HashSet<HColumn<DynamicComposite, byte[]>>();
-
-    // not a proxy, it's the first time this has been saved
-    if (field instanceof Proxy) {
-
-      Proxy proxy = (Proxy) field;
-      ChangeTracker changes = proxy.getChangeTracker();
-
-      createColumns(stateManager, changes.getAdded(), newOrderColumns,
-          newIdColumns, clock);
-
-      // TODO TN need to get the original value to delete old index on change
-      createColumns(stateManager, changes.getChanged(), newOrderColumns,
-          newIdColumns, clock);
-
-      // add everything that needs removed
-      createColumns(stateManager, changes.getRemoved(), deletedColumns,
-          deletedIdColumns, clock);
-    }
-    // new item that hasn't been proxied, just write them as new columns
-    else {
-      createColumns(stateManager, (Collection<?>) field, newOrderColumns,
-          newIdColumns, clock);
-    }
-
-    // construct the key
+    // construct the keys
     byte[] orderKey = constructKey(key, orderedMarker);
     byte[] idKey = constructKey(key, idMarker);
 
-    // write our updates and out deletes
-    for (HColumn<DynamicComposite, byte[]> current : deletedColumns) {
+    writeAdds(stateManager, (Collection<?>)field, mutator, clock, orderKey, idKey, cfName);
+    writeDeletes(stateManager, (Collection<?>)field, mutator, clock, orderKey, idKey, cfName);
+    writeChanged(stateManager, (Collection<?>)field, mutator, clock, orderKey, idKey, cfName);
 
-      // same column exists on write, don't issue the delete since we don't want
-      // to remove the write
-      if (newOrderColumns.contains(current)) {
-        continue;
-      }
-
-      mutator.addDeletion(orderKey, CF_NAME, current.getName(),
-          compositeSerializer, clock);
-    }
-
-    for (HColumn<DynamicComposite, byte[]> current : deletedIdColumns) {
-
-      // same column exists on write, don't issue the delete since we don't want
-      // to remove the write
-      if (newIdColumns.contains(current)) {
-        continue;
-      }
-
-      mutator.addDeletion(idKey, CF_NAME, current.getName(),
-          compositeSerializer, clock);
-    }
-
-    // write our order updates
-    for (HColumn<DynamicComposite, byte[]> current : newOrderColumns) {
-
-      mutator.addInsertion(orderKey, CF_NAME, current);
-    }
-
-    // write our key updates
-    for (HColumn<DynamicComposite, byte[]> current : newIdColumns) {
-
-      mutator.addInsertion(idKey, CF_NAME, current);
-    }
 
   }
 
@@ -171,11 +113,13 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
 
     DynamicComposite dynamicCol = null;
 
+    
+    
     for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
-      
-      //TODO TN set the serializers in the columns before deserailizing
+
+      // TODO TN set the serializers in the columns before deserailizing
       dynamicCol = col.getName();
-      
+
       fields = dynamicCol.toArray();
 
       // the id will always be the last value in a composite type, we only care
@@ -201,8 +145,8 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
    * @param count
    * @return
    */
-  public SliceQuery<byte[], DynamicComposite, byte[]> createQuery(Object objectId,
-      Keyspace keyspace, String columnFamilyName, int count) {
+  public SliceQuery<byte[], DynamicComposite, byte[]> createQuery(
+      Object objectId, Keyspace keyspace, String columnFamilyName, int count) {
 
     // undefined value set it to something realistic
     if (count < 0) {
@@ -221,26 +165,38 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
 
   }
 
+ 
   /**
-   * Create columns and add them to the collection of columns.
-   * 
-   * @param stateManager
-   * @param objects
-   * @param orders
+   * Remove all indexes for elements
+   * @param ctx
+   * @param value
+   * @param mutator
    * @param clock
+   * @param orderKey
+   * @param idKey
+   * @param cfName
    */
-  private void createColumns(OpenJPAStateManager stateManager,
-      Collection<?> objects, Set<HColumn<DynamicComposite, byte[]>> orders,
-      Set<HColumn<DynamicComposite, byte[]>> keys, long clock) {
+  private void writeDeletes(OpenJPAStateManager stateManager, Collection value,
+      Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey,
+      String cfName) {
 
-    StoreContext ctx = stateManager.getContext();
+    Collection objects = getRemoved(value);
+
+    if (objects == null) {
+      return;
+    }
 
     DynamicComposite orderComposite = null;
     DynamicComposite idComposite = null;
+    Object currentId = null;
+    Object field = null;
+    
+    StoreContext context = stateManager.getContext();
 
+    // loop through all deleted object and create the deletes for them.
     for (Object current : objects) {
 
-      Object currentId = mappingUtils.getTargetObject(ctx.getObjectId(current));
+      currentId = mappingUtils.getTargetObject(context.getObjectId(current));
 
       // create our composite of the format of id+order*
       idComposite = new DynamicComposite();
@@ -248,27 +204,236 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       // create our composite of the format order*+id
       orderComposite = new DynamicComposite();
 
-         // add our id to the beginning of our id based composite
+      // add our id to the beginning of our id based composite
       idComposite.add(currentId, idSerizlizer);
 
       // now construct the composite with order by the ids at the end.
       for (OrderField order : orderBy) {
-        order.addField(stateManager, idComposite, current);
-        order.addField(stateManager, orderComposite, current);
+        
+        field = order.getValue(stateManager, current);
+        
+        // add this to all deletes for the order composite.
+        order.addFieldDelete(orderComposite, current);
+
+        // The deletes to teh is composite
+        order.addFieldDelete(idComposite, current);
+      }
+
+      // add our id to the end of our order based composite
+      orderComposite.add(currentId, idSerizlizer);
+
+      mutator.addDeletion(orderKey, CF_NAME, orderComposite,
+          compositeSerializer, clock);
+      mutator.addDeletion(idKey, CF_NAME, idComposite, compositeSerializer,
+          clock);
+
+    }
+
+  }
+
+  /**
+   * Write all indexes for newly added elements
+   * @param ctx
+   * @param value
+   * @param mutator
+   * @param clock
+   * @param orderKey
+   * @param idKey
+   * @param cfName
+   */
+  private void writeAdds(OpenJPAStateManager stateManager, Collection value,
+      Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey,
+      String cfName) {
+
+    Collection objects = getAdded(value);
+
+    if (objects == null) {
+      return;
+    }
+
+    DynamicComposite orderComposite = null;
+    DynamicComposite idComposite = null;
+    Object currentId = null;
+    Object field = null;
+    
+
+    StoreContext context = stateManager.getContext();
+
+    // loop through all added objects and create the writes for them.
+    for (Object current : objects) {
+
+      currentId = mappingUtils.getTargetObject(context.getObjectId(current));
+
+      // create our composite of the format of id+order*
+      idComposite = new DynamicComposite();
+
+      // create our composite of the format order*+id
+      orderComposite = new DynamicComposite();
+
+      // add our id to the beginning of our id based composite
+      idComposite.add(currentId, idSerizlizer);
+
+      // now construct the composite with order by the ids at the end.
+      for (OrderField order : orderBy) {
+        
+        field = order.getValue(stateManager, current);
+        
+        // add this to all deletes for the order composite.
+        order.addFieldWrite(orderComposite, field);
+
+        // The deletes to teh is composite
+        order.addFieldWrite(idComposite, field);
+      }
+
+      // add our id to the end of our order based composite
+      orderComposite.add(currentId, idSerizlizer);
+
+      mutator.addInsertion(orderKey, CF_NAME,
+          new HColumnImpl<DynamicComposite, byte[]>(orderComposite, HOLDER,
+              clock, compositeSerializer, BytesArraySerializer.get()));
+
+      mutator.addInsertion(idKey, CF_NAME,
+          new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
+              compositeSerializer, BytesArraySerializer.get()));
+
+    }
+  }
+
+  /**
+   * Write all changes columns.  Also writes the delete for the original values from the proxys
+   * @param ctx
+   * @param value
+   * @param mutator
+   * @param clock
+   * @param orderKey
+   * @param idKey
+   * @param cfName
+   */
+  private void writeChanged(OpenJPAStateManager stateManager, Collection value,
+      Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey,
+      String cfName) {
+
+    Collection objects = getChanged(value);
+
+    if (objects == null) {
+      return;
+    }
+
+    DynamicComposite orderComposite = null;
+    DynamicComposite idComposite = null;
+    Object currentId = null;
+
+    boolean changed;
+
+    DynamicComposite deleteOrderComposite;
+    DynamicComposite deleteIdComposite;
+    
+    Object field = null;
+    
+    StoreContext context = stateManager.getContext();
+    
+
+    // loop through all added objects and create the writes for them.
+    for (Object current : objects) {
+      
+      //if any of the fields are dirty we need to set our changed flag so we can delete the oiginal columns later
+      changed = false;
+
+      currentId = mappingUtils.getTargetObject(context.getObjectId(current));
+
+      // create our composite of the format of id+order*
+      idComposite = new DynamicComposite();
+      deleteIdComposite = new DynamicComposite();
+
+      // create our composite of the format order*+id
+      orderComposite = new DynamicComposite();
+      deleteOrderComposite = new DynamicComposite();
+
+      // add our id to the beginning of our id based composite
+      idComposite.add(currentId, idSerizlizer);
+
+      // now construct the composite with order by the ids at the end.
+      for (OrderField order : orderBy) {
+        
+        field = order.getValue(stateManager, current);
+        
+        // add this to all deletes for the order composite.
+        order.addFieldWrite(orderComposite, field);
+        changed |= order.addFieldDelete(deleteOrderComposite, field);
+
+        // The deletes to teh is composite
+        order.addFieldWrite(idComposite, current);
+        changed |= order.addFieldDelete(deleteIdComposite, field);
       }
 
       // add our id to the end of our order based composite
       orderComposite.add(currentId, idSerizlizer);
 
       // add our order based column to the columns
-      orders.add(new HColumnImpl<DynamicComposite, byte[]>(orderComposite, HOLDER,
-          clock, compositeSerializer, BytesArraySerializer.get()));
 
-      // add our key based column to the key columns
-      keys.add(new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
-          compositeSerializer, BytesArraySerializer.get()));
+      mutator.addInsertion(orderKey, CF_NAME,
+          new HColumnImpl<DynamicComposite, byte[]>(orderComposite, HOLDER,
+              clock, compositeSerializer, BytesArraySerializer.get()));
+
+      mutator.addInsertion(idKey, CF_NAME,
+          new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
+              compositeSerializer, BytesArraySerializer.get()));
+
+      if (changed) {
+        mutator.addDeletion(orderKey, CF_NAME, deleteOrderComposite,
+            compositeSerializer, clock);
+        mutator.addDeletion(idKey, CF_NAME, deleteIdComposite,
+            compositeSerializer, clock);
+
+      }
 
     }
+
+  }
+
+  /**
+   * Return the collection of deleted objects from the proxy. If none is preset
+   * then null is returned
+   * 
+   * @param field
+   * @return
+   */
+  private Collection getRemoved(Collection field) {
+    if (field instanceof Proxy) {
+      return ((Proxy) field).getChangeTracker().getRemoved();
+    }
+
+    return null;
+
+  }
+
+  /**
+   * Get changed values. Null is returned if nothing has changed
+   * 
+   * @param field
+   * @return
+   */
+  private Collection getChanged(Collection field) {
+    if (field instanceof Proxy) {
+      return ((Proxy) field).getChangeTracker().getChanged();
+    }
+
+    return null;
+
+  }
+
+  /**
+   * Get added values. If the item is not a proxy it is returned as a collection
+   * 
+   * @param field
+   * @return
+   */
+  private Collection getAdded(Collection field) {
+    if (field instanceof Proxy) {
+      return ((Proxy) field).getChangeTracker().getAdded();
+    }
+
+    return field;
 
   }
 
@@ -300,27 +465,120 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     }
 
     /**
-     * Add the field this order represents to the composite
-     * @param composite
+     * Get the value for the ordered field off the instance. Could return null
+     * if the instance is null or the field is null
+     * 
+     * @param manager
      * @param instance
+     * @return
      */
-    protected void addField(OpenJPAStateManager manager, DynamicComposite composite, Object instance) {
-
+    protected Object getValue(OpenJPAStateManager manager, Object instance) {
       if (instance == null) {
-        return;
+        return null;
       }
 
-      
-      OpenJPAStateManager stateManager =  manager.getContext().getStateManager(instance);
-      
-      //no state, we can't get the order value
-      if(stateManager == null){
-        throw new UserException(String.format("You attempted to specify field '%s' on entity '%s'.  However the entity does not have a state manager.  Make sure you enable cascade for this operation or explicity persist it with the entity manager", targetFieldName, instance));
-      }
-      
-      Object value = stateManager.fetch(targetFieldIndex);
+      OpenJPAStateManager stateManager = manager.getContext().getStateManager(
+          instance);
 
-      composite.add(value, serializer);
+      // no state, we can't get the order value
+      if (stateManager == null) {
+        throw new UserException(
+            String
+                .format(
+                    "You attempted to specify field '%s' on entity '%s'.  However the entity does not have a state manager.  Make sure you enable cascade for this operation or explicity persist it with the entity manager",
+                    targetFieldName, instance));
+      }
+
+      return stateManager.fetch(targetFieldIndex);
+    }
+
+    /**
+     * Create the write composite.
+     * 
+     * @param manager
+     *          The state manager
+     * @param composite
+     *          The composite to write to
+     * @param instance
+     *          The field instance
+     */
+    protected void addFieldWrite(DynamicComposite composite, Object instance) {
+      // write the current value from the proxy
+      Object current = getAdded(instance);
+
+      composite.add(current, serializer);
+
+    }
+
+    /**
+     * Create the write composite.
+     * 
+     * @param composite
+     *          The composite to write to
+     * @param instance
+     *          The field instance
+     */
+    protected boolean addFieldDelete(DynamicComposite composite, Object instance) {
+
+      // check if there was an original value. If so write it to the composite
+      Object original = getRemoved(instance);
+
+      // value was changed, add the old value
+      if (original != null) {
+        composite.add(original, serializer);
+        return true;
+      }
+
+      // write the current value from the proxy. This one didn't change but
+      // other fields could.
+      Object current = getAdded(instance);
+
+      composite.add(current, serializer);
+
+      return false;
+
+    }
+
+    /**
+     * Return the collection of deleted objects from the proxy. If none is
+     * preset then null is returned
+     * 
+     * @param field
+     * @return
+     */
+    private Object getRemoved(Object field) {
+      if (field instanceof Proxy) {
+        Iterator<?> resultItr = ((Proxy) field).getChangeTracker().getRemoved()
+            .iterator();
+
+        if (resultItr.hasNext()) {
+          return resultItr.next();
+        }
+
+      }
+
+      return null;
+
+    }
+
+    /**
+     * Get added values. If the item is not a proxy it is returned as a
+     * collection
+     * 
+     * @param field
+     * @return
+     */
+    private Object getAdded(Object field) {
+      if (field instanceof Proxy) {
+        Iterator<?> resultItr = ((Proxy) field).getChangeTracker().getAdded()
+            .iterator();
+
+        if (resultItr.hasNext()) {
+          return resultItr.next();
+        }
+      }
+
+      return field;
 
     }
   }

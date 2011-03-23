@@ -208,7 +208,7 @@ public class EntityFacade implements Serializable {
 
         // now query and load this field
         SliceQuery<byte[], DynamicComposite, byte[]> query = collectionField
-            .createQuery(entityId, keyspace, columnFamilyName, size);
+            .createQuery(entityId, keyspace, size);
 
         collectionField.readField(stateManager, query.execute());
 

@@ -62,7 +62,7 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
      */
     assertEquals(store, returnedStore);
 
-    Iterator<Customer> storeItr = store.getCustomers().iterator();
+    Iterator<Customer> storeItr = returnedStore.getCustomers().iterator();
 
     Customer customer = storeItr.next();
 
