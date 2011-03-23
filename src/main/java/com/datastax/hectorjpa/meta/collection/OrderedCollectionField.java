@@ -4,9 +4,7 @@
 package com.datastax.hectorjpa.meta.collection;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
@@ -25,7 +23,6 @@ import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.meta.Order;
-import org.apache.openjpa.util.ChangeTracker;
 import org.apache.openjpa.util.Proxy;
 import org.apache.openjpa.util.UserException;
 
@@ -41,8 +38,7 @@ import com.datastax.hectorjpa.store.MappingUtils;
 public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
 
   // represents the end "ordered" in the key
-  private static final byte[] orderedMarker = StringSerializer.get().toBytes(
-      "o");
+  private static final byte[] orderedMarker = StringSerializer.get().toBytes("o");
 
   // represents the end "id" in the key
   private static final byte[] idMarker = StringSerializer.get().toBytes("i");
@@ -88,9 +84,9 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     byte[] orderKey = constructKey(key, orderedMarker);
     byte[] idKey = constructKey(key, idMarker);
 
-    writeAdds(stateManager, (Collection<?>)field, mutator, clock, orderKey, idKey, cfName);
-    writeDeletes(stateManager, (Collection<?>)field, mutator, clock, orderKey, idKey, cfName);
-    writeChanged(stateManager, (Collection<?>)field, mutator, clock, orderKey, idKey, cfName);
+    writeAdds(stateManager, (Collection<?>)field, mutator, clock, orderKey, idKey);
+    writeDeletes(stateManager, (Collection<?>)field, mutator, clock, orderKey, idKey);
+    writeChanged(stateManager, (Collection<?>)field, mutator, clock, orderKey, idKey);
 
 
   }
@@ -153,13 +149,14 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       count = DEFAULT_FETCH_SIZE;
     }
 
+    byte[] key = constructKey(mappingUtils.getKeyBytes(objectId), orderedMarker);
+    
     SliceQuery<byte[], DynamicComposite, byte[]> query = new ThriftSliceQuery(
         keyspace, BytesArraySerializer.get(), compositeSerializer,
         BytesArraySerializer.get());
 
     query.setRange(null, null, false, count);
-    query
-        .setKey(constructKey(mappingUtils.getKeyBytes(objectId), orderedMarker));
+    query.setKey(key);
     query.setColumnFamily(columnFamilyName);
     return query;
 
@@ -177,8 +174,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
    * @param cfName
    */
   private void writeDeletes(OpenJPAStateManager stateManager, Collection value,
-      Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey,
-      String cfName) {
+      Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey) {
 
     Collection objects = getRemoved(value);
 
@@ -242,8 +238,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
    * @param cfName
    */
   private void writeAdds(OpenJPAStateManager stateManager, Collection value,
-      Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey,
-      String cfName) {
+      Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey) {
 
     Collection objects = getAdded(value);
 
@@ -310,8 +305,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
    * @param cfName
    */
   private void writeChanged(OpenJPAStateManager stateManager, Collection value,
-      Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey,
-      String cfName) {
+      Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey) {
 
     Collection objects = getChanged(value);
 

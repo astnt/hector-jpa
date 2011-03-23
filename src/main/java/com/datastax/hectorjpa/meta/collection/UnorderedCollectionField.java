@@ -22,6 +22,7 @@ import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.util.ChangeTracker;
 import org.apache.openjpa.util.Proxy;
 
+import com.datastax.hectorjpa.meta.collection.OrderedCollectionField.OrderField;
 import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
@@ -99,83 +100,132 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       return;
     }
 
-    Set<HColumn<DynamicComposite, byte[]>> newIdColumns = new HashSet<HColumn<DynamicComposite, byte[]>>();
-    Set<HColumn<DynamicComposite, byte[]>> deletedIdColumns = new HashSet<HColumn<DynamicComposite, byte[]>>();
-
-    // not a proxy, it's the first time this has been saved
-    if (field instanceof Proxy) {
-
-      Proxy proxy = (Proxy) field;
-      ChangeTracker changes = proxy.getChangeTracker();
-
-      createColumns(stateManager, changes.getAdded(), newIdColumns, clock);
-
-      // TODO TN need to get the original value to delete old index on change
-      createColumns(stateManager, changes.getChanged(), newIdColumns, clock);
-
-      // add everything that needs removed
-      createColumns(stateManager, changes.getRemoved(), deletedIdColumns, clock);
-    }
-    // new item that hasn't been proxied, just write them as new columns
-    else {
-      createColumns(stateManager, (Collection<?>) field, newIdColumns, clock);
-    }
-
     // construct the key
     byte[] idKey = constructKey(key, unorderedMarker);
 
-    for (HColumn<DynamicComposite, byte[]> current : deletedIdColumns) {
+    writeAdds(stateManager, (Collection<?>)field, mutator, clock, idKey);
+    writeDeletes(stateManager, (Collection<?>)field, mutator, clock, idKey);
 
-      // same column exists on write, don't issue the delete since we don't want
-      // to remove the write
-      if (newIdColumns.contains(current)) {
-        continue;
-      }
+  }
 
-      mutator.addDeletion(idKey, CF_NAME, current.getName(),
-          compositeSerializer, clock);
+  /**
+   * Remove all indexes for elements
+   * @param ctx
+   * @param value
+   * @param mutator
+   * @param clock
+   * @param orderKey
+   * @param idKey
+   * @param cfName
+   */
+  private void writeDeletes(OpenJPAStateManager stateManager, Collection value,
+      Mutator<byte[]> mutator, long clock, byte[] idKey) {
+
+    Collection objects = getRemoved(value);
+
+    if (objects == null) {
+      return;
     }
 
-    // write our key updates
-    for (HColumn<DynamicComposite, byte[]> current : newIdColumns) {
+    DynamicComposite idComposite = null;
+    Object currentId = null;
+    
+    StoreContext context = stateManager.getContext();
 
-      mutator.addInsertion(idKey, CF_NAME, current);
+    // loop through all deleted object and create the deletes for them.
+    for (Object current : objects) {
+
+      currentId = mappingUtils.getTargetObject(context.getObjectId(current));
+
+      // create our composite of the format of id+order*
+      idComposite = new DynamicComposite();
+
+      // add our id to the beginning of our id based composite
+      idComposite.add(currentId, idSerizlizer);
+
+      mutator.addDeletion(idKey, CF_NAME, idComposite, compositeSerializer,
+          clock);
+
     }
 
   }
 
   /**
-   * Create columns and add them to the collection of columns.
-   * 
-   * @param stateManager
-   * @param objects
-   * @param orders
+   * Write all indexes for newly added elements
+   * @param ctx
+   * @param value
+   * @param mutator
    * @param clock
+   * @param orderKey
+   * @param idKey
+   * @param cfName
    */
-  private void createColumns(OpenJPAStateManager stateManager,
-      Collection<?> objects, Set<HColumn<DynamicComposite, byte[]>> keys,
-      long clock) {
+  private void writeAdds(OpenJPAStateManager stateManager, Collection value,
+      Mutator<byte[]> mutator, long clock, byte[] idKey) {
 
-    StoreContext ctx = stateManager.getContext();
+    Collection objects = getAdded(value);
 
-    DynamicComposite idComposite = null;
-
-    for (Object current : objects) {
-
-      Object currentId = mappingUtils.getTargetObject(ctx.getObjectId(current));
-
-      // create our DynamicComposite of the format of id+order*
-      idComposite = new DynamicComposite();
-
-      // add our id to the beginning of our id based DynamicComposite
-      idComposite.add(currentId, idSerizlizer);
-
-      // add our key based column to the key columns
-      keys.add(new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER,
-          clock, compositeSerializer, BytesArraySerializer.get()));
-
+    if (objects == null) {
+      return;
     }
 
+    DynamicComposite idComposite = null;
+    Object currentId = null;
+    Object field = null;
+    
+
+    StoreContext context = stateManager.getContext();
+
+    // loop through all added objects and create the writes for them.
+    for (Object current : objects) {
+
+      currentId = mappingUtils.getTargetObject(context.getObjectId(current));
+
+      // create our composite of the format of id+order*
+      idComposite = new DynamicComposite();
+
+      // add our id to the beginning of our id based composite
+      idComposite.add(currentId, idSerizlizer);
+
+
+      mutator.addInsertion(idKey, CF_NAME,
+          new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
+              compositeSerializer, BytesArraySerializer.get()));
+
+    }
   }
+
+
+  /**
+   * Return the collection of deleted objects from the proxy. If none is preset
+   * then null is returned
+   * 
+   * @param field
+   * @return
+   */
+  private Collection getRemoved(Collection field) {
+    if (field instanceof Proxy) {
+      return ((Proxy) field).getChangeTracker().getRemoved();
+    }
+
+    return null;
+
+  }
+
+  /**
+   * Get added values. If the item is not a proxy it is returned as a collection
+   * 
+   * @param field
+   * @return
+   */
+  private Collection getAdded(Collection field) {
+    if (field instanceof Proxy) {
+      return ((Proxy) field).getChangeTracker().getAdded();
+    }
+
+    return field;
+
+  }
+  
 
 }

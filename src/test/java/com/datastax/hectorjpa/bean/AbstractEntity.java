@@ -62,6 +62,11 @@ public class AbstractEntity {
         return false;
     } else if (!id.equals(other.id))
       return false;
+
+    // if both entity Id's are null we revert to instance equality
+    if(id == null && other.id == null){
+      return this == obj;
+    }
     return true;
   }
 }
