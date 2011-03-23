@@ -5,7 +5,7 @@ import java.util.Collection;
 
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
-import me.prettyprint.cassandra.serializers.DynamicCompositeSerialzier;
+import me.prettyprint.cassandra.serializers.DynamicCompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
@@ -39,7 +39,7 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
   // the default batch size when it hasn't been set into the context
   protected int DEFAULT_FETCH_SIZE = 100;
 
-  protected static final DynamicCompositeSerialzier compositeSerializer = new DynamicCompositeSerialzier();
+  protected static final DynamicCompositeSerializer compositeSerializer = new DynamicCompositeSerializer();
 
   protected Serializer<Object> idSerizlizer;
   protected String name;
@@ -51,6 +51,9 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
 
   // the name of the field serialzied as bytes
   protected byte[] fieldName;
+  
+
+  protected int compositeFieldLength = 0;
   
  
   

@@ -68,15 +68,14 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
 
     for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
       
-      //TODO TN set the serializers in the columns before deserailizing
-      dynamicCol = col.getName();
-     
-      fields = dynamicCol.toArray();
-
-      // the id will always be the first value in a DynamicComposite type, we
+       // the id will always be the first value in a DynamicComposite type, we
       // only care
       // about that value.
-      Object nativeId = fields[0];
+      Object nativeId = col.getName().get(0, this.idSerizlizer);
+
+
+    
+
 
       collection.add(context.find(context.newObjectId(targetClass, nativeId),
           true, null));

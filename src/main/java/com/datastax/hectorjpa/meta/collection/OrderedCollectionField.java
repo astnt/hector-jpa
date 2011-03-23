@@ -25,6 +25,7 @@ import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.meta.Order;
 import org.apache.openjpa.util.Proxy;
 import org.apache.openjpa.util.UserException;
+import org.springframework.core.OrderComparator;
 
 import com.datastax.hectorjpa.store.MappingUtils;
 
@@ -44,6 +45,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
   private static final byte[] idMarker = StringSerializer.get().toBytes("i");
 
   private OrderField[] orderBy;
+  
 
   public OrderedCollectionField(FieldMetaData fmd, MappingUtils mappingUtils) {
     super(fmd, mappingUtils);
@@ -56,6 +58,8 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       orderBy[i] = new OrderField(orders[i], fmd);
     }
 
+    //orders +1 for length
+    compositeFieldLength = orders.length+1;
   }
 
   /*
@@ -114,13 +118,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
 
       // TODO TN set the serializers in the columns before deserailizing
-      dynamicCol = col.getName();
-
-      fields = dynamicCol.toArray();
-
-      // the id will always be the last value in a composite type, we only care
-      // about that value.
-      Object nativeId = fields[fields.length - 1];
+      Object nativeId = col.getName().get(compositeFieldLength-1, this.idSerizlizer);
 
       collection.add(context.find(context.newObjectId(targetClass, nativeId),
           true, null));
