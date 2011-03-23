@@ -208,15 +208,15 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
         field = order.getValue(stateManager, current);
         
         // add this to all deletes for the order composite.
-        order.addFieldDelete(orderComposite, current);
+        order.addFieldDelete(orderComposite, field);
 
         // The deletes to teh is composite
-        order.addFieldDelete(idComposite, current);
+        order.addFieldDelete(idComposite, field);
       }
 
       // add our id to the end of our order based composite
       orderComposite.add(currentId, idSerizlizer);
-
+      
       mutator.addDeletion(orderKey, CF_NAME, orderComposite,
           compositeSerializer, clock);
       mutator.addDeletion(idKey, CF_NAME, idComposite, compositeSerializer,

@@ -26,7 +26,7 @@ public class Store extends AbstractEntity {
   @Persistent
   private String name;
   
-  @OneToMany(mappedBy="store", cascade=CascadeType.ALL)
+  @OneToMany(mappedBy="store", orphanRemoval=true, cascade=CascadeType.ALL)
   @OrderBy("name")
   private List<Customer> customers;
 

@@ -113,10 +113,10 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
 
     assertEquals(luke, returnedStore.getCustomers().get(1));
     
-    //remove james
+    //remove james and save.  Should cause the element to be removed from the collection
     returnedStore.getCustomers().remove(0);
     
-    em2.persist(returnedStore);
+//    em2.persist(returnedStore);
     em2.getTransaction().commit();
     
     //now create a new em and pull the value out

@@ -85,38 +85,53 @@ public class CassandraStoreManager extends AbstractStoreManager {
     
     long clock = cassandraStore.getClock();
     
+    Mutator<?> mutator = cassandraStore.createMutator();
 
-    OpenJPAConfiguration conf = ctx.getConfiguration();
-    Mutator mutator = cassandraStore.createMutator();
-
-    for (Iterator itr = pNew.iterator(); itr.hasNext();) {
-      // create new object data for instance
-      OpenJPAStateManager sm = (OpenJPAStateManager) itr.next();
-      cassandraStore.storeObject(mutator, sm, sm.getDirty(), clock);
-
-    }
-    // TODO combine pNewUpdated and pDirty and use sm.getDirty for bitmask of
-    // field
-    //
-    // for (int i = 0; i < fmds.length; i++)
-    // if (fields.get(i))
-    // sm.store(i, toLoadable(sm, fmds[i], _data[i], fetch));
-    //
-    // combine pNewFlushDelete and pDeleted into the mutator
-    if (!pDeleted.isEmpty() || !pNewFlushedDeleted.isEmpty()) {
-      List deletes = new ArrayList(pDeleted.size() + pNewFlushedDeleted.size());
-      deletes.addAll(pDeleted);
-      deletes.addAll(pNewFlushedDeleted);
-      for (Iterator itr = deletes.iterator(); itr.hasNext();) {
-        // create new object data for instance
-        OpenJPAStateManager sm = (OpenJPAStateManager) itr.next();
-        cassandraStore.removeObject(mutator, sm, clock);
-
-      }
-    }
+    writeEntities(pNew, mutator, clock);
+    writeEntities(pNewUpdated, mutator, clock);
+    writeEntities(pDirty, mutator, clock);
+    
+    deleteEntities(pNewFlushedDeleted, mutator, clock);
+    deleteEntities(pDeleted, mutator, clock);
+    
+    
     mutator.execute();
 
     return null;
+  }
+  
+  
+  /**
+   * Write all entities in the collection
+   * @param writes
+   * @param mutator
+   * @param clock
+   */
+  private void writeEntities(Collection writes, Mutator mutator, long clock){
+    
+    OpenJPAStateManager sm = null;
+    
+    for (Iterator itr = writes.iterator(); itr.hasNext();) {
+      sm = (OpenJPAStateManager) itr.next();
+      cassandraStore.storeObject(mutator, sm, sm.getDirty(), clock);
+    }
+    
+   
+  }
+  
+  /**
+   * Delete all entities in the collection
+   * @param deletes
+   * @param mutator
+   * @param clock
+   */
+  private void deleteEntities(Collection deletes, Mutator mutator, long clock){
+    for (Iterator itr = deletes.iterator(); itr.hasNext();) {
+      // create new object data for instance
+      OpenJPAStateManager sm = (OpenJPAStateManager) itr.next();
+      cassandraStore.removeObject(mutator, sm, clock);
+
+    }
   }
 
   @Override
