@@ -3,7 +3,9 @@
  */
 package com.datastax.hectorjpa.bean;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -26,7 +28,7 @@ public class Store extends AbstractEntity {
   
   @OneToMany(mappedBy="store", cascade=CascadeType.ALL)
   @OrderBy("name")
-  private Set<Customer> customers;
+  private List<Customer> customers;
 
   public String getName() {
     return name;
@@ -36,13 +38,13 @@ public class Store extends AbstractEntity {
     this.name = name;
   }
 
-  public Set<Customer> getCustomers() {
+  public List<Customer> getCustomers() {
     return customers;
   }
   
   public void addCustomer(Customer customer){
     if(customers == null){
-      customers = new HashSet<Customer>();
+      customers = new ArrayList<Customer>();
     }
     
     customers.add(customer);

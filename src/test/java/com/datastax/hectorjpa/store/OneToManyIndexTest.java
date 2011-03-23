@@ -62,15 +62,9 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
      */
     assertEquals(store, returnedStore);
 
-    Iterator<Customer> storeItr = returnedStore.getCustomers().iterator();
+    assertEquals(james, returnedStore.getCustomers().get(0));
 
-    Customer customer = storeItr.next();
-
-    assertEquals(james, customer);
-
-    customer = storeItr.next();
-
-    assertEquals(luke, customer);
+    assertEquals(luke, returnedStore.getCustomers().get(1));
 
   }
 
@@ -115,20 +109,14 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
      */
     assertEquals(store, returnedStore);
 
-    Iterator<Customer> custItr = store.getCustomers().iterator();
+    assertEquals(james, returnedStore.getCustomers().get(0));
 
-    Customer customer = custItr.next();
-
-    assertEquals(james, customer);
-
-    customer = custItr.next();
-
-    assertEquals(luke, customer);
+    assertEquals(luke, returnedStore.getCustomers().get(1));
     
     //remove james
-    store.getCustomers().remove(store.getCustomers().iterator().next());
+    returnedStore.getCustomers().remove(0);
     
-//    em2.persist(store);
+    em2.persist(returnedStore);
     em2.getTransaction().commit();
     
     //now create a new em and pull the value out
@@ -140,7 +128,7 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
 
     assertEquals(1, returnedStore.getCustomers().size());
     
-    assertTrue(returnedStore.getCustomers().contains(luke));
+    assertEquals(luke, returnedStore.getCustomers().get(0));
     
 
   }

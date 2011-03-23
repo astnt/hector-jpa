@@ -60,6 +60,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
 
     //orders +1 for length
     compositeFieldLength = orders.length+1;
+    
   }
 
   /*
