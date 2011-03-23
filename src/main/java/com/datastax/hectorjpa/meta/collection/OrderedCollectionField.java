@@ -19,6 +19,7 @@ import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
 
+import org.apache.openjpa.kernel.FindCallbacks;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.FieldMetaData;
@@ -121,8 +122,17 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       // TODO TN set the serializers in the columns before deserailizing
       Object nativeId = col.getName().get(compositeFieldLength-1, this.idSerizlizer);
 
-      collection.add(context.find(context.newObjectId(targetClass, nativeId),
-          true, null));
+      
+      Object oid = context.newObjectId(targetClass, nativeId);
+      
+      Object found = context.find(oid, true, null);
+      
+      //object was not found, what do we do with it?
+      if(found == null){
+        continue;
+      }
+      
+      collection.add(found);
 
     }
 
@@ -410,10 +420,11 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     if (field instanceof Proxy) {
       return ((Proxy) field).getChangeTracker().getChanged();
     }
-
+    
     return null;
 
   }
+  
 
   /**
    * Get added values. If the item is not a proxy it is returned as a collection

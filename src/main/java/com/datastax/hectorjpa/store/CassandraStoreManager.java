@@ -142,18 +142,16 @@ public class CassandraStoreManager extends AbstractStoreManager {
     cassandraStore.open();
     stateManager.initialize(stateManager.getMetaData().getDescribedType(),
         pcState);
-    cassandraStore.getObject(stateManager,
+    return cassandraStore.getObject(stateManager,
         stateManager.getUnloaded(fetchConfiguration));
     
-    //TODO TN, this should be returning the result from above, however returning false for new entities 
-    //caused duplicate object exceptions on cascades.
-    return true;
+    
 
   }
 
   @Override
   public boolean load(OpenJPAStateManager stateManager, BitSet fields,
-      FetchConfiguration arg2, int arg3, Object arg4) {
+      FetchConfiguration fetch, int lockLevel, Object edata) {
     log.debug("In load operation...");
     // return cassandraStore.getObject(stateManager, fields);
 
@@ -164,15 +162,13 @@ public class CassandraStoreManager extends AbstractStoreManager {
   }
 
   @Override
-  public boolean exists(OpenJPAStateManager arg0, Object arg1) {
-    // TODO
-    // hit cassandra to see if the object exists
+  public boolean exists(OpenJPAStateManager stateManager, Object edata) {
     log.debug("In CSM.exists()");
-    return false;
+    return cassandraStore.exists(stateManager);
   }
 
   @Override
-  public boolean isCached(List<Object> arg0, BitSet arg1) {
+  public boolean isCached(List<Object> oids, BitSet edata) {
     log.debug("In CSM.isCached()");
     // TODO Auto-generated method stub
     return false;

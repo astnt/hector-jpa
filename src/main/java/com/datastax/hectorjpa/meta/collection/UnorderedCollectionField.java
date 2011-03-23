@@ -74,11 +74,11 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       Object nativeId = col.getName().get(0, this.idSerizlizer);
 
 
-    
+    Object saved = context.find(context.newObjectId(targetClass, nativeId),
+        true, null);
 
 
-      collection.add(context.find(context.newObjectId(targetClass, nativeId),
-          true, null));
+      collection.add(saved);
 
     }
 

@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.meta.ColumnField;
 import com.datastax.hectorjpa.meta.StaticColumn;
-import com.datastax.hectorjpa.meta.ToOneColumnField;
+import com.datastax.hectorjpa.meta.ToOneColumn;
 import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 import com.datastax.hectorjpa.meta.collection.OrderedCollectionField;
 import com.datastax.hectorjpa.meta.collection.UnorderedCollectionField;
@@ -113,7 +113,7 @@ public class EntityFacade implements Serializable {
       if (fmds[i].getAssociationType() == FieldMetaData.MANY_TO_ONE
           || fmds[i].getAssociationType() == FieldMetaData.ONE_TO_ONE) {
 
-        ToOneColumnField<?> toOne = new ToOneColumnField(fmds[i], mappingUtils);
+        ToOneColumn<?> toOne = new ToOneColumn(fmds[i], mappingUtils);
 
         columnFieldIds.put(i, toOne);
 
@@ -243,6 +243,44 @@ public class EntityFacade implements Serializable {
     return result.get().getColumns().size() > 0;
 
   }
+  
+
+  /**
+   * Loads only the jpa marker column to check for cassandra existence
+   * 
+   * @param stateManager
+   * @param fieldSet
+   * @return true if the entity was present (I.E the marker column was found)
+   *         otherwise false is returned.
+   */
+  public boolean exists(OpenJPAStateManager stateManager,  Keyspace keyspace) {
+
+    List<String> fields = new ArrayList<String>();
+
+    Object entityId = stateManager.getObjectId();
+    
+    //This entity has never been persisted, we can't possibly load it
+    if(mappingUtils.getTargetObject(entityId) == null){
+      return false;
+    }
+
+    fields.add(columnFieldIds.get(StaticColumn.HOLDER_FIELD_ID).getName());
+
+
+    // now load all the columns in the CF.
+    SliceQuery<byte[], String, byte[]> query = mappingUtils.buildSliceQuery(
+        entityId, fields, columnFamilyName, keyspace);
+
+    QueryResult<ColumnSlice<String, byte[]>> result = query.execute();
+    
+   
+    // only need to check > 0. If the entity wasn't tombstoned then we would
+    // have loaded the static jpa marker column
+
+    return result.get().getColumns().size() > 0;
+
+  }
+
 
   /**
    * Add the columns from the bit set to the mutator with the given time

@@ -100,6 +100,23 @@ public class CassandraStore {
   }
 
   /**
+   * Load this object for the statemanager
+   * @param stateManager
+   * @param fields
+   *          The bitset of fields to load
+   * @return true if the object was found, false otherwise
+   */
+  public boolean exists(OpenJPAStateManager stateManager) {
+
+    ClassMetaData metaData = stateManager.getMetaData();
+    EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
+
+    return entityFacade.exists(stateManager, keyspace);
+
+
+  }
+  
+  /**
    * Store this object using the given mutator
    * @param mutator
    * @param stateManager

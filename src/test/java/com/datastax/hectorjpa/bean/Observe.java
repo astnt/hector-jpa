@@ -3,20 +3,14 @@
  */
 package com.datastax.hectorjpa.bean;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.apache.openjpa.persistence.Persistent;
-
-import com.eaio.uuid.UUID;
 
 /**
  * Represents the relationship between two users. Essentially a link on the one
@@ -34,22 +28,17 @@ import com.eaio.uuid.UUID;
 // @IdClass(Follow.FollowId.class)
 @Table(name = "ObserveColumnFamily")
 @Entity
-@SequenceGenerator(name = "timeuuid", allocationSize = 100, sequenceName = "com.datastax.hectorjpa.sequence.TimeUuid()")
-public class Observe {
+public class Observe extends AbstractEntity{
 
-  @Id
-  @Persistent
-  @GeneratedValue(generator = "timeuuid", strategy = GenerationType.SEQUENCE)
-  private UUID id;
 
   /**
    * the user observing the target
    */
-  @ManyToOne
+  @ManyToOne(fetch=FetchType.LAZY)
   private User owner;
 
   // don't cascade delete
-  @ManyToOne
+  @ManyToOne(fetch=FetchType.LAZY)
   private User target;
 
   /**
@@ -72,12 +61,7 @@ public class Observe {
   @Enumerated(EnumType.STRING)
   private FollowState state;
 
-  /**
-   * @return the id
-   */
-  public UUID getId() {
-    return id;
-  }
+ 
 
   /**
    * @return the follower
@@ -171,40 +155,6 @@ public class Observe {
     return ownerLastName;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see java.lang.Object#hashCode()
-   */
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((id == null) ? 0 : id.hashCode());
-    return result;
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see java.lang.Object#equals(java.lang.Object)
-   */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (!(obj instanceof Observe))
-      return false;
-    Observe other = (Observe) obj;
-    if (id == null) {
-      if (other.id != null)
-        return false;
-    } else if (!id.equals(other.id))
-      return false;
-    return true;
-  }
 
   // public static class FollowId implements Serializable{
   //

@@ -8,6 +8,7 @@ import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 
+import org.apache.openjpa.kernel.FindCallbacks;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.ClassMetaData;
@@ -26,15 +27,15 @@ import com.datastax.hectorjpa.store.MappingUtils;
  * 
  * @param <V>
  */
-public class ToOneColumnField<V> extends ColumnField<V> {
+public class ToOneColumn<V> extends ColumnField<V> {
 
   private static final Logger log = LoggerFactory
-      .getLogger(ToOneColumnField.class);
+      .getLogger(ToOneColumn.class);
 
   protected Class<?> targetClass;
   protected MappingUtils mappingUtils;
 
-  public ToOneColumnField(FieldMetaData fmd, MappingUtils mappingUtils) {
+  public ToOneColumn(FieldMetaData fmd, MappingUtils mappingUtils) {
     super(fmd.getIndex(), fmd.getName());
 
     targetClass = fmd.getDeclaredType();

@@ -24,14 +24,14 @@ import com.datastax.hectorjpa.bean.User;
  * @author Todd Nine
  * 
  */
-public class ManyToManyIndexTest extends ManagedEntityTestBase {
+public class ManyToOneIndexTest extends ManagedEntityTestBase {
 
   /**
    * Test simple instance with no collections to ensure we persist properly
    * without indexing
    */
   @Test
-  @Ignore  
+  // @Ignore
   public void basicCasePersistence() {
 
     EntityManager em = entityManagerFactory.createEntityManager();
@@ -48,7 +48,7 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
 
     EntityManager em2 = entityManagerFactory.createEntityManager();
     em2.getTransaction().begin();
-    
+
     User returnedUser = em2.find(User.class, user.getId());
 
     assertEquals(user, returnedUser);
@@ -57,28 +57,18 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
     assertEquals(user.getLastName(), returnedUser.getLastName());
     assertEquals(user.getEmail(), returnedUser.getEmail());
 
-    
-
     em2.remove(returnedUser);
     em2.getTransaction().commit();
     em2.close();
 
     EntityManager em3 = entityManagerFactory.createEntityManager();
 
-    boolean found = true;
+    returnedUser = em3.find(User.class, user.getId());
 
-    try {
-      em3.find(User.class, user.getId());
-    } catch (EntityNotFoundException enfe) {
-      found = false;
-    }
-
-    assertFalse(found);
+    assertNull(returnedUser);
 
   }
 
-  
-  
   /**
    * Test simple instance with no collections to ensure we persist properly
    * without indexing
@@ -93,72 +83,73 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
     bob.setFirstName("Bob");
     bob.setLastName("Smith");
     bob.setEmail("bob.smith@testing.com");
-    
+
     User frank = new User();
     frank.setFirstName("Frank");
     frank.setLastName("Smith");
     frank.setEmail("frank.smith@testing.com");
-    
-    
 
-    //bob.observeUser(frank, FollowState.PENDING);
+    // bob.observeUser(frank, FollowState.PENDING);
 
-    //TODO on commit we're only getting 2 entities in the graph, bob and Observer, yet the graph of bob <-> Follower <-> Frank is build.  Is this a bug?
-    //em.persist(bob);
+    // TODO on commit we're only getting 2 entities in the graph, bob and
+    // Observer, yet the graph of bob <-> Follower <-> Frank is build. Is this a
+    // bug?
+    // em.persist(bob);
     Observe observe = new Observe();
     observe.setOwner(bob);
     observe.setTarget(frank);
     observe.setState(FollowState.PENDING);
-    //bob.observeUser(frank, FollowState.PENDING);
+    // bob.observeUser(frank, FollowState.PENDING);
     bob.getObserving().add(observe);
     frank.getObservers().add(observe);
-        
+
     em.persist(bob);
     em.persist(frank);
     em.persist(observe);
-    
-    
-//    em.persist(bob);
-//    em.persist(frank);
-//    
-  
-   
+
     em.getTransaction().commit();
     em.close();
 
     EntityManager em2 = entityManagerFactory.createEntityManager();
-   
-    User returnedUser = em2.find(User.class, frank.getId());
 
+    // find bob
+    User returnedUser = em2.find(User.class, bob.getId());
+
+    // check default fields
+    assertEquals(bob, returnedUser);
+    assertEquals(bob.getFirstName(), returnedUser.getFirstName());
+    assertEquals(bob.getLastName(), returnedUser.getLastName());
+    assertEquals(bob.getEmail(), returnedUser.getEmail());
+
+    // check our many relation is correct
+    Observe observeResult = returnedUser.getObserving().get(0);
+
+    // check the to one is correct
+    assertEquals(frank, observeResult.getTarget());
+    assertEquals(observe.getState(), observeResult.getState());
+    assertEquals(0, returnedUser.getObservers().size());
+
+    // find frank
+    returnedUser = em2.find(User.class, frank.getId());
+
+    // check base object
     assertEquals(frank, returnedUser);
 
     assertEquals(frank.getFirstName(), returnedUser.getFirstName());
     assertEquals(frank.getLastName(), returnedUser.getLastName());
     assertEquals(frank.getEmail(), returnedUser.getEmail());
-    
-//    assertTrue(frank.getFollowers().contains(bob));
-//    assertEquals(0, frank.getFollowing().size());
-//    
-    
-    returnedUser = em2.find(User.class, bob.getId());
-    
-    assertEquals(bob.getFirstName(), returnedUser.getFirstName());
-    assertEquals(bob.getLastName(), returnedUser.getLastName());
-    assertEquals(bob.getEmail(), returnedUser.getEmail());
-    
-//    assertTrue(bob.getFollowing().contains(frank));
-//    assertEquals(0, frank.getFollowers().size());
 
+    // check to many
+    observeResult = returnedUser.getObservers().get(0);
+
+    // check to one
+    assertEquals(bob, observeResult.getOwner());
+    assertEquals(observe.getState(), observeResult.getState());
+    assertEquals(0, returnedUser.getObserving().size());
 
   }
-  
 
-  /**
-   * Test simple instance with no collections to ensure we persist properly
-   * without indexing
-   */
   @Test
-  @Ignore  
   public void basicFollowingDelete() {
 
     EntityManager em = entityManagerFactory.createEntityManager();
@@ -168,73 +159,111 @@ public class ManyToManyIndexTest extends ManagedEntityTestBase {
     bob.setFirstName("Bob");
     bob.setLastName("Smith");
     bob.setEmail("bob.smith@testing.com");
-    
+
     User frank = new User();
     frank.setFirstName("Frank");
     frank.setLastName("Smith");
     frank.setEmail("frank.smith@testing.com");
-    
-    bob.observeUser(frank, FollowState.PENDING);
-        
-    em.persist(bob);
 
-    
+    // bob.observeUser(frank, FollowState.PENDING);
+
+    // TODO on commit we're only getting 2 entities in the graph, bob and
+    // Observer, yet the graph of bob <-> Follower <-> Frank is build. Is this a
+    // bug?
+    // em.persist(bob);
+    Observe observe = new Observe();
+    observe.setOwner(bob);
+    observe.setTarget(frank);
+    observe.setState(FollowState.PENDING);
+    // bob.observeUser(frank, FollowState.PENDING);
+    bob.getObserving().add(observe);
+    frank.getObservers().add(observe);
+
+    em.persist(bob);
+    em.persist(frank);
+    em.persist(observe);
+
     em.getTransaction().commit();
     em.close();
 
     EntityManager em2 = entityManagerFactory.createEntityManager();
-   
-    User returnedUser = em2.find(User.class, frank.getId());
 
+    em2.getTransaction().begin();
+
+    // find bob
+    User returnedUser = em2.find(User.class, bob.getId());
+
+    // check default fields
+    assertEquals(bob, returnedUser);
+    assertEquals(bob.getFirstName(), returnedUser.getFirstName());
+    assertEquals(bob.getLastName(), returnedUser.getLastName());
+    assertEquals(bob.getEmail(), returnedUser.getEmail());
+
+    // check our many relation is correct
+    Observe observeResult = returnedUser.getObserving().get(0);
+
+    // check the to one is correct
+    assertEquals(frank, observeResult.getTarget());
+    assertEquals(observe.getState(), observeResult.getState());
+    assertEquals(0, returnedUser.getObservers().size());
+
+    // find frank
+    returnedUser = em2.find(User.class, frank.getId());
+
+    // check base object
     assertEquals(frank, returnedUser);
 
     assertEquals(frank.getFirstName(), returnedUser.getFirstName());
     assertEquals(frank.getLastName(), returnedUser.getLastName());
     assertEquals(frank.getEmail(), returnedUser.getEmail());
-    
-//    assertTrue(frank.getFollowers().contains(bob));
-//    assertEquals(0, frank.getFollowing().size());
-    
-    
-    returnedUser = em2.find(User.class, bob.getId());
-    
-    assertEquals(bob.getFirstName(), returnedUser.getFirstName());
-    assertEquals(bob.getLastName(), returnedUser.getLastName());
-    assertEquals(bob.getEmail(), returnedUser.getEmail());
-    
-//    assertTrue(bob.getFollowing().contains(frank));
-//    assertEquals(0, frank.getFollowers().size());
 
-    //delete bob, no one should be following frank
-    em2.getTransaction().begin();
-    em2.remove(returnedUser);
+    // check to many
+    observeResult = returnedUser.getObservers().get(0);
+
+    // check to one
+    assertEquals(bob, observeResult.getOwner());
+    assertEquals(observe.getState(), observeResult.getState());
+    assertEquals(0, returnedUser.getObserving().size());
+
+    // now we remove bob's observing link. Should remove the Observe object but
+    // not Frank
+
+    // remove the link
+    bob.getObserving().remove(observeResult);
+    frank.getObservers().remove(observeResult);
+
+    // remove the middle link
+    em2.remove(observeResult);
+
     em2.getTransaction().commit();
     em2.close();
 
     EntityManager em3 = entityManagerFactory.createEntityManager();
 
-    boolean found = true;
+    returnedUser = em3.find(User.class, bob.getId());
 
-    try {
-      em3.find(User.class, frank.getId());
-    } catch (EntityNotFoundException enfe) {
-      found = false;
-    }
+    // check default fields
+    assertEquals(bob, returnedUser);
+    assertEquals(bob.getFirstName(), returnedUser.getFirstName());
+    assertEquals(bob.getLastName(), returnedUser.getLastName());
+    assertEquals(bob.getEmail(), returnedUser.getEmail());
 
-    assertFalse(found);
-    
-    returnedUser = em2.find(User.class, frank.getId());
+    // check our many relation is correct
+    assertEquals(0, returnedUser.getObserving().size());
+    assertEquals(0, returnedUser.getObservers().size());
 
+    returnedUser = em3.find(User.class, frank.getId());
+
+    // check base object
     assertEquals(frank, returnedUser);
 
     assertEquals(frank.getFirstName(), returnedUser.getFirstName());
     assertEquals(frank.getLastName(), returnedUser.getLastName());
     assertEquals(frank.getEmail(), returnedUser.getEmail());
-//    
-//    assertEquals(0, frank.getFollowers().size());
-//    assertEquals(0, frank.getFollowing().size());
-    
-    
+
+    assertEquals(0, returnedUser.getObserving().size());
+    assertEquals(0, returnedUser.getObservers().size());
+
   }
 
 }
