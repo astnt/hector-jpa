@@ -106,16 +106,11 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
   public void readField(OpenJPAStateManager stateManager,
       QueryResult<ColumnSlice<DynamicComposite, byte[]>> result) {
 
-    Object[] fields = null;
 
     StoreContext context = stateManager.getContext();
 
     // TODO TN use our CollectionProxy here
-    Collection<Object> collection = (Collection<Object>) stateManager.newProxy(fieldId);
-
-    DynamicComposite dynamicCol = null;
-
-    
+    Collection<Object> collection = (Collection<Object>) stateManager.newFieldProxy(fieldId);
     
     for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
 
