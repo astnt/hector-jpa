@@ -4,8 +4,6 @@
 package com.datastax.hectorjpa.meta.collection;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
@@ -19,10 +17,8 @@ import me.prettyprint.hector.api.query.QueryResult;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.FieldMetaData;
-import org.apache.openjpa.util.ChangeTracker;
 import org.apache.openjpa.util.Proxy;
 
-import com.datastax.hectorjpa.meta.collection.OrderedCollectionField.OrderField;
 import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
@@ -126,6 +122,8 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       return;
     }
 
+    //TODO TN remove from opposite index 
+    
     DynamicComposite idComposite = null;
     Object currentId = null;
     

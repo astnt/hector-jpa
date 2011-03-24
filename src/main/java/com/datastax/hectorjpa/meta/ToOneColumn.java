@@ -43,7 +43,7 @@ public class ToOneColumn<V> extends ColumnField<V> {
     ClassMetaData targetClass = fmd.getDeclaredTypeMetaData();
 
     serializer = MappingUtils
-        .getSerializer(targetClass.getPrimaryKeyFields()[0]);
+        .getSerializerForPk(targetClass);
 
     this.mappingUtils = mappingUtils;
 
@@ -65,6 +65,9 @@ public class ToOneColumn<V> extends ColumnField<V> {
 
     Object instance = stateManager.fetch(fieldId);
 
+    
+    //TODO TN remove from opposite index 
+    
     // value is null remove it
     if (instance == null) {
       mutator

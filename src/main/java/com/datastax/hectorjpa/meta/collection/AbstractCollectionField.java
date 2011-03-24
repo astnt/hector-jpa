@@ -73,7 +73,11 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
 
     ClassMetaData elementClassMeta = fmd.getElement().getDeclaredTypeMetaData();
     
-    this.idSerizlizer = MappingUtils.getSerializer(elementClassMeta.getPrimaryKeyFields()[0]);
+    if(elementClassMeta == null){
+      throw new MetaDataException(String.format("You defined type %s in a collection, but it is not a persistable entity", fmd.getElement().getDeclaredType()));
+    }
+    
+    this.idSerizlizer = MappingUtils.getSerializerForPk(elementClassMeta);
 
     // set the class of the collection elements
     targetClass = elementClassMeta.getDescribedType();

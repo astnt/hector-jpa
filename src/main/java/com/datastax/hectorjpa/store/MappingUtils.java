@@ -33,6 +33,7 @@ import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.meta.JavaTypes;
 import org.apache.openjpa.util.LongId;
+import org.apache.openjpa.util.MetaDataException;
 import org.apache.openjpa.util.OpenJPAId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,6 +84,26 @@ public class MappingUtils {
       }
     }
     return serializer;
+  }
+  
+  /**
+   * Get serializers for the primary key
+   * @param cmd
+   * @return
+   */
+  public static Serializer<Object> getSerializerForPk(ClassMetaData cmd){
+    
+    FieldMetaData[] keys = cmd.getPrimaryKeyFields();
+    
+    if(keys.length == 0){
+      throw new MetaDataException(String.format("You declared a class %s without a primary key field", cmd.getDescribedType()));
+    }
+    
+    if(keys.length > 1){
+      throw new MetaDataException(String.format("You declared a class %s with more than one primary key field.  This is currently unsupported", cmd.getDescribedType()));
+    }
+                              
+    return MappingUtils.getSerializer(keys[0]);
   }
 
   public SliceQuery<byte[], String, byte[]> buildSliceQuery(Object idObj,
