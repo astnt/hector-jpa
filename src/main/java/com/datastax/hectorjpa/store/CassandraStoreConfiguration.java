@@ -22,6 +22,9 @@ public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
     addString("me.prettyprint.hom.keyspace");
     addString("me.prettyprint.hom.clusterName");
     addString("me.prettyprint.hom.hostList");
+    
+    //TODO map our metadata plugin parser factory for parsing index annotations
+//    metaFactoryPlugin.setClassName(CassandraPersistenceMappingParser.class.getName());
 
     ProductDerivations.beforeConfigurationLoad(this);
     loadGlobals();
