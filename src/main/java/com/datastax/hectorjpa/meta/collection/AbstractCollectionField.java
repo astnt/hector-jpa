@@ -184,8 +184,9 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
    * Read this field from the data store from the queryresult
    * @param stateManager
    * @param result
+   * @return true if this field had values
    */
-  public abstract void readField(OpenJPAStateManager stateManager,   QueryResult<ColumnSlice<DynamicComposite, byte[]>> result);
+  public abstract boolean readField(OpenJPAStateManager stateManager,   QueryResult<ColumnSlice<DynamicComposite, byte[]>> result);
   
   
   /**

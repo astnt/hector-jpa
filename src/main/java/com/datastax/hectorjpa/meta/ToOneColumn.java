@@ -2,13 +2,11 @@ package com.datastax.hectorjpa.meta;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 
-import org.apache.openjpa.kernel.FindCallbacks;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.ClassMetaData;
@@ -111,14 +109,14 @@ public class ToOneColumn<V> extends ColumnField<V> {
    * @param stateManager
    * @param result
    */
-  public void readField(OpenJPAStateManager stateManager,
+  public boolean readField(OpenJPAStateManager stateManager,
       QueryResult<ColumnSlice<String, byte[]>> result) {
 
     HColumn<String, byte[]> column = result.get().getColumnByName(name);
 
     if (column == null) {
       stateManager.storeObject(fieldId, null);
-      return;
+      return false;
     }
 
     Object id = serializer.fromBytes(column.getValue());
@@ -130,6 +128,8 @@ public class ToOneColumn<V> extends ColumnField<V> {
     Object returned = context.find(entityId, true, null);
 
     stateManager.storeObject(fieldId, returned);
+    
+    return true;
   }
 
 }

@@ -1,12 +1,9 @@
 package com.datastax.hectorjpa.store;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.datastax.hectorjpa.ManagedEntityTestBase;

@@ -49,7 +49,7 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
   }
 
   @Override
-  public void readField(OpenJPAStateManager stateManager,
+  public boolean readField(OpenJPAStateManager stateManager,
       QueryResult<ColumnSlice<DynamicComposite, byte[]>> result) {
 
     Object[] fields = null;
@@ -81,6 +81,9 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     // now load all the objects from the ids we were given.
 
     stateManager.storeObject(fieldId, collection);
+    
+
+    return result.get().getColumns().size() > 0;
 
   }
 

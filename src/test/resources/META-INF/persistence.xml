@@ -1,43 +1,46 @@
 <persistence xmlns="http://java.sun.com/xml/ns/persistence"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://java.sun.com/xml/ns/persistence
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence
 	http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
-  version="2.0">
-  <persistence-unit name="openjpa">
-    <provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
+	version="2.0">
+	<persistence-unit name="openjpa">
+		<provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
 
-    <class>com.datastax.hectorjpa.bean.SimpleTestBean</class>
-    <class>com.datastax.hectorjpa.bean.User</class>
-    <class>com.datastax.hectorjpa.bean.Observe</class>
-    <class>com.datastax.hectorjpa.bean.AbstractEntity</class>
-    <class>com.datastax.hectorjpa.bean.Store</class>
-    <class>com.datastax.hectorjpa.bean.Customer</class>
-    <class>com.datastax.hectorjpa.bean.Sale</class>
+		<class>com.datastax.hectorjpa.bean.SimpleTestBean</class>
+		<class>com.datastax.hectorjpa.bean.User</class>
+		<class>com.datastax.hectorjpa.bean.Observe</class>
+		<class>com.datastax.hectorjpa.bean.AbstractEntity</class>
+		<class>com.datastax.hectorjpa.bean.Store</class>
+		<class>com.datastax.hectorjpa.bean.Customer</class>
+		<class>com.datastax.hectorjpa.bean.Sale</class>
+		<class>com.datastax.hectorjpa.bean.SmsMessage</class>
+		<class>com.datastax.hectorjpa.bean.VerificationSmsMessage</class>
+		<class>com.datastax.hectorjpa.bean.WarningSmsMessage</class>
+		<class>com.datastax.hectorjpa.bean.IncomingSmsMessage</class>
 
 
 
-    <!-- <class>me.prettyprint.hom.beans.MyBlueTestBean</class> <class>me.prettyprint.hom.beans.MyRedTestBean</class> 
-      <class>com.datastax.openjpa.beans.SimpleTestBean</class> <class>me.prettyprint.hom.beans.SimpleRelationshipBean</class> 
-      <class>me.prettyprint.hom.beans.MyPurpleTestBean</class> -->
+		<!-- <class>me.prettyprint.hom.beans.MyBlueTestBean</class> <class>me.prettyprint.hom.beans.MyRedTestBean</class> 
+			<class>com.datastax.openjpa.beans.SimpleTestBean</class> <class>me.prettyprint.hom.beans.SimpleRelationshipBean</class> 
+			<class>me.prettyprint.hom.beans.MyPurpleTestBean</class> -->
 
-    <properties>
-      <property name="me.prettyprint.hom.classpathPrefix"
-        value="com.datastax.hectorjpa.bean" />
-      <property name="me.prettyprint.hom.keyspace" value="TestKeyspace" />
-      <property name="me.prettyprint.hom.clusterName" value="TestPool" />
-      <property name="me.prettyprint.hom.hostList" value="localhost:9161" />
-      <property name="openjpa.BrokerFactory" value="abstractstore" />
-      <property name="openjpa.abstractstore.AbstractStoreManager"
-        value="com.datastax.hectorjpa.store.CassandraStoreManager" />
-      <property name="openjpa.Optimistic" value="false" />
-      <property name="openjpa.LockManager" value="none" />
-      <property name="openjpa.ConnectionURL" value="localhost:9161" />
-      <property name="openjpa.RuntimeUnenhancedClasses" value="supported" />
+		<properties>
+			<property name="me.prettyprint.hom.classpathPrefix" value="com.datastax.hectorjpa.bean" />
+			<property name="me.prettyprint.hom.keyspace" value="TestKeyspace" />
+			<property name="me.prettyprint.hom.clusterName" value="TestPool" />
+			<property name="me.prettyprint.hom.hostList" value="localhost:9161" />
+			<property name="openjpa.BrokerFactory" value="abstractstore" />
+			<property name="openjpa.abstractstore.AbstractStoreManager"
+				value="com.datastax.hectorjpa.store.CassandraStoreManager" />
+			<property name="openjpa.Optimistic" value="false" />
+			<property name="openjpa.LockManager" value="none" />
+			<property name="openjpa.ConnectionURL" value="localhost:9161" />
+			<property name="openjpa.RuntimeUnenhancedClasses" value="supported" />
 
-      <property name="openjpa.Log" value="log4j" />
-      <!-- <property name="openjpa.EntityManagerFactory" value="me.prettyprint.hom.EntityManagerFactoryImpl"/> -->
+			<property name="openjpa.Log" value="log4j" />
+			<!-- <property name="openjpa.EntityManagerFactory" value="me.prettyprint.hom.EntityManagerFactoryImpl"/> -->
 
-    </properties>
-  </persistence-unit>
+		</properties>
+	</persistence-unit>
 
 </persistence>

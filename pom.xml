@@ -242,6 +242,9 @@
             </goals>
           </execution>
         </executions>
+        <configuration>
+        <includes>com/datastax/hectorjpa/bean/*.class</includes>
+        </configuration>
       </plugin>
     </plugins>
   </build>

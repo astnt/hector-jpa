@@ -11,6 +11,7 @@ import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
+import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
@@ -24,24 +25,23 @@ import me.prettyprint.hector.api.query.SliceQuery;
  * 
  * @param <V>
  */
-public class StaticColumn implements ObjectTypeColumnStrategy {
+public class DiscriminatorColumn implements ObjectTypeColumnStrategy {
 
-	
-	
-	public static final String EMPTY_COL = "jpaholder";
-
-	private static final String FOUND = "FOUND"; 
-	
-	private static final byte[] EMPTY_VAL = new byte[] { 0 };
+	public static final String DISCRIMINAATOR_COL = "jpaholder";
 
 	private static List<String> columns;
 
+	private String value;
+
 	private MappingUtils mappingUtils;
 
-	public StaticColumn(MappingUtils mappingUtils) {
+	public DiscriminatorColumn(String discriminatorValue,
+			MappingUtils mappingUtils) {
 		this.mappingUtils = mappingUtils;
 		columns = new ArrayList<String>();
-		columns.add(EMPTY_COL);
+		columns.add(DISCRIMINAATOR_COL);
+
+		this.value = discriminatorValue;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -49,14 +49,14 @@ public class StaticColumn implements ObjectTypeColumnStrategy {
 	public void write(Mutator<byte[]> mutator, long clock, byte[] key,
 			String cfName) {
 
-		mutator.addInsertion(key, cfName, new HColumnImpl(EMPTY_COL, EMPTY_VAL,
-				clock, StringSerializer.get(), BytesArraySerializer.get()));
+		mutator.addInsertion(key, cfName, new HColumnImpl(DISCRIMINAATOR_COL,
+				value, clock, StringSerializer.get(), StringSerializer.get()));
 
 	}
 
 	@Override
 	public String getObjectId(Object rowKey, String cfName, Keyspace keyspace) {
-		
+
 		SliceQuery<byte[], String, byte[]> query = mappingUtils
 				.buildSliceQuery(rowKey, columns, cfName, keyspace);
 
@@ -65,16 +65,21 @@ public class StaticColumn implements ObjectTypeColumnStrategy {
 		// only need to check > 0. If the entity wasn't tombstoned then we would
 		// have loaded the static jpa marker column
 
-		if (result.get().getColumns().size() > 0) {
-			return FOUND;
+		HColumn<String, byte[]> descrimValue = result.get().getColumnByName(
+				DISCRIMINAATOR_COL);
+
+		if (descrimValue == null) {
+			return null;
 		}
 
-		return null;
+		return StringSerializer.get().fromBytes(descrimValue.getValue());
 	}
 
 	@Override
 	public Class<?> getClass(String value, Class<?> candidate, MetaCache metaCache) {
-		return candidate;
+		// TODO Auto-generated method stub
+		return null;
 	}
+
 	
 }
