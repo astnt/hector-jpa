@@ -115,7 +115,10 @@ public class ToOneColumn<V> extends ColumnField<V> {
       QueryResult<ColumnSlice<String, byte[]>> result) {
 
     HColumn<String, byte[]> column = result.get().getColumnByName(name);
-
+    if ( log.isDebugEnabled() ) {
+      log.debug("Read column: {}", column);
+    }
+    
     if (column == null) {
       stateManager.storeObject(fieldId, null);
       return;

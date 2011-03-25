@@ -185,6 +185,10 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
    */
   private void writeDeletes(OpenJPAStateManager stateManager, Collection value,
       Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey) {
+    if (log.isDebugEnabled()) {
+      log.debug("OrderedCollection.writeDeletes");
+    }
+    
     Collection objects = ProxyUtils.getRemoved(value);
 
     if (objects == null || objects.size() == 0) {

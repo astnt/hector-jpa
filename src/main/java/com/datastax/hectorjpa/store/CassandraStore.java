@@ -90,7 +90,7 @@ public class CassandraStore {
    * @return true if the object was found, false otherwise
    */
   public boolean getObject(OpenJPAStateManager stateManager, BitSet fields) {
-
+    log.debug("Current BitSet: {}", fields);
     ClassMetaData metaData = stateManager.getMetaData();
     EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
 

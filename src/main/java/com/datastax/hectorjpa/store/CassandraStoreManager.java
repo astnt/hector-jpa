@@ -67,6 +67,9 @@ public class CassandraStoreManager extends AbstractStoreManager {
   @Override
   protected Collection flush(Collection pNew, Collection pNewUpdated,
       Collection pNewFlushedDeleted, Collection pDirty, Collection pDeleted) {
+    if (log.isDebugEnabled()) {
+      log.debug("In flush() operation of store manager");      
+    }
     /*
      * defn. of above arguments --------------------------- pNew - Objects that
      * should be added to the store, and that have not previously been flushed.
@@ -90,7 +93,7 @@ public class CassandraStoreManager extends AbstractStoreManager {
     writeEntities(pNew, mutator, clock);
     writeEntities(pNewUpdated, mutator, clock);
     writeEntities(pDirty, mutator, clock);
-    
+
     deleteEntities(pNewFlushedDeleted, mutator, clock);
     deleteEntities(pDeleted, mutator, clock);
     
@@ -157,7 +160,7 @@ public class CassandraStoreManager extends AbstractStoreManager {
     // return cassandraStore.getObject(stateManager, fields);
 
     // load is called to fill in additional information not retrieved from
-    // initialize call above
+    // initialize call above    
     return cassandraStore.getObject(stateManager, fields);
 
   }
@@ -213,10 +216,10 @@ public class CassandraStoreManager extends AbstractStoreManager {
 
     // and add some that we don't support but the abstract store does
     // TODO take these out one by one
-    c.add(OpenJPAConfiguration.OPTION_EMBEDDED_RELATION);
-    c.add(OpenJPAConfiguration.OPTION_EMBEDDED_COLLECTION_RELATION);
-    c.add(OpenJPAConfiguration.OPTION_EMBEDDED_MAP_RELATION);
-    // c.add(OpenJPAConfiguration.OPTION_OPTIMISTIC);
+    //c.add(OpenJPAConfiguration.OPTION_EMBEDDED_RELATION);    
+    //c.add(OpenJPAConfiguration.OPTION_EMBEDDED_COLLECTION_RELATION);
+    //c.add(OpenJPAConfiguration.OPTION_EMBEDDED_MAP_RELATION);
+     c.add(OpenJPAConfiguration.OPTION_OPTIMISTIC);
     return c;
   }
 
