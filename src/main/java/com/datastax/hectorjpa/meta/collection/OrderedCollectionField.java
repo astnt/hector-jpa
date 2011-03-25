@@ -4,14 +4,12 @@
 package com.datastax.hectorjpa.meta.collection;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -19,15 +17,15 @@ import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
 
-import org.apache.openjpa.kernel.FindCallbacks;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.meta.Order;
 import org.apache.openjpa.util.Proxy;
-import org.apache.openjpa.util.UserException;
-import org.springframework.core.OrderComparator;
 
+import com.datastax.hectorjpa.meta.AbstractOrderField;
+import com.datastax.hectorjpa.meta.CollectionOrderField;
+import com.datastax.hectorjpa.proxy.ProxyUtils;
 import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
@@ -45,18 +43,18 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
   // represents the end "id" in the key
   private static final byte[] idMarker = StringSerializer.get().toBytes("i");
 
-  private OrderField[] orderBy;
+  private AbstractOrderField[] orderBy;
   
 
   public OrderedCollectionField(FieldMetaData fmd, MappingUtils mappingUtils) {
     super(fmd, mappingUtils);
 
     Order[] orders = fmd.getOrders();
-    orderBy = new OrderField[orders.length];
+    orderBy = new AbstractOrderField[orders.length];
 
     // create all our order by clauses
     for (int i = 0; i < orders.length; i++) {
-      orderBy[i] = new OrderField(orders[i], fmd);
+      orderBy[i] = new CollectionOrderField(orders[i], fmd);
     }
 
     //orders +1 for length
@@ -180,7 +178,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
   private void writeDeletes(OpenJPAStateManager stateManager, Collection value,
       Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey) {
 
-    Collection objects = getRemoved(value);
+    Collection objects = ProxyUtils.getRemoved(value);
 
     if (objects == null) {
       return;
@@ -192,6 +190,8 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     Object field = null;
     
     StoreContext context = stateManager.getContext();
+    
+    //TODO TN remove from opposite index 
 
     // loop through all deleted object and create the deletes for them.
     for (Object current : objects) {
@@ -208,7 +208,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       idComposite.add(currentId, idSerizlizer);
 
       // now construct the composite with order by the ids at the end.
-      for (OrderField order : orderBy) {
+      for (AbstractOrderField order : orderBy) {
         
         field = order.getValue(stateManager, current);
         
@@ -244,7 +244,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
   private void writeAdds(OpenJPAStateManager stateManager, Collection value,
       Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey) {
 
-    Collection objects = getAdded(value);
+    Collection objects = ProxyUtils.getAdded(value);
 
     if (objects == null) {
       return;
@@ -273,7 +273,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       idComposite.add(currentId, idSerizlizer);
 
       // now construct the composite with order by the ids at the end.
-      for (OrderField order : orderBy) {
+      for (AbstractOrderField order : orderBy) {
         
         field = order.getValue(stateManager, current);
         
@@ -311,7 +311,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
   private void writeChanged(OpenJPAStateManager stateManager, Collection value,
       Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey) {
 
-    Collection objects = getChanged(value);
+    Collection objects = ProxyUtils.getChanged(value);
 
     if (objects == null) {
       return;
@@ -351,7 +351,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       idComposite.add(currentId, idSerizlizer);
 
       // now construct the composite with order by the ids at the end.
-      for (OrderField order : orderBy) {
+      for (AbstractOrderField order : orderBy) {
         
         field = order.getValue(stateManager, current);
         
@@ -389,197 +389,8 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
 
   }
 
-  /**
-   * Return the collection of deleted objects from the proxy. If none is preset
-   * then null is returned
-   * 
-   * @param field
-   * @return
-   */
-  private Collection getRemoved(Collection field) {
-    if (field instanceof Proxy) {
-      return ((Proxy) field).getChangeTracker().getRemoved();
-    }
 
-    return null;
 
-  }
-
-  /**
-   * Get changed values. Null is returned if nothing has changed
-   * 
-   * @param field
-   * @return
-   */
-  private Collection getChanged(Collection field) {
-    if (field instanceof Proxy) {
-      return ((Proxy) field).getChangeTracker().getChanged();
-    }
-    
-    return null;
-
-  }
   
-
-  /**
-   * Get added values. If the item is not a proxy it is returned as a collection
-   * 
-   * @param field
-   * @return
-   */
-  private Collection getAdded(Collection field) {
-    if (field instanceof Proxy) {
-      return ((Proxy) field).getChangeTracker().getAdded();
-    }
-
-    return field;
-
-  }
-
-  /**
-   * Inner class to encapsulate order field logic and meta data
-   * 
-   * @author Todd Nine
-   * 
-   */
-  protected static class OrderField {
-
-    private Order order;
-    private Serializer<Object> serializer;
-    private int targetFieldIndex;
-    private String targetFieldName;
-
-    public OrderField(Order order, FieldMetaData fmd) {
-      super();
-      this.order = order;
-
-      FieldMetaData targetField = fmd.getMappedByField(fmd.getElement()
-          .getTypeMetaData(), order.getName());
-
-      this.serializer = MappingUtils.getSerializer(targetField);
-
-      this.targetFieldIndex = targetField.getIndex();
-      this.targetFieldName = targetField.getName();
-
-    }
-
-    /**
-     * Get the value for the ordered field off the instance. Could return null
-     * if the instance is null or the field is null
-     * 
-     * @param manager
-     * @param instance
-     * @return
-     */
-    protected Object getValue(OpenJPAStateManager manager, Object instance) {
-      if (instance == null) {
-        return null;
-      }
-
-      OpenJPAStateManager stateManager = manager.getContext().getStateManager(
-          instance);
-
-      // no state, we can't get the order value
-      if (stateManager == null) {
-        throw new UserException(
-            String
-                .format(
-                    "You attempted to specify field '%s' on entity '%s'.  However the entity does not have a state manager.  Make sure you enable cascade for this operation or explicity persist it with the entity manager",
-                    targetFieldName, instance));
-      }
-
-      return stateManager.fetch(targetFieldIndex);
-    }
-
-    /**
-     * Create the write composite.
-     * 
-     * @param manager
-     *          The state manager
-     * @param composite
-     *          The composite to write to
-     * @param instance
-     *          The field instance
-     */
-    protected void addFieldWrite(DynamicComposite composite, Object instance) {
-      // write the current value from the proxy
-      Object current = getAdded(instance);
-
-      composite.add(current, serializer);
-
-    }
-
-    /**
-     * Create the write composite.
-     * 
-     * @param composite
-     *          The composite to write to
-     * @param instance
-     *          The field instance
-     */
-    protected boolean addFieldDelete(DynamicComposite composite, Object instance) {
-
-      // check if there was an original value. If so write it to the composite
-      Object original = getRemoved(instance);
-
-      // value was changed, add the old value
-      if (original != null) {
-        composite.add(original, serializer);
-        return true;
-      }
-
-      // write the current value from the proxy. This one didn't change but
-      // other fields could.
-      Object current = getAdded(instance);
-
-      composite.add(current, serializer);
-
-      return false;
-
-    }
-
-    /**
-     * Return the collection of deleted objects from the proxy. If none is
-     * preset then null is returned
-     * 
-     * @param field
-     * @return
-     */
-    private Object getRemoved(Object field) {
-      if (field instanceof Proxy) {
-        Iterator<?> resultItr = ((Proxy) field).getChangeTracker().getRemoved()
-            .iterator();
-
-        if (resultItr.hasNext()) {
-          return resultItr.next();
-        }
-
-      }
-
-      return null;
-
-    }
-
-    /**
-     * Get added values. If the item is not a proxy it is returned as a
-     * collection
-     * 
-     * @param field
-     * @return
-     */
-    private Object getAdded(Object field) {
-      if (field instanceof Proxy) {
-        Iterator<?> resultItr = ((Proxy) field).getChangeTracker().getAdded()
-            .iterator();
-
-        if (resultItr.hasNext()) {
-          return resultItr.next();
-        }
-      }
-
-      return field;
-
-    }
-  }
 
 }

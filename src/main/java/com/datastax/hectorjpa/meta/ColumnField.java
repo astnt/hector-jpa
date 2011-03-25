@@ -1,7 +1,5 @@
 package com.datastax.hectorjpa.meta;
 
-import java.util.Collection;
-
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Serializer;
@@ -12,8 +10,9 @@ import me.prettyprint.hector.api.query.QueryResult;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.FieldMetaData;
-import org.apache.openjpa.util.Proxy;
 
+import com.datastax.hectorjpa.index.IndexDefinition;
+import com.datastax.hectorjpa.index.IndexDefinitions;
 import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
@@ -29,10 +28,12 @@ public class ColumnField<V> extends Field<V> {
   protected String name;
   protected boolean indexed;
   protected boolean ordered;
+  protected IndexDefinitions indexDefs;
 
   public ColumnField(FieldMetaData fmd) {
-    //TODO finish this for indexing
     this(fmd.getIndex(), fmd.getName(), false,fmd.isUsedInOrderBy(), MappingUtils.getSerializer(fmd.getTypeCode()));
+    
+    indexDefs = (IndexDefinitions) fmd.getObjectExtension(IndexDefinitions.EXT_NAME);
   }
 
   public ColumnField(int fieldId, String fieldName, boolean indexed, boolean ordered, Serializer<?> serializer) {
@@ -75,9 +76,21 @@ public class ColumnField<V> extends Field<V> {
       Mutator<byte[]> mutator, long clock, byte[] key, String cfName) {
 
     Object value = stateManager.fetch(fieldId);
+    
+    
 
     mutator.addInsertion(key, cfName, new HColumnImpl(name, value, clock,
         StringSerializer.get(), serializer));
+    
+    /**
+     * We have indexes, write them
+     */
+    if(indexDefs != null){
+      for(IndexDefinition index: indexDefs.getDefinitions()){
+        index.writeIndex(stateManager, value, serializer, mutator, clock);
+      }
+      
+    }
   }
 
   /**
@@ -104,6 +117,8 @@ public class ColumnField<V> extends Field<V> {
 
 
     stateManager.storeObject(fieldId, value);
+    
+    //TODO TN remove from index
   }
 
  

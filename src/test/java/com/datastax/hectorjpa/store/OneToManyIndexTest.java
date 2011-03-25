@@ -34,7 +34,7 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
     em.getTransaction().begin();
 
     Store store = new Store();
-    store.setName("Manhatten");
+    store.setName("Manhattan");
 
     Customer james = new Customer();
     james.setEmail("james@test.com");
@@ -78,7 +78,7 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
     em.getTransaction().begin();
 
     Store store = new Store();
-    store.setName("Manhatten");
+    store.setName("Manhattan");
 
     Customer james = new Customer();
     james.setEmail("james@test.com");

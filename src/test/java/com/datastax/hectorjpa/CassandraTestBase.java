@@ -3,6 +3,7 @@ package com.datastax.hectorjpa;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,9 @@ import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.BeforeClass;
+
+import com.datastax.hectorjpa.index.IndexDefinition;
+import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 
 public class CassandraTestBase {
   protected static boolean cassandraStarted = false;
@@ -77,15 +81,11 @@ public class CassandraTestBase {
           + " - probably already exists : " + e.getMessage());
     }
     /*
-    for (CfDef cfDef : cfDefList) {
-      try {
-        cluster.addColumnFamily(new ThriftCfDef(cfDef));
-      } catch (Throwable e) {
-        System.out.println("exception while creating CF, " + cfDef.getName()
-            + " - probably already exists : " + e.getMessage());
-      }
-    }
-    */
+     * for (CfDef cfDef : cfDefList) { try { cluster.addColumnFamily(new
+     * ThriftCfDef(cfDef)); } catch (Throwable e) {
+     * System.out.println("exception while creating CF, " + cfDef.getName() +
+     * " - probably already exists : " + e.getMessage()); } }
+     */
   }
 
   @BeforeClass
@@ -96,15 +96,15 @@ public class CassandraTestBase {
     startCassandraInstance("tmp/var/lib/cassandra");
     System.out.println("Creating TestKeyspace and columnfamilies");
     ArrayList<CfDef> cfDefList = new ArrayList<CfDef>(2);
-    
+
     cfDefList.add(new CfDef("TestKeyspace", "TestBeanColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
-    
+
     cfDefList.add(new CfDef("TestKeyspace", "CustomIdColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
-    
+
     cfDefList.add(new CfDef("TestKeyspace", "SimpleTestBeanColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
@@ -115,7 +115,7 @@ public class CassandraTestBase {
     cfDefList.add(new CfDef("TestKeyspace", "NoAnonymousColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
-    
+
     cfDefList.add(new CfDef("TestKeyspace", "ComplexColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
@@ -127,22 +127,29 @@ public class CassandraTestBase {
     cfDefList.add(new CfDef("TestKeyspace", "ObserveColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
-    
+
     cfDefList.add(new CfDef("TestKeyspace", "CustomerColumnFamily")
-    .setComparator_type(BytesType.class.getSimpleName())
-    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+        .setComparator_type(BytesType.class.getSimpleName())
+        .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
-    
     cfDefList.add(new CfDef("TestKeyspace", "StoreColumnFamily")
-    .setComparator_type(BytesType.class.getSimpleName())
-    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+        .setComparator_type(BytesType.class.getSimpleName())
+        .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
-    
-    cfDefList.add(new CfDef("TestKeyspace", "Collection_Container")
-    .setComparator_type(DynamicCompositeType.class.getName())
-    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+    cfDefList.add(new CfDef("TestKeyspace", "SaleColumnFamily")
+        .setComparator_type(BytesType.class.getSimpleName())
+        .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
-    
+    // collection indexing
+    cfDefList.add(new CfDef("TestKeyspace", AbstractCollectionField.CF_NAME)
+        .setComparator_type(DynamicCompositeType.class.getName())
+        .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+
+    // search indexing
+    cfDefList.add(new CfDef("TestKeyspace", IndexDefinition.CF_NAME)
+        .setComparator_type(DynamicCompositeType.class.getName())
+        .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+
     cluster = HFactory.getOrCreateCluster("TestPool", "localhost:9161");
     createKeyspace(cluster, "TestKeyspace",
         "org.apache.cassandra.locator.SimpleStrategy", 1, cfDefList);

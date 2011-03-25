@@ -60,14 +60,9 @@ public class EntityFacade implements Serializable {
 
     this.columnFamilyName = mappingUtils.getColumnFamily(clazz);
 
-    if (log.isDebugEnabled()) {
-      log.debug("PK field name: {} and typeCode: {}",
-          classMetaData.getPrimaryKeyFields()[0].getType(),
-          classMetaData.getPrimaryKeyFields()[0].getObjectIdFieldTypeCode());
-    }
+   
 
-    this.keySerializer = MappingUtils.getSerializer(classMetaData
-        .getPrimaryKeyFields()[0]);
+    this.keySerializer = MappingUtils.getSerializerForPk(classMetaData);
 
     columnFieldIds = new HashMap<Integer, ColumnField<?>>();
     collectionFieldIds = new HashMap<Integer, AbstractCollectionField<?>>();
