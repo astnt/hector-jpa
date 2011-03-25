@@ -193,7 +193,12 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
    * @return
    */
   protected abstract byte[] getDefaultSearchmarker();
- 
 
+  @Override
+  public String toString() {  
+    return String.format("AbstractCollectionField(fieldId: %d, name: %s)", fieldId, name);
+  }
+ 
+  
   
 }

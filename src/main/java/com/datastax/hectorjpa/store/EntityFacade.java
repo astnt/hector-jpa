@@ -192,7 +192,9 @@ public class EntityFacade implements Serializable {
       if (field == null) {
 
         collectionField = collectionFieldIds.get(i);
-
+        if ( log.isDebugEnabled() ) {
+          log.debug("loadColumns called on collection field: {}", collectionField);
+        }
         // nothting to do
         if (collectionField == null) {
           continue;
@@ -204,7 +206,9 @@ public class EntityFacade implements Serializable {
         // now query and load this field
         SliceQuery<byte[], DynamicComposite, byte[]> query = collectionField
             .createQuery(entityId, keyspace, size);
-
+        if ( log.isDebugEnabled()) {
+          log.debug("constructed sliceQuery for collection: {}", query);
+        }
         collectionField.readField(stateManager, query.execute());
 
         continue;

@@ -41,6 +41,13 @@ public abstract class Field<V> {
    * @param cfName
    */
   public abstract void addField(OpenJPAStateManager stateManager, Mutator<byte[]> mutator, long clock, byte[] key, String cfName);
+
   
-   
+  @Override
+  public String toString() {  
+    return String.format("Field(fieldId: %d)", fieldId);
+  }
+  
+ 
+  
 }

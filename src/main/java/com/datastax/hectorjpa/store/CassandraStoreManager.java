@@ -94,7 +94,8 @@ public class CassandraStoreManager extends AbstractStoreManager {
     deleteEntities(pNewFlushedDeleted, mutator, clock);
     deleteEntities(pDeleted, mutator, clock);
     
-    
+    if ( log.isDebugEnabled())
+      log.debug("calling execute() on mutator");
     mutator.execute();
 
     return null;

@@ -58,6 +58,9 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     // create all our order by clauses
     for (int i = 0; i < orders.length; i++) {
       orderBy[i] = new CollectionOrderField(orders[i], fmd);
+      if ( log.isDebugEnabled()) {
+        log.debug("adding orderyBY: {}", orderBy[i]);
+      }
     }
 
     //orders +1 for length
@@ -107,7 +110,9 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
   public void readField(OpenJPAStateManager stateManager,
       QueryResult<ColumnSlice<DynamicComposite, byte[]>> result) {
 
-
+    if ( log.isDebugEnabled() ) {
+      log.debug("readField returned {} columns in OrderedCollection", result.get().getColumns().size());
+    }
     StoreContext context = stateManager.getContext();
 
     // TODO TN use our CollectionProxy here
@@ -326,7 +331,9 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     if (objects == null) {
       return;
     }
-
+    if ( log.isDebugEnabled()) {
+      log.debug("writeChanged {} items in OrderedCOllection", objects.size());
+    }
     DynamicComposite orderComposite = null;
     DynamicComposite idComposite = null;
     Object currentId = null;
