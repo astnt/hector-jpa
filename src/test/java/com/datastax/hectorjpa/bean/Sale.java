@@ -32,7 +32,7 @@ public class Sale extends AbstractEntity {
   @Persistent
   //search on sellDate order by item name
   @Index("itemName")
-  private DateTime sellDate;
+  private Date sellDate;
 
   @ManyToOne
   private Customer customer;
@@ -54,14 +54,14 @@ public class Sale extends AbstractEntity {
   /**
    * @return the purchasedDate
    */
-  public DateTime getSellDate() {
+  public Date getSellDate() {
     return sellDate;
   }
 
   /**
    * @param purchasedDate the purchasedDate to set
    */
-  public void setSellDate(DateTime purchasedDate) {
+  public void setSellDate(Date purchasedDate) {
     this.sellDate = purchasedDate;
   }
 

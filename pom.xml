@@ -89,9 +89,9 @@
       <version>1.6.1</version>
       <scope>provided</scope>
     </dependency>
-    
-    
-    <!--  required for consistency annotations -->
+
+
+    <!-- required for consistency annotations -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-aop</artifactId>
@@ -120,10 +120,10 @@
       <type>jar</type>
       <scope>provided</scope>
     </dependency>
-    
-    
-    
-    
+
+
+
+
 
     <dependency>
       <groupId>log4j</groupId>
@@ -175,7 +175,7 @@
       <version>${org.springframework.version}</version>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>org.apache.openjpa</groupId>
       <artifactId>openjpa</artifactId>
@@ -217,6 +217,7 @@
           <optimize>true</optimize>
           <showDeprecation>true</showDeprecation>
           <showWarnings>true</showWarnings>
+          <compilerArgument>-Aopenjpa.metamodel=true</compilerArgument>
         </configuration>
       </plugin>
       <plugin>
@@ -227,6 +228,20 @@
           <downloadSources>true</downloadSources>
           <downloadJavadocs>true</downloadJavadocs>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>openjpa-maven-plugin</artifactId>
+        <version>1.2</version>
+        <executions>
+          <execution>
+            <id>testEnhancer</id>
+            <phase>process-test-classes</phase>
+            <goals>
+              <goal>test-enhance</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

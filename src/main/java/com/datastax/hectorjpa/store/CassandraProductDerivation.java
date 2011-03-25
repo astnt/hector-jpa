@@ -42,6 +42,11 @@ public class CassandraProductDerivation extends AbstractProductDerivation
   @Override
   public boolean beforeConfigurationLoad(Configuration c) {
     
+    //do nothing, may be an enhancer running
+    if(!(c instanceof CassandraStoreConfiguration)){
+      return false;
+    }
+    
     CassandraStoreConfiguration conf = (CassandraStoreConfiguration) c;
     
     Specification jpa = PersistenceProductDerivation.SPEC_JPA;
