@@ -22,6 +22,8 @@ import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.meta.Order;
 import org.apache.openjpa.util.Proxy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.meta.AbstractOrderField;
 import com.datastax.hectorjpa.meta.CollectionOrderField;
@@ -36,6 +38,7 @@ import com.datastax.hectorjpa.store.MappingUtils;
  * 
  */
 public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
+  private static Logger log = LoggerFactory.getLogger(OrderedCollectionField.class);
 
   // represents the end "ordered" in the key
   private static final byte[] orderedMarker = StringSerializer.get().toBytes("o");
@@ -177,13 +180,15 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
    */
   private void writeDeletes(OpenJPAStateManager stateManager, Collection value,
       Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey) {
-
     Collection objects = ProxyUtils.getRemoved(value);
 
-    if (objects == null) {
+    if (objects == null || objects.size() == 0) {
       return;
     }
-
+    if ( log.isDebugEnabled() ) {
+      log.debug("assembling deletes for {} objects", objects.size());
+    }
+    
     DynamicComposite orderComposite = null;
     DynamicComposite idComposite = null;
     Object currentId = null;
@@ -197,6 +202,9 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     for (Object current : objects) {
 
       currentId = mappingUtils.getTargetObject(context.getObjectId(current));
+      if ( log.isDebugEnabled() ) {
+        log.debug("deleting object with id {}", currentId);
+      }
 
       // create our composite of the format of id+order*
       idComposite = new DynamicComposite();
@@ -209,7 +217,9 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
 
       // now construct the composite with order by the ids at the end.
       for (AbstractOrderField order : orderBy) {
-        
+        if ( log.isDebugEnabled() ) {
+          log.debug("deleting ordered field {}", order);
+        }
         field = order.getValue(stateManager, current);
         
         // add this to all deletes for the order composite.

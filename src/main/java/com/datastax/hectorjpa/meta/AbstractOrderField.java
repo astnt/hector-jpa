@@ -131,6 +131,17 @@ public abstract class AbstractOrderField {
    * @return
    */
   protected abstract ClassMetaData getContainerClassMetaData(FieldMetaData fmd);
+
+  /**
+   * Prints information about this field
+   */
+  @Override
+  public String toString() {
+    return String.format("AbstractOrderField(Order:%s, targetFieldName:%s, targetFieldIndex:%d, serializer: %s)", 
+        new Object[]{order.getName(), targetFieldName, targetFieldIndex, serializer.getClass().getName()});
+  }
+  
+  
  
  
 }
