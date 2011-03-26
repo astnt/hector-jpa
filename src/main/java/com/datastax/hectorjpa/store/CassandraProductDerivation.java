@@ -69,7 +69,8 @@ public class CassandraProductDerivation extends AbstractProductDerivation
 		conf.metaFactoryPlugin.setAlias(jpa.getName(),
 				CassandraMetaDataFactory.class.getName());
 
-		conf.metaRepositoryPlugin.setClassName(CassandraMetaDataFactory.class.getName());
+	
+		conf.metaRepositoryPlugin.setAlias("default", CassandraMetaDataFactory.class.getName());
 	
 		return true;
 
