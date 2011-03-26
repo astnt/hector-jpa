@@ -3,23 +3,23 @@ package com.datastax.hectorjpa.meta;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datastax.hectorjpa.store.MappingUtils;
-
 import me.prettyprint.cassandra.model.HColumnImpl;
-import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
 
+import com.datastax.hectorjpa.store.CassandraClassMetaData;
+import com.datastax.hectorjpa.store.MappingUtils;
+
 /**
  * Class that always holds static information. Used for the placeholder column.
  * This column is required so we can differentiate between a tombstone row and a
- * row where only the id column was requested in the BitSet
+ * row where only the id column was requested in the BitSet.  Also holds the subclass discriminator 
+ * value so we can determine which class to load at runtime.
  * 
  * @author Todd Nine
  * 
@@ -27,7 +27,7 @@ import me.prettyprint.hector.api.query.SliceQuery;
  */
 public class DiscriminatorColumn implements ObjectTypeColumnStrategy {
 
-	public static final String DISCRIMINAATOR_COL = "jpaholder";
+	public static final String DISCRIMINAATOR_COL = "jpacol";
 
 	private static List<String> columns;
 
@@ -55,7 +55,7 @@ public class DiscriminatorColumn implements ObjectTypeColumnStrategy {
 	}
 
 	@Override
-	public String getObjectId(Object rowKey, String cfName, Keyspace keyspace) {
+	public String getStoredType(Object rowKey, String cfName, Keyspace keyspace) {
 
 		SliceQuery<byte[], String, byte[]> query = mappingUtils
 				.buildSliceQuery(rowKey, columns, cfName, keyspace);
@@ -77,8 +77,14 @@ public class DiscriminatorColumn implements ObjectTypeColumnStrategy {
 
 	@Override
 	public Class<?> getClass(String value, Class<?> candidate, MetaCache metaCache) {
-		// TODO Auto-generated method stub
-		return null;
+	  CassandraClassMetaData meta = metaCache.getClassFromDiscriminator(value);
+	  
+	  if(meta == null){
+	    return null;
+	  }
+	  
+	  return meta.getDescribedType();
+	  
 	}
 
 	

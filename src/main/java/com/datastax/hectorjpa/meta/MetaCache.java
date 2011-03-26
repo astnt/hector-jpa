@@ -55,14 +55,18 @@ public class MetaCache {
 
 		String discriminatorValue = cassMeta.getDiscriminatorColumn();
 
-		discriminators.putIfAbsent(discriminatorValue, cassMeta);
+		if (discriminatorValue != null) {
+
+			discriminators.putIfAbsent(discriminatorValue, cassMeta);
+		}
 
 		return facade;
 
 	}
 
 	/**
-	 * Get the class name from the discriminator string.  Null if one doesn't exist
+	 * Get the class name from the discriminator string. Null if one doesn't
+	 * exist
 	 * 
 	 * @param discriminator
 	 * @return

@@ -64,11 +64,10 @@ public class EntityFacade implements Serializable {
 
 		CassandraClassMetaData cassMeta = (CassandraClassMetaData) classMetaData;
 
-		clazz = cassMeta.getDescribedType();
 
-		this.columnFamilyName = mappingUtils.getColumnFamily(clazz);
+		this.columnFamilyName = mappingUtils.getColumnFamily(cassMeta);
 
-		// classMetaData.get
+	  clazz = cassMeta.getDescribedType();
 
 		this.keySerializer = MappingUtils.getSerializerForPk(cassMeta);
 
@@ -151,7 +150,7 @@ public class EntityFacade implements Serializable {
 
 		String discriminator = cassMeta.getDiscriminatorColumn();
 
-		if (discriminator != null) {
+		if (discriminator != null || cassMeta.isAbstract()) {
 			strategy = new DiscriminatorColumn(discriminator, mappingUtils);
 		} else {
 			strategy = new StaticColumn(mappingUtils);
@@ -292,8 +291,6 @@ public class EntityFacade implements Serializable {
 		
 		Class<?> oidType = ((OpenJPAId)oid).getType();
 		
-		Object id = mappingUtils.getTargetObject(oid);
-		
 
 		// This entity has never been persisted, we can't possibly load it
 		if (oidType == null) {
@@ -301,10 +298,10 @@ public class EntityFacade implements Serializable {
 		}
 
 	
-		String descrim = strategy.getObjectId(oid, columnFamilyName, keyspace);
+		String descrim = strategy.getStoredType(oid, columnFamilyName, keyspace);
 		
 		if(descrim == null){
-			return null;
+		  return null;
 		}
 		
 		return strategy.getClass(descrim, oidType, metaCache);
@@ -351,6 +348,9 @@ public class EntityFacade implements Serializable {
 					this.columnFamilyName);
 
 		}
+		
+		//add our object type column strategy
+		this.strategy.write(m, clockTime, keyBytes, columnFamilyName);
 
 	}
 

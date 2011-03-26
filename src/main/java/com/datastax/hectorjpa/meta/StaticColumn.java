@@ -3,17 +3,16 @@ package com.datastax.hectorjpa.meta;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datastax.hectorjpa.store.MappingUtils;
-
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
+
+import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
  * Class that always holds static information. Used for the placeholder column.
@@ -25,10 +24,8 @@ import me.prettyprint.hector.api.query.SliceQuery;
  * @param <V>
  */
 public class StaticColumn implements ObjectTypeColumnStrategy {
-
 	
-	
-	public static final String EMPTY_COL = "jpaholder";
+	public static final String EMPTY_COL = "jpacol";
 
 	private static final String FOUND = "FOUND"; 
 	
@@ -55,7 +52,7 @@ public class StaticColumn implements ObjectTypeColumnStrategy {
 	}
 
 	@Override
-	public String getObjectId(Object rowKey, String cfName, Keyspace keyspace) {
+	public String getStoredType(Object rowKey, String cfName, Keyspace keyspace) {
 		
 		SliceQuery<byte[], String, byte[]> query = mappingUtils
 				.buildSliceQuery(rowKey, columns, cfName, keyspace);

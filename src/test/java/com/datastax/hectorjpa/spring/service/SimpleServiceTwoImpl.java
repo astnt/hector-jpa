@@ -4,10 +4,8 @@
 package com.datastax.hectorjpa.spring.service;
 
 import static org.junit.Assert.assertEquals;
-
 import me.prettyprint.hector.api.HConsistencyLevel;
 
-import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.springframework.stereotype.Service;
 
 import com.datastax.hectorjpa.consitency.JPAConsistency;

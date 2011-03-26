@@ -4,7 +4,6 @@
 package com.datastax.hectorjpa.meta;
 
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.mutation.Mutator;
 
 /**
@@ -26,14 +25,15 @@ public interface ObjectTypeColumnStrategy {
 
 
 	/**
-	 * Get the objectId from the system.  Null if the entity doesn't exist
+	 * Get get the stored type.  If no row is present, null is returned.  Otherwise 
+	 * a valid string must be returned which will be passed to getClass
 	 * 
 	 * @return
 	 */
-	public String getObjectId(Object rowKey, String cfName, Keyspace keyspace);
+	public String getStoredType(Object rowKey, String cfName, Keyspace keyspace);
 	
 	/**
-	 * Get the class for the persisted value
+	 * Get the class for the persisted value.
 	 * @param value
 	 * @param candidate
 	 * @return

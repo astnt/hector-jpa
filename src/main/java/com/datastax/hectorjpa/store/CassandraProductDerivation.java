@@ -9,7 +9,6 @@ import org.apache.openjpa.conf.OpenJPAProductDerivation;
 import org.apache.openjpa.conf.Specification;
 import org.apache.openjpa.lib.conf.AbstractProductDerivation;
 import org.apache.openjpa.lib.conf.Configuration;
-import org.apache.openjpa.meta.MetaDataRepository;
 import org.apache.openjpa.persistence.PersistenceProductDerivation;
 
 /**
@@ -70,7 +69,7 @@ public class CassandraProductDerivation extends AbstractProductDerivation
 				CassandraMetaDataFactory.class.getName());
 
 	
-		conf.metaRepositoryPlugin.setAlias("default", CassandraMetaDataFactory.class.getName());
+//		conf.metaRepositoryPlugin.setAlias("default", CassandraMetaDataFactory.class.getName());
 	
 		return true;
 

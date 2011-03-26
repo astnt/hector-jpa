@@ -3,7 +3,6 @@ package com.datastax.hectorjpa;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.List;
 

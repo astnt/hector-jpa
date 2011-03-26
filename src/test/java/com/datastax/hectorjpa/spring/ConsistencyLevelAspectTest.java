@@ -7,10 +7,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
 import me.prettyprint.hector.api.HConsistencyLevel;
 
-import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;

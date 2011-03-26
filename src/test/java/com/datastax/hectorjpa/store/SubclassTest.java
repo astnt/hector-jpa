@@ -1,26 +1,14 @@
 package com.datastax.hectorjpa.store;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.List;
 
 import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.SmsMessage;
-import com.datastax.hectorjpa.bean.Customer;
-import com.datastax.hectorjpa.bean.Sale;
-import com.datastax.hectorjpa.bean.Sale_;
-import com.datastax.hectorjpa.bean.Store;
 import com.datastax.hectorjpa.bean.VerificationSmsMessage;
 
 /**

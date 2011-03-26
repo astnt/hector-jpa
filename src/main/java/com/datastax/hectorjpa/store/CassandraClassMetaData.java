@@ -20,7 +20,9 @@ public class CassandraClassMetaData extends ClassMetaData {
 	 */
 	private static final long serialVersionUID = -7584475014214868856L;
 	
-	private String discriminatorValue;
+	private String discriminatorColumn;
+	
+	private String columnFamily;
 
 	protected CassandraClassMetaData(Class<?> type, MetaDataRepository repos) {
 		super(type, repos);
@@ -35,7 +37,7 @@ public class CassandraClassMetaData extends ClassMetaData {
 	 * @return
 	 */
 	public String getDiscriminatorColumn() {
-		return discriminatorValue;
+		return discriminatorColumn;
 	}
 
 	/**
@@ -43,7 +45,15 @@ public class CassandraClassMetaData extends ClassMetaData {
 	 * @param discriminatorColumn
 	 */
 	public void setDiscriminatorColumn(String discriminatorColumn) {
-		this.discriminatorValue = discriminatorColumn;
+		this.discriminatorColumn = discriminatorColumn;
 	}
+
+  public String getColumnFamily() {
+    return columnFamily;
+  }
+
+  public void setColumnFamily(String columnFamily) {
+    this.columnFamily = columnFamily;
+  }
 
 }

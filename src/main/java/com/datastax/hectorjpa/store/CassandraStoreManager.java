@@ -65,8 +65,6 @@ public class CassandraStoreManager extends AbstractStoreManager {
 
 	@Override
 	public Class<?> getManagedType(Object oid) {
-		// TODO TN check if this entity is managed with subclasses
-	
 		return cassandraStore.getDataStoreId(oid, this.getContext() );
 	}
 
@@ -90,8 +88,6 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		 */
 		// _updates = new ArrayList(pNew.size() + pDirty.size());
 		// _deletes = new ArrayList(pDeleted.size());
-		cassandraStore.open();
-
 		long clock = cassandraStore.getClock();
 
 		Mutator<?> mutator = cassandraStore.createMutator();
@@ -147,7 +143,6 @@ public class CassandraStoreManager extends AbstractStoreManager {
 			PCState pcState, FetchConfiguration fetchConfiguration, Object obj) {
 
 		log.debug("In initialize operation...");
-		cassandraStore.open();
 		stateManager.initialize(stateManager.getMetaData().getDescribedType(),
 				pcState);
 		return cassandraStore.getObject(stateManager,
@@ -206,6 +201,7 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		// cluster);
 
 		cassandraStore = new CassandraStore((CassandraStoreConfiguration) conf);
+		cassandraStore.open();
 		log.debug("in CSM.open()");
 	}
 

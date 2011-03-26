@@ -18,6 +18,7 @@ import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.persistence.AnnotationPersistenceMetaDataParser;
 import org.apache.openjpa.util.MetaDataException;
 
+import com.datastax.hectorjpa.annotation.ColumnFamily;
 import com.datastax.hectorjpa.annotation.Index;
 import com.datastax.hectorjpa.index.IndexDefinitions;
 
@@ -28,130 +29,153 @@ import com.datastax.hectorjpa.index.IndexDefinitions;
  * 
  */
 public class CassandraAnnotationParser extends
-		AnnotationPersistenceMetaDataParser {
+    AnnotationPersistenceMetaDataParser {
 
-	private static final Map<Class<?>, ClassMapping> mapping = new HashMap<Class<?>, ClassMapping>();
+  private static final Map<Class<?>, ClassMapping> mapping = new HashMap<Class<?>, ClassMapping>();
 
-	static {
-		mapping.put(Index.class, ClassMapping.INDEX);
-		mapping.put(DiscriminatorValue.class, ClassMapping.DISCRIMINATOR);
-		mapping.put(Inheritance.class, ClassMapping.INHERITANCE);
-	}
+  static {
+    mapping.put(Index.class, ClassMapping.INDEX);
+    mapping.put(DiscriminatorValue.class, ClassMapping.DISCRIMINATOR);
+    mapping.put(Inheritance.class, ClassMapping.INHERITANCE);
+    mapping.put(ColumnFamily.class, ClassMapping.COLUMNFAMILY);
+  }
 
-	public CassandraAnnotationParser(OpenJPAConfiguration conf) {
-		super(conf);
-	}
+  public CassandraAnnotationParser(OpenJPAConfiguration conf) {
+    super(conf);
+  }
 
-	@Override
-	protected void parseClassMappingAnnotations(ClassMetaData meta) {
+  @Override
+  protected void parseClassMappingAnnotations(ClassMetaData meta) {
 
-		CassandraClassMetaData cm = (CassandraClassMetaData) meta;
-		Class<?> cls = cm.getDescribedType();
+    CassandraClassMetaData cm = (CassandraClassMetaData) meta;
+    Class<?> cls = cm.getDescribedType();
 
-		ClassMapping mapped = null;
+    ClassMapping mapped = null;
 
-		for (Annotation anno : cls.getDeclaredAnnotations()) {
-			mapped = mapping.get(anno.annotationType());
-			if (mapped == null) {
-				continue;
-			}
+    for (Annotation anno : cls.getDeclaredAnnotations()) {
+      mapped = mapping.get(anno.annotationType());
+      if (mapped == null) {
+        continue;
+      }
 
-			switch (mapped) {
+      switch (mapped) {
 
-			case DISCRIMINATOR:
-				handleDiscrimiantor(cm, (DiscriminatorValue) anno);
-				break;
+      case DISCRIMINATOR:
+        handleDiscrimiantor(cm, (DiscriminatorValue) anno);
+        break;
 
-			case INHERITANCE:
-				handleInheritance(cm, (Inheritance) anno);
-			}
+      case INHERITANCE:
+        handleInheritance(cm, (Inheritance) anno);
+        break;
 
-		}
-	}
+      case COLUMNFAMILY:
+        handleColumnFamily(cm, (ColumnFamily) anno);
+        break;
+      }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.openjpa.persistence.AnnotationPersistenceMetaDataParser#
-	 * parseMemberMappingAnnotations(org.apache.openjpa.meta.FieldMetaData)
-	 */
-	@Override
-	protected void parseMemberMappingAnnotations(FieldMetaData fmd) {
+    }
+  }
 
-		CassandraFieldMetaData cassField = (CassandraFieldMetaData) fmd;
-		
-		AnnotatedElement el = (AnnotatedElement) getRepository()
-				.getMetaDataFactory().getDefaults().getBackingMember(fmd);
+  /*
+   * (non-Javadoc)
+   * 
+   * @see org.apache.openjpa.persistence.AnnotationPersistenceMetaDataParser#
+   * parseMemberMappingAnnotations(org.apache.openjpa.meta.FieldMetaData)
+   */
+  @Override
+  protected void parseMemberMappingAnnotations(FieldMetaData fmd) {
 
-		ClassMapping mapped = null;
+    CassandraFieldMetaData cassField = (CassandraFieldMetaData) fmd;
 
-		for (Annotation annotation : el.getDeclaredAnnotations()) {
-			mapped = mapping.get(annotation.annotationType());
+    AnnotatedElement el = (AnnotatedElement) getRepository()
+        .getMetaDataFactory().getDefaults().getBackingMember(fmd);
 
-			if (mapped == null) {
-				continue;
-			}
+    ClassMapping mapped = null;
 
-			switch (mapped) {
+    for (Annotation annotation : el.getDeclaredAnnotations()) {
+      mapped = mapping.get(annotation.annotationType());
 
-			case INDEX:
-				handleIndex(cassField, (Index) annotation);
-				break;
-			}
+      if (mapped == null) {
+        continue;
+      }
 
-		}
+      switch (mapped) {
 
-	}
+      case INDEX:
+        handleIndex(cassField, (Index) annotation);
+        break;
+      }
 
-	/**
-	 * Parse the cassandra index expression
-	 * 
-	 * @param fmd
-	 * @param index
-	 */
-	private void handleIndex(CassandraFieldMetaData fmd, Index index) {
+    }
 
-		String orderClause = index.value();
+  }
 
-		IndexDefinitions defs = (IndexDefinitions) fmd
-				.getObjectExtension(IndexDefinitions.EXT_NAME);
+  /**
+   * Parse the cassandra index expression
+   * 
+   * @param fmd
+   * @param index
+   */
+  private void handleIndex(CassandraFieldMetaData fmd, Index index) {
 
-		if (defs == null) {
-			defs = new IndexDefinitions();
-		}
+    String orderClause = index.value();
 
-		defs.add(orderClause, fmd);
+    IndexDefinitions defs = (IndexDefinitions) fmd
+        .getObjectExtension(IndexDefinitions.EXT_NAME);
 
-	}
+    if (defs == null) {
+      defs = new IndexDefinitions();
+    }
 
-	/**
-	 * Parse the cassandra discriminator
-	 * 
-	 * @param fmd
-	 * @param index
-	 */
-	private void handleDiscrimiantor(CassandraClassMetaData cass,
-			DiscriminatorValue discriminator) {
-		cass.setDiscriminatorColumn(discriminator.value());
-	}
+    defs.add(orderClause, fmd);
 
-	/**
-	 * Parse the cassandra index expression
-	 * 
-	 * @param fmd
-	 * @param index
-	 */
-	private void handleInheritance(CassandraClassMetaData cass,
-			Inheritance inheritance) {
+  }
 
-		if (inheritance.strategy() != InheritanceType.SINGLE_TABLE) {
-			throw new MetaDataException(
-					"Only single table inheritance is supported");
-		}
+  /**
+   * Parse the cassandra discriminator
+   * 
+   * @param fmd
+   * @param index
+   */
+  private void handleDiscrimiantor(CassandraClassMetaData cass,
+      DiscriminatorValue discriminator) {
+    cass.setDiscriminatorColumn(discriminator.value());
+  }
 
-	}
+  /**
+   * Parse the cassandra index expression
+   * 
+   * @param fmd
+   * @param index
+   */
+  private void handleInheritance(CassandraClassMetaData cass,
+      Inheritance inheritance) {
 
-	private enum ClassMapping {
-		INDEX, DISCRIMINATOR, INHERITANCE;
-	}
+    if (inheritance.strategy() != InheritanceType.SINGLE_TABLE) {
+      throw new MetaDataException("Only single table inheritance is supported");
+    }
+
+  }
+
+  /**
+   * 
+   * @param cass
+   * @param inheritance
+   */
+  private void handleColumnFamily(CassandraClassMetaData cass, ColumnFamily cf) {
+
+    String name = cf.value();
+
+    if (name == null) {
+      throw new MetaDataException(
+          "You must specify a name in the column family");
+    }
+
+    cass.setColumnFamily(name);
+
+  }
+
+  private enum ClassMapping {
+    INDEX, DISCRIMINATOR, INHERITANCE, COLUMNFAMILY;
+  }
 }

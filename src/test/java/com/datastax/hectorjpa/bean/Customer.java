@@ -10,17 +10,17 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
-import javax.persistence.Table;
 
 import org.apache.openjpa.persistence.Persistent;
+
+import com.datastax.hectorjpa.annotation.ColumnFamily;
 
 /**
  * @author Todd Nine
  * 
  */
 @Entity
-@Table(name = "CustomerColumnFamily")
+@ColumnFamily("CustomerColumnFamily")
 public class Customer extends AbstractEntity {
 
   @Persistent

@@ -6,9 +6,11 @@ package com.datastax.hectorjpa.bean;
 import java.util.Date;
 
 import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.MappedSuperclass;
 
 import org.apache.openjpa.persistence.Persistent;
+
+import com.datastax.hectorjpa.annotation.ColumnFamily;
 
 /**
  * Abstract class common to all sms messages
@@ -16,8 +18,8 @@ import org.apache.openjpa.persistence.Persistent;
  * @author Todd Nine
  *
  */
-@Entity
-@Table(name="SmsMessageColumnFamily")
+@MappedSuperclass
+@ColumnFamily("SmsMessageColumnFamily")
 public abstract class SmsMessage extends AbstractEntity {
 
 	@Persistent

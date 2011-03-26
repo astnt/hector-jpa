@@ -32,6 +32,9 @@
 			<property name="openjpa.BrokerFactory" value="abstractstore" />
 			<property name="openjpa.abstractstore.AbstractStoreManager"
 				value="com.datastax.hectorjpa.store.CassandraStoreManager" />
+			<property name="openjpa.MetaDataRepository"
+				value="com.datastax.hectorjpa.store.CassandraMetaDataRepository" />
+
 			<property name="openjpa.Optimistic" value="false" />
 			<property name="openjpa.LockManager" value="none" />
 			<property name="openjpa.ConnectionURL" value="localhost:9161" />
