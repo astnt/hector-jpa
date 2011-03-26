@@ -7,7 +7,8 @@ import org.apache.openjpa.persistence.AnnotationPersistenceMetaDataParser;
 import org.apache.openjpa.persistence.PersistenceMetaDataFactory;
 
 /**
- * Meta Data factory for cassandra specific meta data
+ * Meta Data factory for Cassandra specific meta data
+ * 
  * @author Todd Nine
  *
  */

@@ -3,7 +3,6 @@ package com.datastax.hectorjpa;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -139,6 +138,11 @@ public class CassandraTestBase {
     cfDefList.add(new CfDef("TestKeyspace", "SaleColumnFamily")
         .setComparator_type(BytesType.class.getSimpleName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+    
+    cfDefList.add(new CfDef("TestKeyspace", "SmsMessageColumnFamily")
+    .setComparator_type(BytesType.class.getSimpleName())
+    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+
 
     // collection indexing
     cfDefList.add(new CfDef("TestKeyspace", AbstractCollectionField.CF_NAME)

@@ -128,9 +128,22 @@ public class MappingUtils {
    * @param clazz
    * @return
    */
-  public String getColumnFamily(Class<?> clazz) {
-    return clazz.getAnnotation(Table.class) != null ? clazz.getAnnotation(
-        Table.class).name() : clazz.getSimpleName();
+  public String getColumnFamily(CassandraClassMetaData metaData) {
+    
+    String name = metaData.getColumnFamily();
+    
+    if(name != null){
+      return name;
+    }
+    
+    CassandraClassMetaData parent = (CassandraClassMetaData) metaData.getPCSuperclassMetaData();
+    
+    if(parent != null){
+      return getColumnFamily(parent);
+    }
+    
+    throw new MetaDataException(String.format("You have not defined a column family for the entity %s", metaData.getDescribedType()));
+    
   }
 
   /**

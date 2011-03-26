@@ -22,6 +22,7 @@ import org.apache.openjpa.util.MetaDataException;
 import org.apache.openjpa.util.Proxy;
 
 import com.datastax.hectorjpa.meta.Field;
+import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
@@ -71,7 +72,7 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
 
     this.name = fmd.getName();
 
-    ClassMetaData elementClassMeta = fmd.getElement().getDeclaredTypeMetaData();
+    CassandraClassMetaData elementClassMeta = (CassandraClassMetaData) fmd.getElement().getDeclaredTypeMetaData();
     
     if(elementClassMeta == null){
       throw new MetaDataException(String.format("You defined type %s in a collection, but it is not a persistable entity", fmd.getElement().getDeclaredType()));
@@ -87,8 +88,7 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
 
     // write our column family name of the owning side to our rowkey for
     // scanning
-    String columnFamilyName = mappingUtils.getColumnFamily(fmd
-        .getDeclaringType());
+    String columnFamilyName = mappingUtils.getColumnFamily(elementClassMeta);
 
     entityName = StringSerializer.get().toBytes(columnFamilyName);
   }
@@ -184,8 +184,9 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
    * Read this field from the data store from the queryresult
    * @param stateManager
    * @param result
+   * @return true if this field had values
    */
-  public abstract void readField(OpenJPAStateManager stateManager,   QueryResult<ColumnSlice<DynamicComposite, byte[]>> result);
+  public abstract boolean readField(OpenJPAStateManager stateManager,   QueryResult<ColumnSlice<DynamicComposite, byte[]>> result);
   
   
   /**

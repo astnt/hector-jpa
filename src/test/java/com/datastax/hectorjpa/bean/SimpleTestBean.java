@@ -5,10 +5,11 @@ import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.Table;
+
+import com.datastax.hectorjpa.annotation.ColumnFamily;
 
 @Entity
-@Table(name="SimpleTestBeanColumnFamily")
+@ColumnFamily("SimpleTestBeanColumnFamily")
 public class SimpleTestBean implements Serializable {
   
   private long id;

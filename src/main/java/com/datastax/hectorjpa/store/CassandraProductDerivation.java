@@ -12,56 +12,67 @@ import org.apache.openjpa.lib.conf.Configuration;
 import org.apache.openjpa.persistence.PersistenceProductDerivation;
 
 /**
- * Defines the derivations that the cassandra plugin uses.  Mostly annotation based
- * additions for tracking indexing ability
+ * Defines the derivations that the cassandra plugin uses. Mostly annotation
+ * based additions for tracking indexing ability
  * 
  * @author Todd Nine
- *
+ * 
  */
 public class CassandraProductDerivation extends AbstractProductDerivation
-    implements OpenJPAProductDerivation {
+		implements OpenJPAProductDerivation {
 
-  /* (non-Javadoc)
-   * @see org.apache.openjpa.lib.conf.ProductDerivation#getType()
-   */
-  @Override
-  public int getType() {
-    return TYPE_SPEC_STORE;
-  }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.openjpa.lib.conf.ProductDerivation#getType()
+	 */
+	@Override
+	public int getType() {
+		return TYPE_SPEC_STORE;
+	}
 
-  /* (non-Javadoc)
-   * @see org.apache.openjpa.conf.OpenJPAProductDerivation#putBrokerFactoryAliases(java.util.Map)
-   */
-  @Override
-  public void putBrokerFactoryAliases(Map aliases) {
-  }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.apache.openjpa.conf.OpenJPAProductDerivation#putBrokerFactoryAliases
+	 * (java.util.Map)
+	 */
+	@Override
+	public void putBrokerFactoryAliases(Map aliases) {
+	}
 
-  /* (non-Javadoc)
-   * @see org.apache.openjpa.lib.conf.AbstractProductDerivation#beforeConfigurationLoad(org.apache.openjpa.lib.conf.Configuration)
-   */
-  @Override
-  public boolean beforeConfigurationLoad(Configuration c) {
-    
-    //do nothing, may be an enhancer running
-    if(!(c instanceof CassandraStoreConfiguration)){
-      return false;
-    }
-    
-    CassandraStoreConfiguration conf = (CassandraStoreConfiguration) c;
-    
-    Specification jpa = PersistenceProductDerivation.SPEC_JPA;
-    Specification ejb = PersistenceProductDerivation.ALIAS_EJB;
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.apache.openjpa.lib.conf.AbstractProductDerivation#beforeConfigurationLoad
+	 * (org.apache.openjpa.lib.conf.Configuration)
+	 */
+	@Override
+	public boolean beforeConfigurationLoad(Configuration c) {
 
-    //wire up our meta data factory
-    conf.metaFactoryPlugin.setAlias(ejb.getName(),
-        CassandraMetaDataFactory.class.getName());
-    conf.metaFactoryPlugin.setAlias(jpa.getName(),
-        CassandraMetaDataFactory.class.getName());
-    
-    return true;
+		// do nothing, may be an enhancer running
+		if (!(c instanceof CassandraStoreConfiguration)) {
+			return false;
+		}
 
-  }
-  
-  
+		CassandraStoreConfiguration conf = (CassandraStoreConfiguration) c;
+
+		Specification jpa = PersistenceProductDerivation.SPEC_JPA;
+		Specification ejb = PersistenceProductDerivation.ALIAS_EJB;
+
+		// wire up our meta data factory
+		conf.metaFactoryPlugin.setAlias(ejb.getName(),
+				CassandraMetaDataFactory.class.getName());
+		conf.metaFactoryPlugin.setAlias(jpa.getName(),
+				CassandraMetaDataFactory.class.getName());
+
+	
+//		conf.metaRepositoryPlugin.setAlias("default", CassandraMetaDataFactory.class.getName());
+	
+		return true;
+
+	}
 
 }

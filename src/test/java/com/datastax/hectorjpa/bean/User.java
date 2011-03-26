@@ -11,11 +11,11 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
-import javax.persistence.Table;
 
-import org.apache.openjpa.persistence.FetchAttribute;
 import org.apache.openjpa.persistence.Persistent;
 import org.apache.openjpa.persistence.jdbc.Index;
+
+import com.datastax.hectorjpa.annotation.ColumnFamily;
 
 /**
  * Generic user class with auto generated entity
@@ -24,7 +24,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
  * 
  */
 @Entity
-@Table(name = "UserColumnFamily")
+@ColumnFamily("UserColumnFamily")
 public class User extends AbstractEntity {
 
 

@@ -107,7 +107,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
    * @param stateManager
    * @param result
    */
-  public void readField(OpenJPAStateManager stateManager,
+  public boolean readField(OpenJPAStateManager stateManager,
       QueryResult<ColumnSlice<DynamicComposite, byte[]>> result) {
 
     if ( log.isDebugEnabled() ) {
@@ -141,6 +141,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
 
     stateManager.storeObject(fieldId, collection);
 
+    return result.get().getColumns().size() > 0;
   }
 
   /**

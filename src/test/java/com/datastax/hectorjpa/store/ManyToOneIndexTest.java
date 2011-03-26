@@ -1,14 +1,10 @@
 package com.datastax.hectorjpa.store;
 
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.datastax.hectorjpa.ManagedEntityTestBase;

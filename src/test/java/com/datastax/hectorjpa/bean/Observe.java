@@ -8,9 +8,10 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
-import javax.persistence.Table;
 
 import org.apache.openjpa.persistence.Persistent;
+
+import com.datastax.hectorjpa.annotation.ColumnFamily;
 
 /**
  * Represents the relationship between two users. Essentially a link on the one
@@ -26,7 +27,7 @@ import org.apache.openjpa.persistence.Persistent;
  * 
  */
 // @IdClass(Follow.FollowId.class)
-@Table(name = "ObserveColumnFamily")
+@ColumnFamily("ObserveColumnFamily")
 @Entity
 public class Observe extends AbstractEntity{
 
