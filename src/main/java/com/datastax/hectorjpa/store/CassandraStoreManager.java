@@ -12,10 +12,16 @@ import org.apache.openjpa.conf.OpenJPAConfiguration;
 import org.apache.openjpa.kernel.FetchConfiguration;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.PCState;
+import org.apache.openjpa.kernel.QueryLanguages;
+import org.apache.openjpa.kernel.StoreQuery;
+import org.apache.openjpa.kernel.exps.ExpressionParser;
 import org.apache.openjpa.lib.rop.ResultObjectProvider;
 import org.apache.openjpa.meta.ClassMetaData;
+import org.apache.openjpa.util.UnsupportedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.hectorjpa.query.CassandraStoreQuery;
 
 public class CassandraStoreManager extends AbstractStoreManager {
 
@@ -64,6 +70,17 @@ public class CassandraStoreManager extends AbstractStoreManager {
 	}
 
 	@Override
+  public StoreQuery newQuery(String language) {
+	  ExpressionParser ep = QueryLanguages.parserForLanguage(language);
+	  
+	  if(ep == null){
+	    throw new  UnsupportedException(language);
+	  }
+	  
+    return new CassandraStoreQuery(ep);
+  }
+
+  @Override
 	public Class<?> getManagedType(Object oid) {
 		return cassandraStore.getDataStoreId(oid, this.getContext() );
 	}

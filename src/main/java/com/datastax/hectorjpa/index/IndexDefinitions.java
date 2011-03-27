@@ -40,7 +40,8 @@ public class IndexDefinitions {
   }
   
   /**
-   * Add a new index definition for the given field with the order expression
+   * Add a new index definition for the given field with the order expression. This is mostly
+   * copied from the default annotation scanner
    * @param orderExpression
    * @param field
    */
