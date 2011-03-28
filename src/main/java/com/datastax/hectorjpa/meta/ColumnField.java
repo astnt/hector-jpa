@@ -29,13 +29,10 @@ public class ColumnField<V> extends Field<V> {
 	protected String name;
 	protected boolean indexed;
 	protected boolean ordered;
-	protected IndexDefinitions indexDefs;
 
 	public ColumnField(FieldMetaData fmd) {
 		this(fmd.getIndex(), fmd.getName(), false, fmd.isUsedInOrderBy(),
 				MappingUtils.getSerializer(fmd.getTypeCode()));
-
-		indexDefs = ((CassandraFieldMetaData) fmd).getIndexDefinitions();
 	}
 
 	public ColumnField(int fieldId, String fieldName, boolean indexed,
@@ -84,16 +81,7 @@ public class ColumnField<V> extends Field<V> {
 		mutator.addInsertion(key, cfName, new HColumnImpl(name, value, clock,
 				StringSerializer.get(), serializer));
 
-		/**
-		 * We have indexes, write them
-		 */
-		if (indexDefs != null) {
-			for (IndexDefinition index : indexDefs.getDefinitions()) {
-				index.writeIndex(stateManager, value, serializer, mutator,
-						clock);
-			}
-
-		}
+	
 	}
 
 	/**

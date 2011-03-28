@@ -12,6 +12,7 @@ import org.apache.openjpa.persistence.Persistent;
 
 import com.datastax.hectorjpa.annotation.ColumnFamily;
 import com.datastax.hectorjpa.annotation.Index;
+import com.datastax.hectorjpa.annotation.Indexes;
 
 /**
  * A class to simulate customer purchases.
@@ -20,17 +21,19 @@ import com.datastax.hectorjpa.annotation.Index;
  */
 @Entity
 @ColumnFamily("SaleColumnFamily")
+@Indexes({
+@Index(fields="sellDate, itemName", order="itemName"),
+@Index(fields="sellDate, itemName", order="sellDate desc")
+})
 public class Sale extends AbstractEntity {
 
   @Persistent
   //Search on item name, sort by sellDate
-  @Index("sellDate")
   private String itemName;
   
   
   @Persistent
   //search on sellDate order by item name
-  @Index("itemName")
   private Date sellDate;
 
   @ManyToOne

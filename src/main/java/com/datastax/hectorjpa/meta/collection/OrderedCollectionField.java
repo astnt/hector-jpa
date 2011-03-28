@@ -25,7 +25,7 @@ import org.apache.openjpa.util.Proxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.hectorjpa.meta.AbstractOrderField;
+import com.datastax.hectorjpa.meta.AbstractIndexField;
 import com.datastax.hectorjpa.meta.CollectionOrderField;
 import com.datastax.hectorjpa.proxy.ProxyUtils;
 import com.datastax.hectorjpa.store.MappingUtils;
@@ -46,14 +46,14 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
   // represents the end "id" in the key
   private static final byte[] idMarker = StringSerializer.get().toBytes("i");
 
-  private AbstractOrderField[] orderBy;
+  private AbstractIndexField[] orderBy;
   
 
   public OrderedCollectionField(FieldMetaData fmd, MappingUtils mappingUtils) {
     super(fmd, mappingUtils);
 
     Order[] orders = fmd.getOrders();
-    orderBy = new AbstractOrderField[orders.length];
+    orderBy = new AbstractIndexField[orders.length];
 
     // create all our order by clauses
     for (int i = 0; i < orders.length; i++) {
@@ -226,7 +226,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       idComposite.add(currentId, idSerizlizer);
 
       // now construct the composite with order by the ids at the end.
-      for (AbstractOrderField order : orderBy) {
+      for (AbstractIndexField order : orderBy) {
         if ( log.isDebugEnabled() ) {
           log.debug("deleting ordered field {}", order);
         }
@@ -293,7 +293,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       idComposite.add(currentId, idSerizlizer);
 
       // now construct the composite with order by the ids at the end.
-      for (AbstractOrderField order : orderBy) {
+      for (AbstractIndexField order : orderBy) {
         
         field = order.getValue(stateManager, current);
         
@@ -373,7 +373,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       idComposite.add(currentId, idSerizlizer);
 
       // now construct the composite with order by the ids at the end.
-      for (AbstractOrderField order : orderBy) {
+      for (AbstractIndexField order : orderBy) {
         
         field = order.getValue(stateManager, current);
         

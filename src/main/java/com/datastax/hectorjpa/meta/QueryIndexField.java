@@ -1,10 +1,7 @@
 package com.datastax.hectorjpa.meta;
 
-import org.apache.openjpa.kernel.exps.Value;
 import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
-import org.apache.openjpa.meta.Order;
-import org.apache.openjpa.meta.ValueMetaData;
 
 /**
  * Inner class to encapsulate order field logic and meta data
@@ -12,18 +9,18 @@ import org.apache.openjpa.meta.ValueMetaData;
  * @author Todd Nine
  * 
  */
-public class CollectionOrderField extends AbstractOrderField{
+public class QueryIndexField  extends AbstractIndexField {
 
-
-  public CollectionOrderField(Order order, FieldMetaData fmd) {
-    super(order, fmd);
+  public QueryIndexField(FieldMetaData fmd) {
+    super(fmd, fmd.getName());
   }
 
   @Override
   protected ClassMetaData getContainerClassMetaData(FieldMetaData fmd) {
-    return fmd.getElement().getTypeMetaData();
+    return fmd.getDefiningMetaData();
   }
 
- 
+  
+
  
 }

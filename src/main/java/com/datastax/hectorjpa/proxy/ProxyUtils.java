@@ -122,7 +122,7 @@ public class ProxyUtils {
       }
     }
 
-    return field;
+    return null;
 
   }
 }

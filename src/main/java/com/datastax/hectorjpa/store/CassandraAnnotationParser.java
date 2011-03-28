@@ -4,7 +4,6 @@
 package com.datastax.hectorjpa.store;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,12 +13,12 @@ import javax.persistence.InheritanceType;
 
 import org.apache.openjpa.conf.OpenJPAConfiguration;
 import org.apache.openjpa.meta.ClassMetaData;
-import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.persistence.AnnotationPersistenceMetaDataParser;
 import org.apache.openjpa.util.MetaDataException;
 
 import com.datastax.hectorjpa.annotation.ColumnFamily;
 import com.datastax.hectorjpa.annotation.Index;
+import com.datastax.hectorjpa.annotation.Indexes;
 import com.datastax.hectorjpa.index.IndexDefinitions;
 
 /**
@@ -35,6 +34,7 @@ public class CassandraAnnotationParser extends
 
   static {
     mapping.put(Index.class, ClassMapping.INDEX);
+    mapping.put(Indexes.class, ClassMapping.INDEXES);
     mapping.put(DiscriminatorValue.class, ClassMapping.DISCRIMINATOR);
     mapping.put(Inheritance.class, ClassMapping.INHERITANCE);
     mapping.put(ColumnFamily.class, ClassMapping.COLUMNFAMILY);
@@ -71,42 +71,68 @@ public class CassandraAnnotationParser extends
       case COLUMNFAMILY:
         handleColumnFamily(cm, (ColumnFamily) anno);
         break;
+
+      case INDEX:
+        handleIndex(cm, (Index) anno);
+        break;
+
+      case INDEXES:
+        handleIndexes(cm, (Indexes) anno);
+        break;
+
       }
 
     }
   }
 
-  /*
-   * (non-Javadoc)
+  // /*
+  // * (non-Javadoc)
+  // *
+  // * @see org.apache.openjpa.persistence.AnnotationPersistenceMetaDataParser#
+  // * parseMemberMappingAnnotations(org.apache.openjpa.meta.FieldMetaData)
+  // */
+  // @Override
+  // protected void parseMemberMappingAnnotations(FieldMetaData fmd) {
+  //
+  // CassandraFieldMetaData cassField = (CassandraFieldMetaData) fmd;
+  //
+  // AnnotatedElement el = (AnnotatedElement) getRepository()
+  // .getMetaDataFactory().getDefaults().getBackingMember(fmd);
+  //
+  // ClassMapping mapped = null;
+  //
+  // for (Annotation annotation : el.getDeclaredAnnotations()) {
+  // mapped = mapping.get(annotation.annotationType());
+  //
+  // if (mapped == null) {
+  // continue;
+  // }
+  //
+  // switch (mapped) {
+  //
+  // }
+  //
+  //
+  // }
+  //
+  // }
+
+  /**
+   * Parse the cassandra index expression
    * 
-   * @see org.apache.openjpa.persistence.AnnotationPersistenceMetaDataParser#
-   * parseMemberMappingAnnotations(org.apache.openjpa.meta.FieldMetaData)
+   * @param fmd
+   * @param index
    */
-  @Override
-  protected void parseMemberMappingAnnotations(FieldMetaData fmd) {
+  private void handleIndex(CassandraClassMetaData cass, Index index) {
 
-    CassandraFieldMetaData cassField = (CassandraFieldMetaData) fmd;
+    IndexDefinitions defs = cass.getIndexDefinitions();
 
-    AnnotatedElement el = (AnnotatedElement) getRepository()
-        .getMetaDataFactory().getDefaults().getBackingMember(fmd);
-
-    ClassMapping mapped = null;
-
-    for (Annotation annotation : el.getDeclaredAnnotations()) {
-      mapped = mapping.get(annotation.annotationType());
-
-      if (mapped == null) {
-        continue;
-      }
-
-      switch (mapped) {
-
-      case INDEX:
-        handleIndex(cassField, (Index) annotation);
-        break;
-      }
-
+    if (defs == null) {
+      defs = new IndexDefinitions();
+      cass.setIndexDefinitions(defs);
     }
+
+    defs.add(index.fields(), index.order(), cass);
 
   }
 
@@ -116,18 +142,11 @@ public class CassandraAnnotationParser extends
    * @param fmd
    * @param index
    */
-  private void handleIndex(CassandraFieldMetaData fmd, Index index) {
+  private void handleIndexes(CassandraClassMetaData cass, Indexes index) {
 
-    String orderClause = index.value();
-
-    IndexDefinitions defs = (IndexDefinitions) fmd
-        .getObjectExtension(IndexDefinitions.EXT_NAME);
-
-    if (defs == null) {
-      defs = new IndexDefinitions();
+    for (Index current : index.value()) {
+      handleIndex(cass, current);
     }
-
-    defs.add(orderClause, fmd);
 
   }
 
@@ -176,6 +195,6 @@ public class CassandraAnnotationParser extends
   }
 
   private enum ClassMapping {
-    INDEX, DISCRIMINATOR, INHERITANCE, COLUMNFAMILY;
+    INDEX, INDEXES, DISCRIMINATOR, INHERITANCE, COLUMNFAMILY;
   }
 }

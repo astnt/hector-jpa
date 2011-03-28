@@ -42,19 +42,15 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
   protected ResultObjectProvider executeQuery(Executor ex, ClassMetaData base,
       ClassMetaData[] types, boolean subclasses, ExpressionFactory[] facts,
       QueryExpressions[] parsed, Object[] params, Range range) {
+    
+//    parse[0]
+    
     // TODO Auto-generated method stub
     return super.executeQuery(ex, base, types, subclasses, facts, parsed,
         params, range);
   }
 
-  @Override
-  protected String[] getDataStoreActions(ClassMetaData base,
-      ClassMetaData[] types, boolean subclasses, ExpressionFactory[] facts,
-      QueryExpressions[] parsed, Object[] params, Range range) {
-    // TODO Auto-generated method stub
-    return super.getDataStoreActions(base, types, subclasses, facts, parsed,
-        params, range);
-  }
+
 
   @Override
   protected ExpressionFactory getExpressionFactory(ClassMetaData type) {

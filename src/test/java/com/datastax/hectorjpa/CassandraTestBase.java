@@ -22,6 +22,7 @@ import org.apache.thrift.transport.TTransportException;
 import org.junit.BeforeClass;
 
 import com.datastax.hectorjpa.index.IndexDefinition;
+import com.datastax.hectorjpa.meta.IndexOperation;
 import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 
 public class CassandraTestBase {
@@ -150,7 +151,7 @@ public class CassandraTestBase {
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
     // search indexing
-    cfDefList.add(new CfDef("TestKeyspace", IndexDefinition.CF_NAME)
+    cfDefList.add(new CfDef("TestKeyspace", IndexOperation.CF_NAME)
         .setComparator_type(DynamicCompositeType.class.getName())
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
