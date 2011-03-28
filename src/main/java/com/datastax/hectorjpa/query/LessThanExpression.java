@@ -29,10 +29,4 @@ public class LessThanExpression extends EqualityExpression {
   }
 
   
-  @Override
-  public void acceptVisit(ExpressionVisitor visitor) {
-    // TODO Auto-generated method stub
-    
-  }
-
 }

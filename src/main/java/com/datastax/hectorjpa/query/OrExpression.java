@@ -33,11 +33,6 @@ public class OrExpression extends BooleanExpression {
     super(left, right);
   }
 
-  
-  @Override
-  public void acceptVisit(ExpressionVisitor visitor) {
-    // TODO Auto-generated method stub
-    
-  }
+
 
 }

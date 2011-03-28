@@ -50,8 +50,12 @@ public class IndexOperation {
   private QueryIndexField[] fields;
 
   private QueryOrderField[] orders;
+  
+  private IndexDefinition indexDefinition;
 
   public IndexOperation(CassandraClassMetaData metaData, IndexDefinition indexDef) {
+    this.indexDefinition = indexDef;
+    
     String[] fieldNames = indexDef.getIndexedFields();
     IndexOrder[] indexOrders = indexDef.getOrderFields();
     
@@ -154,5 +158,12 @@ public class IndexOperation {
           compositeSerializer, clock);
 
     }
+  }
+
+  /**
+   * @return the indexDefinition
+   */
+  public IndexDefinition getIndexDefinition() {
+    return indexDefinition;
   }
 }

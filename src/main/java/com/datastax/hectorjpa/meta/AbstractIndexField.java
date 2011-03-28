@@ -141,6 +141,28 @@ public abstract class AbstractIndexField {
    */
   protected abstract ClassMetaData getContainerClassMetaData(FieldMetaData fmd);
 
+  
+  /**
+   * @return the serializer
+   */
+  public Serializer<Object> getSerializer() {
+    return serializer;
+  }
+
+  /**
+   * @return the targetFieldIndex
+   */
+  public int getTargetFieldIndex() {
+    return targetFieldIndex;
+  }
+
+  /**
+   * @return the targetFieldName
+   */
+  public String getTargetFieldName() {
+    return targetFieldName;
+  }
+
   /**
    * Prints information about this field
    */

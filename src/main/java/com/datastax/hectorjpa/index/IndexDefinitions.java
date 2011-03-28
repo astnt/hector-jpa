@@ -6,7 +6,6 @@ package com.datastax.hectorjpa.index;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
@@ -82,9 +81,10 @@ public class IndexDefinitions {
       fields[i] = fields[i].trim();
     }
 
-    IndexDefinition indexDef = new IndexDefinition(fields, orders);
+    IndexDefinition indexDef = new IndexDefinition(metaData, fields, orders);
 
     indexDefs.add(indexDef);
   }
+  
 
 }

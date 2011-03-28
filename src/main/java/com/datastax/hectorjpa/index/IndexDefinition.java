@@ -1,5 +1,7 @@
 package com.datastax.hectorjpa.index;
 
+import com.datastax.hectorjpa.store.CassandraClassMetaData;
+
 /**
  * A meta holder for index definitions
  * 
@@ -11,11 +13,13 @@ public class IndexDefinition {
   private String[] indexedFields;
   
   private IndexOrder[] orderFields;
+  
+  private CassandraClassMetaData metaData;
 
+   
   
-  
-  public IndexDefinition(String[] indexedFields, IndexOrder[] orderFields) {
-    super();
+  public IndexDefinition(CassandraClassMetaData metaData, String[] indexedFields, IndexOrder[] orderFields) {
+    this.metaData = metaData;
     this.indexedFields = indexedFields;
     this.orderFields = orderFields;
   }
@@ -27,12 +31,7 @@ public class IndexDefinition {
     return indexedFields;
   }
 
-  /**
-   * @param indexedFields the indexedFields to set
-   */
-  public void setIndexedFields(String[] indexedFields) {
-    this.indexedFields = indexedFields;
-  }
+
 
   /**
    * @return the orderFields
@@ -41,11 +40,13 @@ public class IndexDefinition {
     return orderFields;
   }
 
+
+
   /**
-   * @param orderFields the orderFields to set
+   * @return the metaData
    */
-  public void setOrderFields(IndexOrder[] orderFields) {
-    this.orderFields = orderFields;
+  public CassandraClassMetaData getMetaData() {
+    return metaData;
   }
   
   

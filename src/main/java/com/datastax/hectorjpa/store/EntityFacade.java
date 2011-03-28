@@ -370,6 +370,15 @@ public class EntityFacade implements Serializable {
     }
 
   }
+  
+  
+
+  /**
+   * @return the indexOps
+   */
+  public IndexOperation[] getIndexOps() {
+    return indexOps;
+  }
 
   @Override
   public String toString() {

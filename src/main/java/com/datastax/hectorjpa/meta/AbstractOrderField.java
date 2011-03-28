@@ -1,6 +1,5 @@
 package com.datastax.hectorjpa.meta;
 
-import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.meta.Order;
 
@@ -17,7 +16,6 @@ public abstract class AbstractOrderField extends AbstractIndexField {
   public AbstractOrderField(Order order, FieldMetaData fmd) {
     super(fmd, order.getName());
     this.order = order;
-    
     
   }
  

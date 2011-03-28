@@ -3,12 +3,17 @@
  */
 package com.datastax.hectorjpa.query;
 
+import java.util.Set;
+
 import org.apache.openjpa.kernel.ExpressionStoreQuery;
 import org.apache.openjpa.kernel.exps.ExpressionFactory;
 import org.apache.openjpa.kernel.exps.ExpressionParser;
+import org.apache.openjpa.kernel.exps.ExpressionVisitor;
 import org.apache.openjpa.kernel.exps.QueryExpressions;
+import org.apache.openjpa.kernel.exps.Value;
 import org.apache.openjpa.lib.rop.ResultObjectProvider;
 import org.apache.openjpa.meta.ClassMetaData;
+import org.apache.openjpa.meta.FieldMetaData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,11 +48,23 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
       ClassMetaData[] types, boolean subclasses, ExpressionFactory[] facts,
       QueryExpressions[] parsed, Object[] params, Range range) {
     
+    
+    ResultObjectProvider results = null;
+    
+    IndexSelectorVisitor visitor = new IndexSelectorVisitor();
+    
+    parsed[0].filter.acceptVisit(visitor);
+    
+    Set<FieldMetaData> fields = visitor.getFields();
+    
+    Value[] ordering = parsed[0].ordering;
+    
+    
 //    parse[0]
     
     // TODO Auto-generated method stub
-    return super.executeQuery(ex, base, types, subclasses, facts, parsed,
-        params, range);
+ 
+    return results;
   }
 
 

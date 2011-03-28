@@ -26,11 +26,6 @@ public class OrderExpression extends EqualityExpression {
   public OrderExpression(Value parameter, Value value) {
     super(parameter, value);
   }
-  
-  @Override
-  public void acceptVisit(ExpressionVisitor visitor) {
-    // TODO Auto-generated method stub
-    
-  }
+
 
 }

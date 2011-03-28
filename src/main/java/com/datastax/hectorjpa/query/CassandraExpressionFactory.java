@@ -3,8 +3,12 @@
  */
 package com.datastax.hectorjpa.query;
 
+import java.util.List;
+
+import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.kernel.exps.Expression;
 import org.apache.openjpa.kernel.exps.InMemoryExpressionFactory;
+import org.apache.openjpa.kernel.exps.QueryExpressions;
 import org.apache.openjpa.kernel.exps.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +58,16 @@ public class CassandraExpressionFactory extends InMemoryExpressionFactory {
   @Override
   public Expression or(Expression exp1, Expression exp2) {
     return new OrExpression(exp1, exp2);
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.openjpa.kernel.exps.InMemoryExpressionFactory#order(org.apache.openjpa.kernel.exps.QueryExpressions, java.util.List, org.apache.openjpa.kernel.StoreContext, java.lang.Object[])
+   */
+  @Override
+  public List order(QueryExpressions exps, List matches, StoreContext ctx,
+      Object[] params) {
+    // TODO Auto-generated method stub
+    return super.order(exps, matches, ctx, params);
   }
 
 }

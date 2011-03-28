@@ -29,10 +29,6 @@ public class GreaterThanExpression extends EqualityExpression {
     super(parameter, value);
   }
   
-  @Override
-  public void acceptVisit(ExpressionVisitor visitor) {
-    // TODO Auto-generated method stub
-    
-  }
+
 
 }

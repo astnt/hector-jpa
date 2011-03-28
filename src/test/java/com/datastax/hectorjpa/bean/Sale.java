@@ -23,7 +23,7 @@ import com.datastax.hectorjpa.annotation.Indexes;
 @ColumnFamily("SaleColumnFamily")
 @Indexes({
 @Index(fields="sellDate, itemName", order="itemName"),
-@Index(fields="sellDate, itemName", order="sellDate desc")
+@Index(fields="sellDate, itemName", order="sellDate desc, itemName")
 })
 public class Sale extends AbstractEntity {
 

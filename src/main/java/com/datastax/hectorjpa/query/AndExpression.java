@@ -14,13 +14,8 @@ import org.slf4j.LoggerFactory;
  */
 public class AndExpression extends BooleanExpression {
 
- 
-
-
-
-
-  private static final Logger log = LoggerFactory.getLogger(AndExpression.class);
-  
+  private static final Logger log = LoggerFactory
+      .getLogger(AndExpression.class);
 
   /**
    * 
@@ -31,13 +26,5 @@ public class AndExpression extends BooleanExpression {
     super(left, right);
   }
 
-  
-
-  
-  @Override
-  public void acceptVisit(ExpressionVisitor visitor) {
-    // TODO Auto-generated method stub
-
-  }
-
+ 
 }

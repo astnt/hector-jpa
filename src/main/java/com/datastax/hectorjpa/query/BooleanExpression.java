@@ -17,8 +17,8 @@ public abstract class BooleanExpression implements Expression {
    */
   private static final long serialVersionUID = -1987557421288975311L;
 
-  private Expression left;
-  private Expression right;
+  protected Expression left;
+  protected Expression right;
 
   /**
    * Default constructor for equality operands
@@ -40,8 +40,11 @@ public abstract class BooleanExpression implements Expression {
    */
   @Override
   public void acceptVisit(ExpressionVisitor visitor) {
-    // TODO Auto-generated method stub
-
+    visitor.enter(this);
+    left.acceptVisit(visitor);
+    right.acceptVisit(visitor);
+    visitor.exit(this);
   }
+
 
 }
