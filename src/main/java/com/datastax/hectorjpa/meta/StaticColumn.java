@@ -33,10 +33,8 @@ public class StaticColumn implements ObjectTypeColumnStrategy {
 
 	private static List<String> columns;
 
-	private MappingUtils mappingUtils;
 
-	public StaticColumn(MappingUtils mappingUtils) {
-		this.mappingUtils = mappingUtils;
+	public StaticColumn() {
 		columns = new ArrayList<String>();
 		columns.add(EMPTY_COL);
 	}
@@ -54,7 +52,7 @@ public class StaticColumn implements ObjectTypeColumnStrategy {
 	@Override
 	public String getStoredType(Object rowKey, String cfName, Keyspace keyspace) {
 		
-		SliceQuery<byte[], String, byte[]> query = mappingUtils
+		SliceQuery<byte[], String, byte[]> query = MappingUtils
 				.buildSliceQuery(rowKey, columns, cfName, keyspace);
 
 		QueryResult<ColumnSlice<String, byte[]>> result = query.execute();

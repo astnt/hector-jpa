@@ -16,7 +16,8 @@ import java.lang.annotation.Target;
  *  The only distinguishing feature requiring a new index annotation is a change in ordering.
  *  
  *  <pre>
- *  @Index(fields="email", order="firstname, lastName, lastLoginDate desc")
+ *  @Index(fields="email", order="firstName, lastName, lastLoginDate desc")
+ *  @Index(fields="email, lastLoginDate", order="firstName, lastName")
  *  <pre>
  * 
  * @author Todd Nine

@@ -33,11 +33,8 @@ public class DiscriminatorColumn implements ObjectTypeColumnStrategy {
 
 	private String value;
 
-	private MappingUtils mappingUtils;
 
-	public DiscriminatorColumn(String discriminatorValue,
-			MappingUtils mappingUtils) {
-		this.mappingUtils = mappingUtils;
+	public DiscriminatorColumn(String discriminatorValue) {
 		columns = new ArrayList<String>();
 		columns.add(DISCRIMINAATOR_COL);
 
@@ -57,7 +54,7 @@ public class DiscriminatorColumn implements ObjectTypeColumnStrategy {
 	@Override
 	public String getStoredType(Object rowKey, String cfName, Keyspace keyspace) {
 
-		SliceQuery<byte[], String, byte[]> query = mappingUtils
+		SliceQuery<byte[], String, byte[]> query = MappingUtils
 				.buildSliceQuery(rowKey, columns, cfName, keyspace);
 
 		QueryResult<ColumnSlice<String, byte[]>> result = query.execute();

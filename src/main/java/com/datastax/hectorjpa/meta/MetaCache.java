@@ -8,11 +8,11 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.apache.openjpa.meta.ClassMetaData;
 
+import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexDefinition;
 import com.datastax.hectorjpa.index.IndexOrder;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.EntityFacade;
-import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
  * Cache for holding all meta data
@@ -26,17 +26,14 @@ public class MetaCache {
 
   private final ConcurrentMap<String, CassandraClassMetaData> discriminators = new ConcurrentHashMap<String, CassandraClassMetaData>();
 
-  private final SortedMap<IndexDefinition, IndexOperation> indexDefinitions = new TreeMap<IndexDefinition, IndexOperation>();
-
-  private final MappingUtils mappingUtils;
+  private final SortedMap<IndexDefinition, IndexOperation> indexDefinitions = new TreeMap<IndexDefinition, IndexOperation>(new IndexOpComparator());
 
   /**
    * Create a new meta cache for classes
    * 
-   * @param mappingUtils
    */
-  public MetaCache(MappingUtils mappingUtils) {
-    this.mappingUtils = mappingUtils;
+  public MetaCache() {
+   
   }
 
   /**
@@ -56,7 +53,7 @@ public class MetaCache {
       return facade;
     }
 
-    facade = new EntityFacade(cassMeta, mappingUtils);
+    facade = new EntityFacade(cassMeta);
 
     metaData.putIfAbsent(cassMeta, facade);
 
@@ -100,7 +97,7 @@ public class MetaCache {
    * @return
    */
   public IndexOperation getIndexOperation(CassandraClassMetaData cmd,
-      String[] fields, IndexOrder[] orders) {
+      FieldOrder[] fields, IndexOrder[] orders) {
 
     IndexDefinition temp = new IndexDefinition(cmd, fields, orders);
 
@@ -177,8 +174,8 @@ public class MetaCache {
       }
 
       // our orders matched, now compare fields
-      String[] def1Field = def1.getIndexedFields();
-      String[] def2Field = def2.getIndexedFields();
+      FieldOrder[] def1Field = def1.getIndexedFields();
+      FieldOrder[] def2Field = def2.getIndexedFields();
 
       if (def1Field.length > def2Field.length) {
         return 1;
@@ -202,5 +199,6 @@ public class MetaCache {
     }
 
   }
+  
 
 }

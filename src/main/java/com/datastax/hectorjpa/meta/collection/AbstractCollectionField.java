@@ -15,7 +15,6 @@ import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
-import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.util.ChangeTracker;
 import org.apache.openjpa.util.MetaDataException;
@@ -42,10 +41,9 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
 
   protected static final DynamicCompositeSerializer compositeSerializer = new DynamicCompositeSerializer();
 
-  protected Serializer<Object> idSerizlizer;
+  protected Serializer<Object> idSerializer;
   protected String name;
   protected Class<?> targetClass;
-  protected MappingUtils mappingUtils;
 
   // The name of this entity serialzied as bytes
   protected byte[] entityName;
@@ -59,10 +57,8 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
  
   
 
-  public AbstractCollectionField(FieldMetaData fmd, MappingUtils mappingUtils) {
+  public AbstractCollectionField(FieldMetaData fmd) {
     super(fmd.getIndex());
-
-    this.mappingUtils = mappingUtils;
 
     Class<?> clazz = fmd.getDeclaredType();
 
@@ -78,7 +74,7 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
       throw new MetaDataException(String.format("You defined type %s in a collection, but it is not a persistable entity", fmd.getElement().getDeclaredType()));
     }
     
-    this.idSerizlizer = MappingUtils.getSerializerForPk(elementClassMeta);
+    this.idSerializer = MappingUtils.getSerializerForPk(elementClassMeta);
 
     // set the class of the collection elements
     targetClass = elementClassMeta.getDescribedType();
@@ -88,7 +84,7 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
 
     // write our column family name of the owning side to our rowkey for
     // scanning
-    String columnFamilyName = mappingUtils.getColumnFamily(elementClassMeta);
+    String columnFamilyName = MappingUtils.getColumnFamily(elementClassMeta);
 
     entityName = StringSerializer.get().toBytes(columnFamilyName);
   }
@@ -131,7 +127,7 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
       count = DEFAULT_FETCH_SIZE;
     }
     
-    byte[] rowKey = constructKey(mappingUtils.getKeyBytes(objectId), getDefaultSearchmarker());
+    byte[] rowKey = constructKey(MappingUtils.getKeyBytes(objectId), getDefaultSearchmarker());
     
     SliceQuery<byte[], DynamicComposite, byte[]> query = new ThriftSliceQuery(
         keyspace, BytesArraySerializer.get(), compositeSerializer,

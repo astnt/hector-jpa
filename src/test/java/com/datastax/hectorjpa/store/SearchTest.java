@@ -9,6 +9,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
@@ -57,12 +58,20 @@ public class SearchTest extends ManagedEntityTestBase {
     store.addCustomer(james);
     
     
-    Sale jeansSale = new Sale();
-    jeansSale.setItemName("jeans");
-    jeansSale.setSellDate(new DateTime(2011, 1, 1, 0, 0, 0, 0).toDate());
+    Sale jeansSale1 = new Sale();
+    jeansSale1.setItemName("jeans");
+    jeansSale1.setSellDate(new DateTime(2011, 1, 1, 0, 0, 0, 0).toDate());
     
-    james.addSale(jeansSale);
-    jeansSale.setCustomer(james);
+    james.addSale(jeansSale1);
+    jeansSale1.setCustomer(james);
+    
+    
+    Sale jeansSale2 = new Sale();
+    jeansSale2.setItemName("jeans");
+    jeansSale2.setSellDate(new DateTime(2011, 1, 4, 0, 0, 0, 0).toDate());
+    
+    james.addSale(jeansSale2);
+    jeansSale2.setCustomer(james);
     
     
     Sale shirtSale = new Sale();
@@ -89,8 +98,10 @@ public class SearchTest extends ManagedEntityTestBase {
     Customer returnedCustomer = returnedStore.getCustomers().get(0);
 
     assertEquals(james, returnedCustomer);
+    
+    assertTrue(returnedCustomer.getSales().contains(jeansSale1));
 
-    assertTrue(returnedCustomer.getSales().contains(jeansSale));
+    assertTrue(returnedCustomer.getSales().contains(jeansSale2));
     
     assertTrue(returnedCustomer.getSales().contains(shirtSale));
     
@@ -107,17 +118,22 @@ public class SearchTest extends ManagedEntityTestBase {
     
     Root<Sale> sale = query.from(Sale.class);
     
-    Predicate predicate = queryBuilder.equal(sale.get(Sale_.itemName), jeansSale.getItemName());
+    Predicate predicate = queryBuilder.equal(sale.get(Sale_.itemName), jeansSale2.getItemName());
     
     query.where(predicate);
+    
+    Order order =  queryBuilder.desc(sale.get(Sale_.sellDate));
+    
+    query.orderBy(order);
     
     TypedQuery<Sale> saleQuery = em3.createQuery(query);
     
     List<Sale> results = saleQuery.getResultList();
     
     
-   
-    assertTrue(results.contains(jeansSale));
+    assertEquals(jeansSale2, results.get(0));
+    
+    assertEquals(jeansSale1, results.get(1));
     
 
   }

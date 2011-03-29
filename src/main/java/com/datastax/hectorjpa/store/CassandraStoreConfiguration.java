@@ -9,7 +9,6 @@ import com.datastax.hectorjpa.meta.MetaCache;
 
 public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
 
-	private MappingUtils mappingUtils;
 	private MetaCache metaCache;
 
 	public CassandraStoreConfiguration() {
@@ -31,17 +30,11 @@ public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
 		ProductDerivations.beforeConfigurationLoad(this);
 		loadGlobals();
 
-		this.mappingUtils = new MappingUtils();
-		this.metaCache = new MetaCache(mappingUtils);
+		this.metaCache = new MetaCache();
 
 	}
 
-	/**
-	 * @return the mappingUtils
-	 */
-	public MappingUtils getMappingUtils() {
-		return mappingUtils;
-	}
+	
 
 	/**
 	 * @return the cache

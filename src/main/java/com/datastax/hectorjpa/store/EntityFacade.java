@@ -45,7 +45,6 @@ public class EntityFacade implements Serializable {
   private final String columnFamilyName;
   private final Class<?> clazz;
   private final Serializer<?> keySerializer;
-  private final MappingUtils mappingUtils;
   private final ObjectTypeColumnStrategy strategy;
   private final IndexOperation[] indexOps;
 
@@ -63,11 +62,11 @@ public class EntityFacade implements Serializable {
    * @param mappingUtils
    *          The mapping utils to use for byte mapping
    */
-  public EntityFacade(ClassMetaData classMetaData, MappingUtils mappingUtils) {
+  public EntityFacade(ClassMetaData classMetaData) {
 
     CassandraClassMetaData cassMeta = (CassandraClassMetaData) classMetaData;
 
-    this.columnFamilyName = mappingUtils.getColumnFamily(cassMeta);
+    this.columnFamilyName = MappingUtils.getColumnFamily(cassMeta);
 
     this.keySerializer = MappingUtils.getSerializerForPk(cassMeta);
 
@@ -76,8 +75,7 @@ public class EntityFacade implements Serializable {
     columnFieldIds = new HashMap<Integer, ColumnField<?>>();
     collectionFieldIds = new HashMap<Integer, AbstractCollectionField<?>>();
 
-    this.mappingUtils = mappingUtils;
-
+ 
     // indexMetaData = new HashSet<AbstractEntityIndex>();
 
     FieldMetaData[] fmds = cassMeta.getFields();
@@ -100,9 +98,9 @@ public class EntityFacade implements Serializable {
         AbstractCollectionField<?> collection = null;
 
         if (fmds[i].getOrders().length > 0) {
-          collection = new OrderedCollectionField(fmds[i], mappingUtils);
+          collection = new OrderedCollectionField(fmds[i]);
         } else {
-          collection = new UnorderedCollectionField(fmds[i], mappingUtils);
+          collection = new UnorderedCollectionField(fmds[i]);
         }
 
         // TODO if fmds[i].getAssociationType() > 0 .. we found an
@@ -120,7 +118,7 @@ public class EntityFacade implements Serializable {
       if (fmds[i].getAssociationType() == FieldMetaData.MANY_TO_ONE
           || fmds[i].getAssociationType() == FieldMetaData.ONE_TO_ONE) {
 
-        ToOneColumn<?> toOne = new ToOneColumn(fmds[i], mappingUtils);
+        ToOneColumn<?> toOne = new ToOneColumn(fmds[i]);
 
         columnFieldIds.put(i, toOne);
 
@@ -150,9 +148,9 @@ public class EntityFacade implements Serializable {
     String discriminator = cassMeta.getDiscriminatorColumn();
 
     if (discriminator != null || cassMeta.isAbstract()) {
-      strategy = new DiscriminatorColumn(discriminator, mappingUtils);
+      strategy = new DiscriminatorColumn(discriminator);
     } else {
-      strategy = new StaticColumn(mappingUtils);
+      strategy = new StaticColumn();
     }
 
     IndexDefinitions indexDefs = cassMeta.getIndexDefinitions();
@@ -193,7 +191,7 @@ public class EntityFacade implements Serializable {
    */
   public void delete(OpenJPAStateManager stateManager, Mutator mutator,
       long clock) {
-    mutator.addDeletion(mappingUtils.getKeyBytes(stateManager.getObjectId()),
+    mutator.addDeletion(MappingUtils.getKeyBytes(stateManager.getObjectId()),
         columnFamilyName, null, StringSerializer.get());
   }
 
@@ -217,7 +215,7 @@ public class EntityFacade implements Serializable {
     boolean read = false;
 
     // This entity has never been persisted, we can't possibly load it
-    if (mappingUtils.getTargetObject(entityId) == null) {
+    if (MappingUtils.getTargetObject(entityId) == null) {
       return false;
     }
 
@@ -251,7 +249,7 @@ public class EntityFacade implements Serializable {
     }
 
     // now load all the columns in the CF.
-    SliceQuery<byte[], String, byte[]> query = mappingUtils.buildSliceQuery(
+    SliceQuery<byte[], String, byte[]> query = MappingUtils.buildSliceQuery(
         entityId, fields, columnFamilyName, keyspace);
 
     QueryResult<ColumnSlice<String, byte[]>> result = query.execute();
@@ -329,7 +327,7 @@ public class EntityFacade implements Serializable {
   public void addColumns(OpenJPAStateManager stateManager, BitSet fieldSet,
       Mutator<byte[]> m, long clockTime) {
 
-    byte[] keyBytes = mappingUtils.getKeyBytes(stateManager.getObjectId());
+    byte[] keyBytes = MappingUtils.getKeyBytes(stateManager.getObjectId());
 
     for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet.nextSetBit(i + 1)) {
       ColumnField field = columnFieldIds.get(i);

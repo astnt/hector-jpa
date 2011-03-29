@@ -1,17 +1,22 @@
 /**
  * 
  */
-package com.datastax.hectorjpa.query;
+package com.datastax.hectorjpa.query.ast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.openjpa.kernel.exps.Expression;
 import org.apache.openjpa.kernel.exps.ExpressionVisitor;
 import org.apache.openjpa.kernel.exps.Value;
 
+import com.datastax.hectorjpa.query.IndexExpression;
+
 /**
  * @author Todd Nine
  * 
  */
-public abstract class EqualityExpression implements Expression {
+public abstract class EqualityExpression implements Expression, IndexExpression {
 
   /**
    * 
@@ -48,4 +53,18 @@ public abstract class EqualityExpression implements Expression {
 
   }
 
+  /* (non-Javadoc)
+   * @see com.datastax.hectorjpa.query.CompressionCapable#getEqualityOps()
+   */
+  @Override
+  public List<EqualityExpression> getEqualityOps() {
+    List<EqualityExpression> exp = new ArrayList<EqualityExpression>();
+    
+    exp.add(this);
+    
+    return exp;
+  }
+
+  
+  
 }

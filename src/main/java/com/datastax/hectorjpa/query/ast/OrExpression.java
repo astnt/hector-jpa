@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.datastax.hectorjpa.query;
+package com.datastax.hectorjpa.query.ast;
 
 import org.apache.openjpa.kernel.exps.Expression;
 import org.apache.openjpa.kernel.exps.ExpressionVisitor;

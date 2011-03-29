@@ -13,6 +13,14 @@ import org.apache.openjpa.kernel.exps.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.hectorjpa.query.ast.AndExpression;
+import com.datastax.hectorjpa.query.ast.EqualExpression;
+import com.datastax.hectorjpa.query.ast.GreaterThanEqualExpression;
+import com.datastax.hectorjpa.query.ast.GreaterThanExpression;
+import com.datastax.hectorjpa.query.ast.LessThanEqualExpression;
+import com.datastax.hectorjpa.query.ast.LessThanExpression;
+import com.datastax.hectorjpa.query.ast.OrExpression;
+
 /**
  * Will perform operations directly against our Cassandra index when possible.
  * Otherwise in memory operations may be performed.
@@ -52,6 +60,13 @@ public class CassandraExpressionFactory extends InMemoryExpressionFactory {
 
   @Override
   public Expression and(Expression exp1, Expression exp2) {
+    
+//    //we can always compress && expressions as the tree is created if both side are && operands
+//    if(exp1 instanceof IndexExpression && exp2 instanceof IndexExpression){
+//      return new CompressedExpression((IndexExpression)exp1, (IndexExpression)exp2);
+//    } 
+//    
+    
     return new AndExpression(exp1, exp2);
   }
 
@@ -59,15 +74,6 @@ public class CassandraExpressionFactory extends InMemoryExpressionFactory {
   public Expression or(Expression exp1, Expression exp2) {
     return new OrExpression(exp1, exp2);
   }
-
-  /* (non-Javadoc)
-   * @see org.apache.openjpa.kernel.exps.InMemoryExpressionFactory#order(org.apache.openjpa.kernel.exps.QueryExpressions, java.util.List, org.apache.openjpa.kernel.StoreContext, java.lang.Object[])
-   */
-  @Override
-  public List order(QueryExpressions exps, List matches, StoreContext ctx,
-      Object[] params) {
-    // TODO Auto-generated method stub
-    return super.order(exps, matches, ctx, params);
-  }
-
+  
+ 
 }

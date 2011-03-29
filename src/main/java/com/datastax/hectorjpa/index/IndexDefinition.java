@@ -10,7 +10,7 @@ import com.datastax.hectorjpa.store.CassandraClassMetaData;
  */
 public class IndexDefinition {
 
-  private String[] indexedFields;
+  private FieldOrder[] indexedFields;
   
   private IndexOrder[] orderFields;
   
@@ -18,7 +18,7 @@ public class IndexDefinition {
 
    
   
-  public IndexDefinition(CassandraClassMetaData metaData, String[] indexedFields, IndexOrder[] orderFields) {
+  public IndexDefinition(CassandraClassMetaData metaData, FieldOrder[] indexedFields, IndexOrder[] orderFields) {
     this.metaData = metaData;
     this.indexedFields = indexedFields;
     this.orderFields = orderFields;
@@ -27,7 +27,7 @@ public class IndexDefinition {
   /**
    * @return the indexedFields
    */
-  public String[] getIndexedFields() {
+  public FieldOrder[] getIndexedFields() {
     return indexedFields;
   }
 
@@ -47,6 +47,24 @@ public class IndexDefinition {
    */
   public CassandraClassMetaData getMetaData() {
     return metaData;
+  }
+  
+  /**
+   * Return the index of this field name in our field list.
+   * 
+   * Returns -1 if it does not exist
+   * 
+   * @param fieldName
+   * @return
+   */
+  public int getIndex(String fieldName){
+    for(int i = 0; i < indexedFields.length; i ++){
+      if(indexedFields[i].getName().equals(fieldName)){
+        return i;
+      }
+    }
+    
+    return -1;
   }
   
   

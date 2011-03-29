@@ -83,6 +83,10 @@ public class CassandraStore {
 	public Mutator createMutator() {
 		return new MutatorImpl(keyspace, BytesArraySerializer.get());
 	}
+	
+	public Keyspace getKeyspace(){
+	  return this.keyspace;
+	}
 
 	/**
 	 * Load this object for the statemanager

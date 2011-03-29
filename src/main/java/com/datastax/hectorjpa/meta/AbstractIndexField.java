@@ -22,8 +22,9 @@ public abstract class AbstractIndexField {
 
   
   protected Serializer<Object> serializer;
-  protected int targetFieldIndex;
-  protected String targetFieldName;
+//  protected int targetFieldIndex;
+//  protected String targetFieldName;
+  protected FieldMetaData targetField;
 
   
   public AbstractIndexField(FieldMetaData owningField, String fieldName) {
@@ -31,16 +32,13 @@ public abstract class AbstractIndexField {
     
     ClassMetaData owningClass = getContainerClassMetaData(owningField);
     
-    FieldMetaData targetField = owningField.getMappedByField(owningClass, fieldName);
+    targetField = owningField.getMappedByField(owningClass, fieldName);
 
     if(targetField == null){
       throw new MetaDataException(String.format("You specified field '%s' to be used in a order by on class '%s' but couldn't find it", fieldName, owningClass));
     }
         
     this.serializer = MappingUtils.getSerializer(targetField);
-
-    this.targetFieldIndex = targetField.getIndex();
-    this.targetFieldName = targetField.getName();
 
   }
   
@@ -73,10 +71,10 @@ public abstract class AbstractIndexField {
           String
               .format(
                   "You attempted to specify field '%s' on entity '%s'.  However the entity does not have a state manager.  Make sure you enable cascade for this operation or explicity persist it with the entity manager",
-                  targetFieldName, instance));
+                  targetField.getIndex(), instance));
     }
 
-    return stateManager.fetch(targetFieldIndex);
+    return stateManager.fetch(targetField.getIndex());
   }
 
   /**
@@ -134,12 +132,16 @@ public abstract class AbstractIndexField {
 
   }
   
+
+  
   /**
    * Get the class meta data for the class that owns the ordered field
    * @param fmd
    * @return
    */
   protected abstract ClassMetaData getContainerClassMetaData(FieldMetaData fmd);
+  
+  
 
   
   /**
@@ -149,19 +151,19 @@ public abstract class AbstractIndexField {
     return serializer;
   }
 
-  /**
-   * @return the targetFieldIndex
-   */
-  public int getTargetFieldIndex() {
-    return targetFieldIndex;
-  }
-
-  /**
-   * @return the targetFieldName
-   */
-  public String getTargetFieldName() {
-    return targetFieldName;
-  }
+//  /**
+//   * @return the targetFieldIndex
+//   */
+//  public int getTargetFieldIndex() {
+//    return targetFieldIndex;
+//  }
+//
+//  /**
+//   * @return the targetFieldName
+//   */
+//  public String getTargetFieldName() {
+//    return targetFieldName;
+//  }
 
   /**
    * Prints information about this field
@@ -169,7 +171,7 @@ public abstract class AbstractIndexField {
   @Override
   public String toString() {
     return String.format("AbstractIndexField(targetFieldName:%s, targetFieldIndex:%d, serializer: %s)", 
-        new Object[]{targetFieldName, targetFieldIndex, serializer.getClass().getName()});
+        new Object[]{targetField.getName(), targetField.getIndex(), serializer.getClass().getName()});
   }
   
   

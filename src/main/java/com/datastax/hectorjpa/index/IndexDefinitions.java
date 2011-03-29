@@ -75,16 +75,26 @@ public class IndexDefinitions {
 
     }
 
-    String[] fields = Strings.split(fieldExpression, ",", 0);
-    
-    for(int i = 0; i < fields.length ; i ++){
-      fields[i] = fields[i].trim();
+    decs = Strings.split(fieldExpression, ",", 0);
+    FieldOrder[] fields = new FieldOrder[decs.length];
+
+    for (int i = 0; i < fields.length; i++) {
+      decs[i] = decs[i].trim();
+
+      spc = decs[i].indexOf(' ');
+      if (spc == -1)
+        asc = true;
+      else {
+        asc = decs[i].substring(spc + 1).trim().toLowerCase().startsWith("asc");
+        decs[i] = decs[i].substring(0, spc);
+      }
+      fields[i] = new FieldOrder(decs[i], asc);
+
     }
 
     IndexDefinition indexDef = new IndexDefinition(metaData, fields, orders);
 
     indexDefs.add(indexDef);
   }
-  
 
 }

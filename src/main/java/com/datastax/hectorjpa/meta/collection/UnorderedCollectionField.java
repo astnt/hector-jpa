@@ -33,8 +33,8 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
   private static final byte[] unorderedMarker = StringSerializer.get().toBytes(
       "u");
 
-  public UnorderedCollectionField(FieldMetaData fmd, MappingUtils mappingUtils) {
-    super(fmd, mappingUtils);
+  public UnorderedCollectionField(FieldMetaData fmd) {
+    super(fmd);
   }
 
   /*
@@ -67,7 +67,7 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
        // the id will always be the first value in a DynamicComposite type, we
       // only care
       // about that value.
-      Object nativeId = col.getName().get(0, this.idSerizlizer);
+      Object nativeId = col.getName().get(0, this.idSerializer);
 
 
     Object saved = context.find(context.newObjectId(targetClass, nativeId),
@@ -135,13 +135,13 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     // loop through all deleted object and create the deletes for them.
     for (Object current : objects) {
 
-      currentId = mappingUtils.getTargetObject(context.getObjectId(current));
+      currentId = MappingUtils.getTargetObject(context.getObjectId(current));
 
       // create our composite of the format of id+order*
       idComposite = new DynamicComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.add(currentId, idSerizlizer);
+      idComposite.add(currentId, idSerializer);
 
       mutator.addDeletion(idKey, CF_NAME, idComposite, compositeSerializer,
           clock);
@@ -179,13 +179,13 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     // loop through all added objects and create the writes for them.
     for (Object current : objects) {
 
-      currentId = mappingUtils.getTargetObject(context.getObjectId(current));
+      currentId = MappingUtils.getTargetObject(context.getObjectId(current));
 
       // create our composite of the format of id+order*
       idComposite = new DynamicComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.add(currentId, idSerizlizer);
+      idComposite.add(currentId, idSerializer);
 
 
       mutator.addInsertion(idKey, CF_NAME,

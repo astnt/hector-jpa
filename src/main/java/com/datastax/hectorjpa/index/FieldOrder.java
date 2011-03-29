@@ -13,7 +13,7 @@ import org.apache.openjpa.meta.Order;
  * @author Todd Nine
  * 
  */
-public class IndexOrder implements Order, Comparable<IndexOrder> {
+public class FieldOrder implements Order, Comparable<FieldOrder> {
 
   /**
    * 
@@ -23,7 +23,7 @@ public class IndexOrder implements Order, Comparable<IndexOrder> {
   private String fieldName;
   private boolean ascending;
 
-  public IndexOrder(String fieldName, boolean ascending) {
+  public FieldOrder(String fieldName, boolean ascending) {
     this.fieldName = fieldName;
     this.ascending = ascending;
   }
@@ -44,7 +44,7 @@ public class IndexOrder implements Order, Comparable<IndexOrder> {
   }
 
   @Override
-  public int compareTo(IndexOrder o) {
+  public int compareTo(FieldOrder o) {
     if (o == null) {
       return 1;
     }
@@ -62,7 +62,6 @@ public class IndexOrder implements Order, Comparable<IndexOrder> {
     }
 
     return 0;
-
   }
 
 }

@@ -76,8 +76,11 @@ public class CassandraStoreManager extends AbstractStoreManager {
 	  if(ep == null){
 	    throw new  UnsupportedException(language);
 	  }
+
+	  CassandraStoreConfiguration conf = ((CassandraStoreConfiguration)getContext().getConfiguration());
+
 	  
-    return new CassandraStoreQuery(ep);
+    return new CassandraStoreQuery(ep,  conf.getMetaCache(), cassandraStore);
   }
 
   @Override

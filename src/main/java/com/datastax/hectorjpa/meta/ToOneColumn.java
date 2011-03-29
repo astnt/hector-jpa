@@ -31,9 +31,8 @@ public class ToOneColumn<V> extends ColumnField<V> {
       .getLogger(ToOneColumn.class);
 
   protected Class<?> targetClass;
-  protected MappingUtils mappingUtils;
 
-  public ToOneColumn(FieldMetaData fmd, MappingUtils mappingUtils) {
+  public ToOneColumn(FieldMetaData fmd) {
     super(fmd.getIndex(), fmd.getName());
 
     targetClass = fmd.getDeclaredType();
@@ -43,7 +42,6 @@ public class ToOneColumn<V> extends ColumnField<V> {
     serializer = MappingUtils
         .getSerializerForPk(targetClass);
 
-    this.mappingUtils = mappingUtils;
 
   }
 
@@ -94,8 +92,7 @@ public class ToOneColumn<V> extends ColumnField<V> {
     }
     
     
-    mappingUtils = new MappingUtils();
-    Object targetId = mappingUtils.getTargetObject(targetStateManager
+    Object targetId = MappingUtils.getTargetObject(targetStateManager
         .getObjectId());
 
     mutator.addInsertion(key, cfName, new HColumnImpl(name, targetId, clock,

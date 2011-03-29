@@ -106,7 +106,7 @@ public class MappingUtils {
     return MappingUtils.getSerializer(keys[0]);
   }
 
-  public SliceQuery<byte[], String, byte[]> buildSliceQuery(Object idObj,
+  public static SliceQuery<byte[], String, byte[]> buildSliceQuery(Object idObj,
       List<String> columns, String cfName, Keyspace keyspace) {
     SliceQuery<byte[], String, byte[]> query = new ThriftSliceQuery(keyspace,
         BytesArraySerializer.get(), StringSerializer.get(),
@@ -128,7 +128,7 @@ public class MappingUtils {
    * @param clazz
    * @return
    */
-  public String getColumnFamily(CassandraClassMetaData metaData) {
+  public static String getColumnFamily(CassandraClassMetaData metaData) {
     
     String name = metaData.getColumnFamily();
     
@@ -152,7 +152,7 @@ public class MappingUtils {
    * @param idObj
    * @return
    */
-  public byte[] getKeyBytes(Object idObj) {
+  public static byte[] getKeyBytes(Object idObj) {
     Object target = getTargetObject(idObj);
 
     Serializer serializer = getSerializer(target);
@@ -166,7 +166,7 @@ public class MappingUtils {
    * @see {@link SerializerTypeInferer} for specifics.
    * @param idObj
    */
-  public Serializer getSerializer(Object idObj) {
+  public static Serializer getSerializer(Object idObj) {
 
     Object target = getTargetObject(idObj);
 
@@ -186,7 +186,7 @@ public class MappingUtils {
    * @param idObj
    * @return
    */
-  public Object getTargetObject(Object idObj) {
+  public static Object getTargetObject(Object idObj) {
     if (idObj instanceof OpenJPAId) {
       return ((OpenJPAId) idObj).getIdObject();
     }

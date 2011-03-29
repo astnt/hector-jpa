@@ -49,8 +49,8 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
   private AbstractIndexField[] orderBy;
   
 
-  public OrderedCollectionField(FieldMetaData fmd, MappingUtils mappingUtils) {
-    super(fmd, mappingUtils);
+  public OrderedCollectionField(FieldMetaData fmd) {
+    super(fmd);
 
     Order[] orders = fmd.getOrders();
     orderBy = new AbstractIndexField[orders.length];
@@ -121,7 +121,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
 
       // TODO TN set the serializers in the columns before deserailizing
-      Object nativeId = col.getName().get(compositeFieldLength-1, this.idSerizlizer);
+      Object nativeId = col.getName().get(compositeFieldLength-1, this.idSerializer);
 
       
       Object oid = context.newObjectId(targetClass, nativeId);
@@ -160,7 +160,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       count = DEFAULT_FETCH_SIZE;
     }
 
-    byte[] key = constructKey(mappingUtils.getKeyBytes(objectId), orderedMarker);
+    byte[] key = constructKey(MappingUtils.getKeyBytes(objectId), orderedMarker);
     
     SliceQuery<byte[], DynamicComposite, byte[]> query = new ThriftSliceQuery(
         keyspace, BytesArraySerializer.get(), compositeSerializer,
@@ -211,7 +211,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     // loop through all deleted object and create the deletes for them.
     for (Object current : objects) {
 
-      currentId = mappingUtils.getTargetObject(context.getObjectId(current));
+      currentId = MappingUtils.getTargetObject(context.getObjectId(current));
       if ( log.isDebugEnabled() ) {
         log.debug("deleting object with id {}", currentId);
       }
@@ -223,7 +223,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       orderComposite = new DynamicComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.add(currentId, idSerizlizer);
+      idComposite.add(currentId, idSerializer);
 
       // now construct the composite with order by the ids at the end.
       for (AbstractIndexField order : orderBy) {
@@ -240,7 +240,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       }
 
       // add our id to the end of our order based composite
-      orderComposite.add(currentId, idSerizlizer);
+      orderComposite.add(currentId, idSerializer);
       
       mutator.addDeletion(orderKey, CF_NAME, orderComposite,
           compositeSerializer, clock);
@@ -281,7 +281,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     // loop through all added objects and create the writes for them.
     for (Object current : objects) {
 
-      currentId = mappingUtils.getTargetObject(context.getObjectId(current));
+      currentId = MappingUtils.getTargetObject(context.getObjectId(current));
 
       // create our composite of the format of id+order*
       idComposite = new DynamicComposite();
@@ -290,7 +290,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       orderComposite = new DynamicComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.add(currentId, idSerizlizer);
+      idComposite.add(currentId, idSerializer);
 
       // now construct the composite with order by the ids at the end.
       for (AbstractIndexField order : orderBy) {
@@ -305,7 +305,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       }
 
       // add our id to the end of our order based composite
-      orderComposite.add(currentId, idSerizlizer);
+      orderComposite.add(currentId, idSerializer);
 
       mutator.addInsertion(orderKey, CF_NAME,
           new HColumnImpl<DynamicComposite, byte[]>(orderComposite, HOLDER,
@@ -359,7 +359,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       //if any of the fields are dirty we need to set our changed flag so we can delete the oiginal columns later
       changed = false;
 
-      currentId = mappingUtils.getTargetObject(context.getObjectId(current));
+      currentId = MappingUtils.getTargetObject(context.getObjectId(current));
 
       // create our composite of the format of id+order*
       idComposite = new DynamicComposite();
@@ -370,7 +370,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       deleteOrderComposite = new DynamicComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.add(currentId, idSerizlizer);
+      idComposite.add(currentId, idSerializer);
 
       // now construct the composite with order by the ids at the end.
       for (AbstractIndexField order : orderBy) {
@@ -387,7 +387,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       }
 
       // add our id to the end of our order based composite
-      orderComposite.add(currentId, idSerizlizer);
+      orderComposite.add(currentId, idSerializer);
 
       // add our order based column to the columns
 
