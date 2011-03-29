@@ -34,29 +34,9 @@ public class QueryIndexField extends AbstractIndexField {
    * @param index
    * @param value
    */
-  public void addToComposite(DynamicComposite composite, int index, int length, Object value) {
-
-    ensureCapacity(composite, index, length);
+  public void addToComposite(DynamicComposite composite, int index, Object value) {
     composite.add(index, value);
   }
 
-  private void ensureCapacity(DynamicComposite composite, int index, int length) {
-
-    List<Serializer<?>> serializers = composite.getSerializersByPosition();
-
-    if (serializers == null) {
-      serializers = new ArrayList<Serializer<?>>(length);
-      
-      for(int i = 0; i < length; i ++){
-        serializers.add(null);
-      }
-      
-    }
-    
-    serializers.set(index, serializer);
-
-    composite.setSerializersByPosition(serializers);
-
-  }
 
 }

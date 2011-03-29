@@ -32,6 +32,7 @@ import com.datastax.hectorjpa.meta.IndexOperation;
 import com.datastax.hectorjpa.meta.MetaCache;
 import com.datastax.hectorjpa.meta.ObjectTypeColumnStrategy;
 import com.datastax.hectorjpa.meta.StaticColumn;
+import com.datastax.hectorjpa.meta.SubclassIndexOperation;
 import com.datastax.hectorjpa.meta.ToOneColumn;
 import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 import com.datastax.hectorjpa.meta.collection.OrderedCollectionField;
@@ -44,7 +45,6 @@ public class EntityFacade implements Serializable {
 
   private final String columnFamilyName;
   private final Class<?> clazz;
-  private final Serializer<?> keySerializer;
   private final ObjectTypeColumnStrategy strategy;
   private final IndexOperation[] indexOps;
 
@@ -68,14 +68,11 @@ public class EntityFacade implements Serializable {
 
     this.columnFamilyName = MappingUtils.getColumnFamily(cassMeta);
 
-    this.keySerializer = MappingUtils.getSerializerForPk(cassMeta);
-
     clazz = cassMeta.getDescribedType();
 
     columnFieldIds = new HashMap<Integer, ColumnField<?>>();
     collectionFieldIds = new HashMap<Integer, AbstractCollectionField<?>>();
 
- 
     // indexMetaData = new HashSet<AbstractEntityIndex>();
 
     FieldMetaData[] fmds = cassMeta.getFields();
@@ -159,8 +156,19 @@ public class EntityFacade implements Serializable {
       this.indexOps = new IndexOperation[indexDefs.getDefinitions().size()];
 
       for (int i = 0; i < indexOps.length; i++) {
-        indexOps[i] = new IndexOperation(cassMeta, indexDefs.getDefinitions()
-            .get(i));
+
+        // construct an index with subclass queries
+        if (discriminator != null) {
+          indexOps[i] = new SubclassIndexOperation(cassMeta, indexDefs
+              .getDefinitions().get(i));
+        }
+        
+        // construct and index without discriminator for subclass queries
+        else {
+
+          indexOps[i] = new IndexOperation(cassMeta, indexDefs.getDefinitions()
+              .get(i));
+        }
       }
 
     } else {
@@ -368,8 +376,6 @@ public class EntityFacade implements Serializable {
     }
 
   }
-  
-  
 
   /**
    * @return the indexOps

@@ -74,6 +74,11 @@ public class ColumnField<V> extends Field<V> {
       Mutator<byte[]> mutator, long clock, byte[] key, String cfName) {
 
     Object value = stateManager.fetch(fieldId);
+    
+    if(value == null){
+      mutator.addDeletion(key, cfName, name, StringSerializer.get(), clock);
+      return;
+    }
 
     mutator.addInsertion(key, cfName, new HColumnImpl(name, value, clock,
         StringSerializer.get(), serializer));

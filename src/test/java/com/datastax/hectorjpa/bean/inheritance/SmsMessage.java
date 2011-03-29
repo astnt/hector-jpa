@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.datastax.hectorjpa.bean;
+package com.datastax.hectorjpa.bean.inheritance;
 
 import java.util.Date;
 
@@ -11,6 +11,7 @@ import javax.persistence.MappedSuperclass;
 import org.apache.openjpa.persistence.Persistent;
 
 import com.datastax.hectorjpa.annotation.ColumnFamily;
+import com.datastax.hectorjpa.bean.AbstractEntity;
 
 /**
  * Abstract class common to all sms messages

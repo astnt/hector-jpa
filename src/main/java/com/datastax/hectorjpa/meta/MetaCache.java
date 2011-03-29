@@ -184,7 +184,7 @@ public class MetaCache {
       }
 
       // lengths are the same compare the fields
-      for (int i = 0; i < def1Order.length; i++) {
+      for (int i = 0; i < def1Field.length; i++) {
         compare = def1Field[i].compareTo(def2Field[i]);
 
         if (compare != 0) {

@@ -47,11 +47,19 @@ import com.datastax.hectorjpa.store.MappingUtils;
  * @author Todd Nine
  * 
  */
-public class IndexOperation extends AbstractIndexOperation {
+public class SubclassIndexOperation extends IndexOperation {
 
-  public IndexOperation(CassandraClassMetaData metaData,
+  /**
+   * String array of all subclass discriminator values
+   */
+  private String[] subClasses;
+
+  public SubclassIndexOperation(CassandraClassMetaData metaData,
       IndexDefinition indexDef) {
     super(metaData, indexDef);
+
+    subClasses = getSubclasses(metaData);
+
   }
 
   /**
@@ -72,26 +80,35 @@ public class IndexOperation extends AbstractIndexOperation {
 
     // loop through all added objects and create the writes for them.
     // create our composite of the format of id+order*
-    newComposite = new DynamicComposite();
 
-    // create our composite of the format order*+id
-    oldComposite = new DynamicComposite();
+    for (int i = 0; i < subClasses.length; i++) {
 
-    boolean changed = constructComposites(newComposite, oldComposite,
-        stateManager);
+      newComposite = new DynamicComposite();
 
-    mutator.addInsertion(indexName, CF_NAME,
-        new HColumnImpl<DynamicComposite, byte[]>(newComposite, HOLDER, clock,
-            compositeSerializer, bytesSerializer));
+      newComposite.add(subClasses[i], stringSerializer);
 
-    // value has changed since we loaded. Remove the old value
-    if (changed) {
+      // create our composite of the format order*+id
+      oldComposite = new DynamicComposite();
 
-      // add it to our old value
-      mutator.addDeletion(indexName, CF_NAME, oldComposite,
-          compositeSerializer, clock);
+      oldComposite.add(subClasses[i], stringSerializer);
 
+      boolean changed = constructComposites(newComposite, oldComposite,
+          stateManager);
+
+      mutator.addInsertion(indexName, CF_NAME,
+          new HColumnImpl<DynamicComposite, byte[]>(newComposite, HOLDER,
+              clock, compositeSerializer, bytesSerializer));
+
+      // value has changed since we loaded. Remove the old value
+      if (changed) {
+
+        // add it to our old value
+        mutator.addDeletion(indexName, CF_NAME, oldComposite,
+            compositeSerializer, clock);
+
+      }
     }
+
   }
 
   /**
@@ -102,24 +119,77 @@ public class IndexOperation extends AbstractIndexOperation {
    */
   public void scanIndex(IndexQuery query, Set<DynamicComposite> results,
       Keyspace keyspace) {
-
-    int length = query.getExpressions().size();
-
+    
+    int length = query.getExpressions().size()+1;
+    
     DynamicComposite startScan = allocateComposite(length);
     DynamicComposite endScan = allocateComposite(length);
 
+    //add the discriminator value so we're querying for the specified class
+    //and it's children
+    String discriminator = indexDefinition.getMetaData().getDiscriminatorColumn();
+    
+    startScan.add(discriminator, stringSerializer);
+    endScan.add(discriminator, stringSerializer);
+    
     int index = 0;
 
     // add all fields
     for (FieldExpression exp : query.getExpressions()) {
       index = this.fieldIndexes.get(exp.getField().getName());
-
-      this.fields[index].addToComposite(startScan, index, exp.getStartSliceQuery());
-      this.fields[index].addToComposite(endScan, index, exp.getEndSliceQuery());
+      this.fields[index].addToComposite(startScan, index+1,  exp.getStartSliceQuery());
+      this.fields[index].addToComposite(endScan, index+1, exp.getEndSliceQuery());
     }
 
+    // now query the values
+    // get our slice range
     super.executeQuery(startScan, endScan, results, keyspace);
 
+  }
+
+  /**
+   * Get all discriminator values including the current class. If one is not
+   * present an null array is returned
+   * 
+   * @param cmd
+   * @return
+   */
+  private String[] getSubclasses(CassandraClassMetaData cmd) {
+    if (cmd.getDiscriminatorColumn() == null) {
+      return null;
+    }
+
+    // TODO TN use a depth weight algorithm to determine the maximum common
+    // ancestor for all fields in the index. For now this naive approach
+    // just uses discriminator values from all parent classes.
+
+    List<String> subclasses = new ArrayList<String>();
+
+    CassandraClassMetaData current = cmd;
+
+    do {
+      // TODO TN, should probably throw a metadata exception here
+      if (current.getDiscriminatorColumn() == null) {
+        break;
+      }
+
+      subclasses.add(current.getDiscriminatorColumn());
+      current = (CassandraClassMetaData) current.getPCSuperclassMetaData();
+    } while (current != null);
+
+    String[] subArray = new String[subclasses.size()];
+
+    subclasses.toArray(subArray);
+
+    return subArray;
+
+  }
+
+  /**
+   * @return the indexDefinition
+   */
+  public IndexDefinition getIndexDefinition() {
+    return indexDefinition;
   }
 
 }

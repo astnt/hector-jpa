@@ -1,4 +1,4 @@
-package com.datastax.hectorjpa.bean;
+package com.datastax.hectorjpa.bean.inheritance;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -6,14 +6,14 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 
 /**
- * Verification outbound message
+ * Warning outbound message
  * 
  * @author Todd Nine
  *
  */
 @Entity
-@DiscriminatorValue("VerificationSmsMessage")
+@DiscriminatorValue("WarningSmsMessage")
 @Inheritance(strategy=InheritanceType.SINGLE_TABLE)
-public class VerificationSmsMessage extends SmsMessage {
+public class WarningSmsMessage extends SmsMessage {
 
 }

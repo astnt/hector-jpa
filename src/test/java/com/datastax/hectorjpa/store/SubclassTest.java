@@ -8,8 +8,8 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 
 import com.datastax.hectorjpa.ManagedEntityTestBase;
-import com.datastax.hectorjpa.bean.SmsMessage;
-import com.datastax.hectorjpa.bean.VerificationSmsMessage;
+import com.datastax.hectorjpa.bean.inheritance.SmsMessage;
+import com.datastax.hectorjpa.bean.inheritance.VerificationSmsMessage;
 
 /**
  * 
