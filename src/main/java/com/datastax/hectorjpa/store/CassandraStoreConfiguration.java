@@ -2,8 +2,6 @@ package com.datastax.hectorjpa.store;
 
 import org.apache.openjpa.conf.OpenJPAConfigurationImpl;
 import org.apache.openjpa.lib.conf.ProductDerivations;
-import org.apache.openjpa.meta.MetaDataFactory;
-import org.apache.openjpa.meta.MetaDataRepository;
 
 import com.datastax.hectorjpa.meta.MetaCache;
 

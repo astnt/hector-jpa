@@ -5,10 +5,9 @@ package com.datastax.hectorjpa.serializer;
 
 import java.nio.ByteBuffer;
 
-import com.eaio.uuid.UUID;
-
 import me.prettyprint.cassandra.serializers.AbstractSerializer;
-import me.prettyprint.cassandra.serializers.UUIDSerializer;
+
+import com.eaio.uuid.UUID;
 
 /**
  * Serializer for the time UUID  object

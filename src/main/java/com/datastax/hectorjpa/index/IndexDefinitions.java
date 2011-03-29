@@ -8,9 +8,9 @@ import java.util.List;
 
 import org.apache.openjpa.meta.FieldMetaData;
 
-import com.datastax.hectorjpa.store.CassandraClassMetaData;
-
 import serp.util.Strings;
+
+import com.datastax.hectorjpa.store.CassandraClassMetaData;
 
 /**
  * A wrapper for all index definitions on a given field

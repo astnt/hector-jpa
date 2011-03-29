@@ -4,10 +4,8 @@
 package com.datastax.hectorjpa.meta;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -297,27 +295,7 @@ public abstract class AbstractIndexOperation {
     };
   }
 
-  /**
-   * Allocate a dynamic composite to the given length
-   * 
-   * @param length
-   * @return
-   */
-  protected DynamicComposite allocateComposite(int length) {
-
-    List<Serializer<?>> serializers = new ArrayList<Serializer<?>>(length);
-
-    for (int i = 0; i < length; i++) {
-      serializers.add(null);
-    }
-
-    DynamicComposite composite = new DynamicComposite();
-
-    composite.setSerializersByPosition(serializers);
-    
-    return composite;
-
-  }
+  
 
   /**
    * @return the indexDefinition

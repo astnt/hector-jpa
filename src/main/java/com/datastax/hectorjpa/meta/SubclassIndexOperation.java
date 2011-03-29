@@ -3,42 +3,23 @@
  */
 package com.datastax.hectorjpa.meta;
 
-import java.nio.ByteBuffer;
+import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
+
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
-import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
-import me.prettyprint.cassandra.serializers.BytesArraySerializer;
-import me.prettyprint.cassandra.serializers.DynamicCompositeSerializer;
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.utils.ByteBufferOutputStream;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.Serializer;
-import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.DynamicComposite;
-import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
-import me.prettyprint.hector.api.query.QueryResult;
-import me.prettyprint.hector.api.query.SliceQuery;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
-import org.apache.openjpa.meta.ClassMetaData;
-import org.apache.openjpa.meta.FieldMetaData;
-import org.apache.openjpa.util.MetaDataException;
 
-import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexDefinition;
-import com.datastax.hectorjpa.index.IndexOrder;
 import com.datastax.hectorjpa.query.FieldExpression;
 import com.datastax.hectorjpa.query.IndexQuery;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
-import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
  * Class to perform all operations for secondary indexing on an instance in the
@@ -83,12 +64,12 @@ public class SubclassIndexOperation extends IndexOperation {
 
     for (int i = 0; i < subClasses.length; i++) {
 
-      newComposite = new DynamicComposite();
+      newComposite = newComposite();
 
       newComposite.add(subClasses[i], stringSerializer);
 
       // create our composite of the format order*+id
-      oldComposite = new DynamicComposite();
+      oldComposite = newComposite();
 
       oldComposite.add(subClasses[i], stringSerializer);
 
@@ -122,8 +103,8 @@ public class SubclassIndexOperation extends IndexOperation {
     
     int length = query.getExpressions().size()+1;
     
-    DynamicComposite startScan = allocateComposite(length);
-    DynamicComposite endScan = allocateComposite(length);
+    DynamicComposite startScan = newComposite(length);
+    DynamicComposite endScan = newComposite(length);
 
     //add the discriminator value so we're querying for the specified class
     //and it's children

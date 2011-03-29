@@ -2,6 +2,7 @@
  * 
  */
 package com.datastax.hectorjpa.meta.collection;
+import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 
 import java.util.Collection;
 
@@ -21,7 +22,6 @@ import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.meta.Order;
-import org.apache.openjpa.util.Proxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -217,10 +217,10 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       }
 
       // create our composite of the format of id+order*
-      idComposite = new DynamicComposite();
+      idComposite = newComposite();
 
       // create our composite of the format order*+id
-      orderComposite = new DynamicComposite();
+      orderComposite = newComposite();
 
       // add our id to the beginning of our id based composite
       idComposite.add(currentId, idSerializer);
@@ -284,10 +284,10 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       currentId = MappingUtils.getTargetObject(context.getObjectId(current));
 
       // create our composite of the format of id+order*
-      idComposite = new DynamicComposite();
+      idComposite = newComposite();
 
       // create our composite of the format order*+id
-      orderComposite = new DynamicComposite();
+      orderComposite = newComposite();
 
       // add our id to the beginning of our id based composite
       idComposite.add(currentId, idSerializer);
@@ -362,12 +362,12 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       currentId = MappingUtils.getTargetObject(context.getObjectId(current));
 
       // create our composite of the format of id+order*
-      idComposite = new DynamicComposite();
-      deleteIdComposite = new DynamicComposite();
+      idComposite = newComposite();
+      deleteIdComposite = newComposite();
 
       // create our composite of the format order*+id
-      orderComposite = new DynamicComposite();
-      deleteOrderComposite = new DynamicComposite();
+      orderComposite = newComposite();
+      deleteOrderComposite = newComposite();
 
       // add our id to the beginning of our id based composite
       idComposite.add(currentId, idSerializer);

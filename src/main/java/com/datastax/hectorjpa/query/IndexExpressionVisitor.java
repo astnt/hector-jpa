@@ -8,7 +8,6 @@ import org.apache.openjpa.kernel.exps.Expression;
 import org.apache.openjpa.kernel.exps.ExpressionVisitor;
 import org.apache.openjpa.kernel.exps.Literal;
 import org.apache.openjpa.kernel.exps.Value;
-import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 
 import com.datastax.hectorjpa.query.ast.EqualExpression;

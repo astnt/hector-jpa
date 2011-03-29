@@ -19,8 +19,6 @@ package com.datastax.hectorjpa.consitency;
 
 import me.prettyprint.hector.api.HConsistencyLevel;
 
-import org.apache.cassandra.thrift.ConsistencyLevel;
-
 /**
  * Class that is used similar to a transaction to set the consistency level for
  * a given operation. If none is set on the thread, HConsistencyLevel.ONE is used as the default

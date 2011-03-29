@@ -6,8 +6,6 @@ package com.datastax.hectorjpa.store;
 import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 
-import com.datastax.hectorjpa.index.IndexDefinitions;
-
 /**
  * @author Todd Nine
  * 

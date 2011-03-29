@@ -1,9 +1,5 @@
 package com.datastax.hectorjpa.meta;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 
 import org.apache.openjpa.meta.ClassMetaData;

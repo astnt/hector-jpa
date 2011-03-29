@@ -1,7 +1,5 @@
 package com.datastax.hectorjpa.query;
 
-import java.nio.charset.Charset;
-
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.util.UnsupportedException;
 

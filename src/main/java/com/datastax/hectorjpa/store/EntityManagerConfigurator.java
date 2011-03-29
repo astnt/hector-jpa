@@ -2,9 +2,9 @@ package com.datastax.hectorjpa.store;
 
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
-
 import me.prettyprint.cassandra.service.CassandraHostConfigurator;
+
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Config wrapper around the properties map required in the JPA

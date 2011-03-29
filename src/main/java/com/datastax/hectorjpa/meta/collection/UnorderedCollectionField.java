@@ -3,6 +3,8 @@
  */
 package com.datastax.hectorjpa.meta.collection;
 
+import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
+
 import java.util.Collection;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
@@ -63,16 +65,14 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     DynamicComposite dynamicCol = null;
 
     for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
-      
-       // the id will always be the first value in a DynamicComposite type, we
+
+      // the id will always be the first value in a DynamicComposite type, we
       // only care
       // about that value.
       Object nativeId = col.getName().get(0, this.idSerializer);
 
-
-    Object saved = context.find(context.newObjectId(targetClass, nativeId),
-        true, null);
-
+      Object saved = context.find(context.newObjectId(targetClass, nativeId),
+          true, null);
 
       collection.add(saved);
 
@@ -81,7 +81,6 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     // now load all the objects from the ids we were given.
 
     stateManager.storeObject(fieldId, collection);
-    
 
     return result.get().getColumns().size() > 0;
 
@@ -101,13 +100,14 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     // construct the key
     byte[] idKey = constructKey(key, unorderedMarker);
 
-    writeAdds(stateManager, (Collection<?>)field, mutator, clock, idKey);
-    writeDeletes(stateManager, (Collection<?>)field, mutator, clock, idKey);
+    writeAdds(stateManager, (Collection<?>) field, mutator, clock, idKey);
+    writeDeletes(stateManager, (Collection<?>) field, mutator, clock, idKey);
 
   }
 
   /**
    * Remove all indexes for elements
+   * 
    * @param ctx
    * @param value
    * @param mutator
@@ -125,11 +125,11 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       return;
     }
 
-    //TODO TN remove from opposite index 
-    
+    // TODO TN remove from opposite index
+
     DynamicComposite idComposite = null;
     Object currentId = null;
-    
+
     StoreContext context = stateManager.getContext();
 
     // loop through all deleted object and create the deletes for them.
@@ -138,7 +138,7 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       currentId = MappingUtils.getTargetObject(context.getObjectId(current));
 
       // create our composite of the format of id+order*
-      idComposite = new DynamicComposite();
+      idComposite = newComposite();
 
       // add our id to the beginning of our id based composite
       idComposite.add(currentId, idSerializer);
@@ -152,6 +152,7 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
 
   /**
    * Write all indexes for newly added elements
+   * 
    * @param ctx
    * @param value
    * @param mutator
@@ -172,7 +173,6 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     DynamicComposite idComposite = null;
     Object currentId = null;
     Object field = null;
-    
 
     StoreContext context = stateManager.getContext();
 
@@ -182,11 +182,10 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       currentId = MappingUtils.getTargetObject(context.getObjectId(current));
 
       // create our composite of the format of id+order*
-      idComposite = new DynamicComposite();
+      idComposite = newComposite();
 
       // add our id to the beginning of our id based composite
       idComposite.add(currentId, idSerializer);
-
 
       mutator.addInsertion(idKey, CF_NAME,
           new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
@@ -194,7 +193,6 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
 
     }
   }
-
 
   /**
    * Return the collection of deleted objects from the proxy. If none is preset
@@ -226,6 +224,5 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     return field;
 
   }
-  
 
 }

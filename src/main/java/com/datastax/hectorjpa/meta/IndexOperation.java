@@ -3,42 +3,21 @@
  */
 package com.datastax.hectorjpa.meta;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
+
 import java.util.Set;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
-import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
-import me.prettyprint.cassandra.serializers.BytesArraySerializer;
-import me.prettyprint.cassandra.serializers.DynamicCompositeSerializer;
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.utils.ByteBufferOutputStream;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.Serializer;
-import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.DynamicComposite;
-import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
-import me.prettyprint.hector.api.query.QueryResult;
-import me.prettyprint.hector.api.query.SliceQuery;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
-import org.apache.openjpa.meta.ClassMetaData;
-import org.apache.openjpa.meta.FieldMetaData;
-import org.apache.openjpa.util.MetaDataException;
 
-import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexDefinition;
-import com.datastax.hectorjpa.index.IndexOrder;
 import com.datastax.hectorjpa.query.FieldExpression;
 import com.datastax.hectorjpa.query.IndexQuery;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
-import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
  * Class to perform all operations for secondary indexing on an instance in the
@@ -72,10 +51,10 @@ public class IndexOperation extends AbstractIndexOperation {
 
     // loop through all added objects and create the writes for them.
     // create our composite of the format of id+order*
-    newComposite = new DynamicComposite();
+    newComposite = newComposite();
 
     // create our composite of the format order*+id
-    oldComposite = new DynamicComposite();
+    oldComposite = newComposite();
 
     boolean changed = constructComposites(newComposite, oldComposite,
         stateManager);
@@ -105,8 +84,8 @@ public class IndexOperation extends AbstractIndexOperation {
 
     int length = query.getExpressions().size();
 
-    DynamicComposite startScan = allocateComposite(length);
-    DynamicComposite endScan = allocateComposite(length);
+    DynamicComposite startScan = newComposite(length);
+    DynamicComposite endScan = newComposite(length);
 
     int index = 0;
 

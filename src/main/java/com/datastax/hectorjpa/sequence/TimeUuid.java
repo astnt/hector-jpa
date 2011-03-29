@@ -6,7 +6,6 @@ import java.util.Queue;
 import org.apache.openjpa.kernel.Seq;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.ClassMetaData;
-import org.apache.openjpa.persistence.Generator;
 
 import com.eaio.uuid.UUID;
 

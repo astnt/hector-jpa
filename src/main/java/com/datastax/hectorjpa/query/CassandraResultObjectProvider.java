@@ -1,9 +1,7 @@
 package com.datastax.hectorjpa.query;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.DynamicComposite;
@@ -11,11 +9,8 @@ import me.prettyprint.hector.api.beans.DynamicComposite;
 import org.apache.openjpa.kernel.FetchConfiguration;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.lib.rop.ResultObjectProvider;
-import org.apache.openjpa.lib.rop.ResultObjectProviderIterator;
-import org.apache.openjpa.meta.ClassMetaData;
 
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
-import com.datastax.hectorjpa.store.CassandraStoreManager;
 import com.datastax.hectorjpa.store.MappingUtils;
 
 /**

@@ -3,19 +3,14 @@ package com.datastax.hectorjpa.store;
 import java.util.BitSet;
 
 import me.prettyprint.cassandra.model.MutatorImpl;
-import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
-import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.OperationType;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.ConsistencyLevelPolicy;
 import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
-import me.prettyprint.hector.api.query.QueryResult;
-import me.prettyprint.hector.api.query.SliceQuery;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
@@ -25,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.consitency.JPAConsistency;
-import com.datastax.hectorjpa.meta.MetaCache;
 
 /**
  * Holds the {@link Cluster} and {@link Keyspace} references needed for

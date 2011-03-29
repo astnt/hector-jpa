@@ -3,12 +3,8 @@
  */
 package com.datastax.hectorjpa.query;
 
-import java.util.List;
-
-import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.kernel.exps.Expression;
 import org.apache.openjpa.kernel.exps.InMemoryExpressionFactory;
-import org.apache.openjpa.kernel.exps.QueryExpressions;
 import org.apache.openjpa.kernel.exps.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

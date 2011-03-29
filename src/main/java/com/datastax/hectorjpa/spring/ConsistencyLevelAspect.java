@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import me.prettyprint.hector.api.HConsistencyLevel;
 
-import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.commons.beanutils.MethodUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;

@@ -4,7 +4,6 @@
 package com.datastax.hectorjpa.query.ast;
 
 import org.apache.openjpa.kernel.exps.Expression;
-import org.apache.openjpa.kernel.exps.ExpressionVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

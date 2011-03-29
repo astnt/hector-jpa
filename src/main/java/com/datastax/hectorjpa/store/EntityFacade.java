@@ -10,7 +10,6 @@ import java.util.Map;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.mutation.Mutator;
@@ -24,7 +23,6 @@ import org.apache.openjpa.util.OpenJPAId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.hectorjpa.index.IndexDefinition;
 import com.datastax.hectorjpa.index.IndexDefinitions;
 import com.datastax.hectorjpa.meta.ColumnField;
 import com.datastax.hectorjpa.meta.DiscriminatorColumn;
