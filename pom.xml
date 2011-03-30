@@ -55,7 +55,7 @@
     <dependency>
       <groupId>me.prettyprint</groupId>
       <artifactId>hector-core</artifactId>
-      <version>0.7.0-29-st-SNAPSHOT</version>      
+      <version>0.7.0-29-st-SNAPSHOT</version>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -179,28 +179,29 @@
     <dependency>
       <groupId>org.apache.openjpa</groupId>
       <artifactId>openjpa</artifactId>
-      <version>2.1.0</version>
+      <version>${openjpa.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.openjpa</groupId>
       <artifactId>openjpa-kernel</artifactId>
-      <version>2.1.0</version>
+      <version>${openjpa.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.openjpa</groupId>
       <artifactId>openjpa-jdbc</artifactId>
-      <version>2.1.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.openjpa</groupId>
-      <artifactId>openjpa-persistence-jdbc</artifactId>
-      <version>2.1.0</version>
+      <version>${openjpa.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.openjpa</groupId>
       <artifactId>openjpa-persistence-jdbc</artifactId>
-      <version>2.1.0</version>
+      <version>${openjpa.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.openjpa</groupId>
+      <artifactId>openjpa-persistence-jdbc</artifactId>
+      <version>${openjpa.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
@@ -244,7 +245,7 @@
           </execution>
         </executions>
         <configuration>
-        <includes>com/datastax/hectorjpa/bean/*.class</includes>
+          <includes>com/datastax/hectorjpa/bean/*.class</includes>
         </configuration>
       </plugin>
     </plugins>
@@ -256,6 +257,7 @@
     <org.springframework.version>3.0.5.RELEASE</org.springframework.version>
     <slf4j.version>1.6.1</slf4j.version>
     <aspectj.version>1.6.8</aspectj.version>
+     <openjpa.version>2.1.0</openjpa.version>
   </properties>
 
 </project>
