@@ -5,7 +5,6 @@ package com.datastax.hectorjpa.bean.inheritance;
 
 import java.util.Date;
 
-import javax.persistence.Entity;
 import javax.persistence.MappedSuperclass;
 
 import org.apache.openjpa.persistence.Persistent;

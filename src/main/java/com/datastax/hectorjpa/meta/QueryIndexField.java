@@ -33,7 +33,7 @@ public class QueryIndexField extends AbstractIndexField {
    * @param value
    */
   public void addToComposite(DynamicComposite composite, int index, Object value, boolean inclusive) {
-    //TODO TN, this feels a bit hacky.  Should the abstract composite default to Bytes if the serializer is null
+    //TODO TN, this feels a bit hacky.  Should the abstract composite default to Bytes if the serializer is null?
     String type = composite.getSerializerToComparatorMapping().get(serializer.getClass());
     
     if(type == null){

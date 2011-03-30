@@ -5,8 +5,6 @@ package com.datastax.hectorjpa.bean.inheritance;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
 
 import org.apache.openjpa.persistence.Persistent;
 
@@ -21,7 +19,6 @@ import com.datastax.hectorjpa.bean.AbstractEntity;
  */
 @Entity
 @ColumnFamily("PersonColumnFamily")
-@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
 @DiscriminatorValue("Person")
 @Index(fields="email", order="firstName, lastName")
 public class Person extends AbstractEntity {

@@ -5,8 +5,6 @@ package com.datastax.hectorjpa.bean.inheritance;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
 
 import org.apache.openjpa.persistence.Persistent;
 
@@ -18,7 +16,6 @@ import com.datastax.hectorjpa.annotation.Indexes;
  *
  */
 @Entity
-@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
 @DiscriminatorValue("Client")
 @Indexes({
 @Index(fields="lastLogin", order="firstName, lastName"),

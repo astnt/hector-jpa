@@ -43,7 +43,8 @@
       <property name="openjpa.Optimistic" value="false" />
       <property name="openjpa.LockManager" value="none" />
       <property name="openjpa.ConnectionURL" value="localhost:9161" />
-      <property name="openjpa.RuntimeUnenhancedClasses" value="supported" />
+      <!--  explicitly disable runtime enhancement support.  It breaks a lot of proxy functionality needed for indexing -->
+      <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported" />
 
       <property name="openjpa.Log" value="log4j" />
       <!-- <property name="openjpa.EntityManagerFactory" value="me.prettyprint.hom.EntityManagerFactoryImpl"/> -->

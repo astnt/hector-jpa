@@ -244,46 +244,38 @@
             <goals>
               <goal>testCompile</goal>
             </goals>
+            <configuration>
+              <source>1.6</source>
+              <target>1.6</target>
+              <optimize>true</optimize>
+              <showDeprecation>true</showDeprecation>
+              <showWarnings>true</showWarnings>
+              <compilerArgument>-Aopenjpa.metamodel=true</compilerArgument>
+              <testIncludes>
+                <includes>com/datastax/hectorjpa/bean/**/*.java</includes>
+              </testIncludes>
+            </configuration>
           </execution>
-        </executions>
-        <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
-          <optimize>true</optimize>
-          <showDeprecation>true</showDeprecation>
-          <showWarnings>true</showWarnings>
-          <compilerArgument>-Aopenjpa.metamodel=true</compilerArgument>
-          <testIncludes>
-            <includes>com/datastax/hectorjpa/bean/**/*.java</includes>
-          </testIncludes>
-        </configuration>
-      </plugin>
+          <!-- performs normal compilation of all classes in test package -->
 
-      <!-- performs normal compilation of all classes in test package -->
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3</version>
-        <executions>
           <execution>
             <id>compile-all-tests</id>
             <phase>test-compile</phase>
             <goals>
               <goal>testCompile</goal>
             </goals>
+            <configuration>
+              <source>1.6</source>
+              <target>1.6</target>
+              <optimize>true</optimize>
+              <showDeprecation>true</showDeprecation>
+              <showWarnings>true</showWarnings><!-- <testIncludes> <includes>**/*.java</includes> 
+                </testIncludes> -->
+            </configuration>
           </execution>
+
         </executions>
-        <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
-          <optimize>true</optimize>
-          <showDeprecation>true</showDeprecation>
-          <showWarnings>true</showWarnings>
-          <testIncludes>
 
-            <includes>**/*.java</includes>
-
-          </testIncludes>
-        </configuration>
       </plugin>
 
 

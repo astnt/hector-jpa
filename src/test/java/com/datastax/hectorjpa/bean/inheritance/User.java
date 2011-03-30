@@ -7,8 +7,6 @@ import java.util.Date;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
 
 import org.apache.openjpa.persistence.Persistent;
 
@@ -19,7 +17,6 @@ import com.datastax.hectorjpa.annotation.Index;
  *
  */
 @Entity
-@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
 @DiscriminatorValue("User")
 @Index(fields="lastLogin", order="firstName, lastName")
 public class User extends Person {
