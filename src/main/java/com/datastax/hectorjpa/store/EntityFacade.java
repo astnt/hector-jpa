@@ -23,7 +23,9 @@ import org.apache.openjpa.util.OpenJPAId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.hectorjpa.index.IndexDefinition;
 import com.datastax.hectorjpa.index.IndexDefinitions;
+import com.datastax.hectorjpa.meta.AbstractIndexOperation;
 import com.datastax.hectorjpa.meta.ColumnField;
 import com.datastax.hectorjpa.meta.DiscriminatorColumn;
 import com.datastax.hectorjpa.meta.IndexOperation;
@@ -36,6 +38,7 @@ import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 import com.datastax.hectorjpa.meta.collection.OrderedCollectionField;
 import com.datastax.hectorjpa.meta.collection.UnorderedCollectionField;
 
+
 public class EntityFacade implements Serializable {
   private static final Logger log = LoggerFactory.getLogger(EntityFacade.class);
 
@@ -44,7 +47,7 @@ public class EntityFacade implements Serializable {
   private final String columnFamilyName;
   private final Class<?> clazz;
   private final ObjectTypeColumnStrategy strategy;
-  private final IndexOperation[] indexOps;
+  private final AbstractIndexOperation[] indexOps;
 
   /**
    * Fields indexed by id
@@ -148,31 +151,46 @@ public class EntityFacade implements Serializable {
       strategy = new StaticColumn();
     }
 
+    List<AbstractIndexOperation> newIndexOps = new ArrayList<AbstractIndexOperation>();
+    
+    addIndexOperations(cassMeta, newIndexOps);
+    
+    indexOps = new AbstractIndexOperation[newIndexOps.size()];
+    
+    newIndexOps.toArray(indexOps);
+    
+
+  }
+  
+  /**
+   * Recursively add all index operations from this class up to the root class to this entity facade.
+   * @param current
+   * @param indexOps
+   */
+  private void addIndexOperations(CassandraClassMetaData cassMeta, List<AbstractIndexOperation> indexOps){
     IndexDefinitions indexDefs = cassMeta.getIndexDefinitions();
 
     if (indexDefs != null) {
-      this.indexOps = new IndexOperation[indexDefs.getDefinitions().size()];
+      
+      for(IndexDefinition indexDef: indexDefs.getDefinitions()){
 
-      for (int i = 0; i < indexOps.length; i++) {
-
+ 
         // construct an index with subclass queries
-        if (discriminator != null) {
-          indexOps[i] = new SubclassIndexOperation(cassMeta, indexDefs
-              .getDefinitions().get(i));
+        if (cassMeta.getDiscriminatorColumn() != null) {
+          indexOps.add(new SubclassIndexOperation(cassMeta, indexDef));
         }
         
         // construct and index without discriminator for subclass queries
         else {
-
-          indexOps[i] = new IndexOperation(cassMeta, indexDefs.getDefinitions()
-              .get(i));
+          indexOps.add(new IndexOperation(cassMeta, indexDef));
         }
       }
 
-    } else {
-      this.indexOps = null;
     }
-
+    
+    if(cassMeta.getPCSuperclassMetaData() != null){
+      addIndexOperations((CassandraClassMetaData) cassMeta.getPCSuperclassMetaData(), indexOps);
+    }
   }
 
   // public String getColumnFamilyName() {
@@ -367,7 +385,7 @@ public class EntityFacade implements Serializable {
      * We have indexes, write them
      */
     if (indexOps != null) {
-      for (IndexOperation op : indexOps) {
+      for (AbstractIndexOperation op : indexOps) {
         op.writeIndex(stateManager, m, clockTime);
       }
 
@@ -378,7 +396,7 @@ public class EntityFacade implements Serializable {
   /**
    * @return the indexOps
    */
-  public IndexOperation[] getIndexOps() {
+  public AbstractIndexOperation[] getIndexOps() {
     return indexOps;
   }
 

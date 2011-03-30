@@ -28,7 +28,7 @@ import com.datastax.hectorjpa.store.CassandraClassMetaData;
  * @author Todd Nine
  * 
  */
-public class SubclassIndexOperation extends IndexOperation {
+public class SubclassIndexOperation extends AbstractIndexOperation {
 
   /**
    * String array of all subclass discriminator values
@@ -66,12 +66,12 @@ public class SubclassIndexOperation extends IndexOperation {
 
       newComposite = newComposite();
 
-      newComposite.add(subClasses[i], stringSerializer);
+      newComposite.addComponent(subClasses[i], stringSerializer);
 
       // create our composite of the format order*+id
       oldComposite = newComposite();
 
-      oldComposite.add(subClasses[i], stringSerializer);
+      oldComposite.addComponent(subClasses[i], stringSerializer);
 
       boolean changed = constructComposites(newComposite, oldComposite,
           stateManager);
@@ -101,25 +101,26 @@ public class SubclassIndexOperation extends IndexOperation {
   public void scanIndex(IndexQuery query, Set<DynamicComposite> results,
       Keyspace keyspace) {
     
-    int length = query.getExpressions().size()+1;
-    
-    DynamicComposite startScan = newComposite(length);
-    DynamicComposite endScan = newComposite(length);
+   
+    DynamicComposite startScan = newComposite();
+    DynamicComposite endScan = newComposite();
 
     //add the discriminator value so we're querying for the specified class
     //and it's children
     String discriminator = indexDefinition.getMetaData().getDiscriminatorColumn();
     
-    startScan.add(discriminator, stringSerializer);
-    endScan.add(discriminator, stringSerializer);
+    startScan.addComponent(discriminator, stringSerializer);
+    endScan.addComponent(discriminator, stringSerializer);
     
     int index = 0;
 
     // add all fields
     for (FieldExpression exp : query.getExpressions()) {
       index = this.fieldIndexes.get(exp.getField().getName());
-      this.fields[index].addToComposite(startScan, index+1,  exp.getStartSliceQuery());
-      this.fields[index].addToComposite(endScan, index+1, exp.getEndSliceQuery());
+      //inclusive adds the byte 1 to the end of the field.  If it's inclusive on the start we want to set to false
+      //so that this byte is 0
+      this.fields[index].addToComposite(startScan, index+1,  exp.getStart(), !exp.isStartInclusive());
+      this.fields[index].addToComposite(endScan, index+1, exp.getEnd(), exp.isEndInclusive());
     }
 
     // now query the values

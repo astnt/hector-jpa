@@ -212,9 +212,9 @@ public abstract class AbstractIndexOperation {
 
     // add it to our new value
 
-    newComposite.add(key, idSerializer);
+    newComposite.addComponent(key, idSerializer);
 
-    oldComposite.add(key, idSerializer);
+    oldComposite.addComponent(key, idSerializer);
 
     return changed;
   }
@@ -303,5 +303,7 @@ public abstract class AbstractIndexOperation {
   public IndexDefinition getIndexDefinition() {
     return indexDefinition;
   }
+  
+  
 
 }

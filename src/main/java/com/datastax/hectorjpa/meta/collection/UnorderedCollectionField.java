@@ -141,7 +141,7 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       idComposite = newComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.add(currentId, idSerializer);
+      idComposite.addComponent(currentId, idSerializer);
 
       mutator.addDeletion(idKey, CF_NAME, idComposite, compositeSerializer,
           clock);
@@ -185,7 +185,7 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       idComposite = newComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.add(currentId, idSerializer);
+      idComposite.addComponent(currentId, idSerializer);
 
       mutator.addInsertion(idKey, CF_NAME,
           new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,

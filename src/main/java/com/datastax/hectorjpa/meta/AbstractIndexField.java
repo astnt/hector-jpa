@@ -91,7 +91,7 @@ public abstract class AbstractIndexField {
     // write the current value from the proxy
     Object current = ProxyUtils.getAdded(instance);
 
-    composite.add(current, serializer);
+    composite.addComponent(current, serializer);
 
   }
 
@@ -110,7 +110,7 @@ public abstract class AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      composite.add(original, serializer);
+      composite.addComponent(original, serializer);
       return true;
     }
     
@@ -118,7 +118,7 @@ public abstract class AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      composite.add(original, serializer);
+      composite.addComponent(original, serializer);
       return true;
     }
 
@@ -126,7 +126,7 @@ public abstract class AbstractIndexField {
     // other fields could.
     Object current = ProxyUtils.getAdded(instance);
 
-    composite.add(current, serializer);
+    composite.addComponent(current, serializer);
 
     return false;
 

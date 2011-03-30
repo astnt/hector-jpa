@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexOrder;
+import com.datastax.hectorjpa.meta.AbstractIndexOperation;
 import com.datastax.hectorjpa.meta.IndexOperation;
 import com.datastax.hectorjpa.meta.MetaCache;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
@@ -79,7 +80,7 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
 
     Set<DynamicComposite> columnResults = null;
 
-    IndexOperation indexOp = null;
+    AbstractIndexOperation indexOp = null;
 
     // TODO TN, this is a mess, comparator operations for index ops aren't
     // properly setup in the class structure. Refactor to fix this
@@ -128,7 +129,7 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
    * @param query
    * @return
    */
-  private IndexOperation getIndexOp(IndexQuery query, Value[] ordering,
+  private AbstractIndexOperation getIndexOp(IndexQuery query, Value[] ordering,
       boolean[] orderAscending) {
 
     Collection<FieldExpression> expFields = query.getExpressions();
@@ -155,7 +156,7 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
           orderAscending[i]);
     }
 
-    IndexOperation indexOp = metaCache.getIndexOperation(query.getMetaData(),
+    AbstractIndexOperation indexOp = metaCache.getIndexOperation(query.getMetaData(),
         fields, orders);
 
     if (indexOp == null) {

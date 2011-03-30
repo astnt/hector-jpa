@@ -222,8 +222,7 @@ public class SearchTest extends ManagedEntityTestBase {
 
     Root<Person> person = query.from(Person.class);
 
-    Predicate predicate = queryBuilder.equal(person.get(Person_.email),
-        p1.getEmail());
+    Predicate predicate = queryBuilder.equal(person.get(Person_.email), p1.getEmail());
 
     query.where(predicate);
 

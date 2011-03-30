@@ -223,7 +223,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       orderComposite = newComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.add(currentId, idSerializer);
+      idComposite.addComponent(currentId, idSerializer);
 
       // now construct the composite with order by the ids at the end.
       for (AbstractIndexField order : orderBy) {
@@ -240,7 +240,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       }
 
       // add our id to the end of our order based composite
-      orderComposite.add(currentId, idSerializer);
+      orderComposite.addComponent(currentId, idSerializer);
       
       mutator.addDeletion(orderKey, CF_NAME, orderComposite,
           compositeSerializer, clock);
@@ -290,7 +290,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       orderComposite = newComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.add(currentId, idSerializer);
+      idComposite.addComponent(currentId, idSerializer);
 
       // now construct the composite with order by the ids at the end.
       for (AbstractIndexField order : orderBy) {
@@ -305,7 +305,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       }
 
       // add our id to the end of our order based composite
-      orderComposite.add(currentId, idSerializer);
+      orderComposite.addComponent(currentId, idSerializer);
 
       mutator.addInsertion(orderKey, CF_NAME,
           new HColumnImpl<DynamicComposite, byte[]>(orderComposite, HOLDER,
@@ -370,7 +370,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       deleteOrderComposite = newComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.add(currentId, idSerializer);
+      idComposite.addComponent(currentId, idSerializer);
 
       // now construct the composite with order by the ids at the end.
       for (AbstractIndexField order : orderBy) {
@@ -387,7 +387,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       }
 
       // add our id to the end of our order based composite
-      orderComposite.add(currentId, idSerializer);
+      orderComposite.addComponent(currentId, idSerializer);
 
       // add our order based column to the columns
 

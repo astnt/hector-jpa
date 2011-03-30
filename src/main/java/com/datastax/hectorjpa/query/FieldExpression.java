@@ -38,19 +38,6 @@ public class FieldExpression {
     return start;
   }
   
-  
-  /**
-   * Get the end value adjusted for slice queries
-   * @return
-   */
-  public Object getStartSliceQuery(){
-    //inclusive
-    if(startInclusive){
-      return start;
-    }
-    
-    return increment(start);
-  }
 
   /**
    * @return the startInclusive
@@ -80,22 +67,7 @@ public class FieldExpression {
     return end;
   }
   
-  /**
-   * Get the end value adjusted for slice queries
-   * @return
-   */
-  public Object getEndSliceQuery(){
-    
-    //not inclusive
-    if(!endInclusive){
-      return end;
-    }
-    
-    return increment(end);
-    
-    
-    
-  }
+  
   
 
 

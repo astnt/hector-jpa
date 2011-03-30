@@ -30,8 +30,8 @@ public class QueryIndexField extends AbstractIndexField {
    * @param index
    * @param value
    */
-  public void addToComposite(DynamicComposite composite, int index, Object value) {
-    composite.add(index, value);
+  public void addToComposite(DynamicComposite composite, int index, Object value, boolean inclusive) {
+    composite.addComponent(index, value, serializer, composite.getSerializerToComparatorMapping().get(serializer.getClass()), inclusive);
   }
 
 

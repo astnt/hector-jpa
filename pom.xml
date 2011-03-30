@@ -55,7 +55,7 @@
     <dependency>
       <groupId>me.prettyprint</groupId>
       <artifactId>hector-core</artifactId>
-      <version>0.7.0-29-SNAPSHOT</version>
+      <version>0.7.0-29-st-SNAPSHOT</version>      
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>

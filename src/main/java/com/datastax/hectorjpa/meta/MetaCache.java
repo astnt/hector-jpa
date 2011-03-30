@@ -26,7 +26,7 @@ public class MetaCache {
 
   private final ConcurrentMap<String, CassandraClassMetaData> discriminators = new ConcurrentHashMap<String, CassandraClassMetaData>();
 
-  private final SortedMap<IndexDefinition, IndexOperation> indexDefinitions = new TreeMap<IndexDefinition, IndexOperation>(new IndexOpComparator());
+  private final SortedMap<IndexDefinition, AbstractIndexOperation> indexDefinitions = new TreeMap<IndexDefinition, AbstractIndexOperation>(new IndexOpComparator());
 
   /**
    * Create a new meta cache for classes
@@ -64,10 +64,10 @@ public class MetaCache {
       discriminators.putIfAbsent(discriminatorValue, cassMeta);
     }
     
-    IndexOperation[] indexOps = facade.getIndexOps();
+    AbstractIndexOperation[] indexOps = facade.getIndexOps();
     
     if(indexOps != null){
-      for(IndexOperation op: indexOps){
+      for(AbstractIndexOperation op: indexOps){
         indexDefinitions.put(op.getIndexDefinition(), op);
       }
       
@@ -96,7 +96,7 @@ public class MetaCache {
    * @param orders
    * @return
    */
-  public IndexOperation getIndexOperation(CassandraClassMetaData cmd,
+  public AbstractIndexOperation getIndexOperation(CassandraClassMetaData cmd,
       FieldOrder[] fields, IndexOrder[] orders) {
 
     IndexDefinition temp = new IndexDefinition(cmd, fields, orders);
