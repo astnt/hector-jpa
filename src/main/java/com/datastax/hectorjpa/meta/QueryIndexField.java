@@ -1,7 +1,9 @@
 package com.datastax.hectorjpa.meta;
 
 import me.prettyprint.hector.api.beans.DynamicComposite;
+import me.prettyprint.hector.api.ddl.ComparatorType;
 
+import org.apache.cassandra.db.marshal.BytesType;
 import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 
@@ -31,7 +33,14 @@ public class QueryIndexField extends AbstractIndexField {
    * @param value
    */
   public void addToComposite(DynamicComposite composite, int index, Object value, boolean inclusive) {
-    composite.addComponent(index, value, serializer, composite.getSerializerToComparatorMapping().get(serializer.getClass()), inclusive);
+    //TODO TN, this feels a bit hacky.  Should the abstract composite default to Bytes if the serializer is null
+    String type = composite.getSerializerToComparatorMapping().get(serializer.getClass());
+    
+    if(type == null){
+      type = ComparatorType.BYTESTYPE.getTypeName();
+    }
+    
+    composite.addComponent(index, value, serializer, type, inclusive);
   }
 
 

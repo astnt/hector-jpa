@@ -23,10 +23,12 @@ import com.datastax.hectorjpa.bean.Sale;
 import com.datastax.hectorjpa.bean.Sale_;
 import com.datastax.hectorjpa.bean.Store;
 import com.datastax.hectorjpa.bean.inheritance.Client;
+import com.datastax.hectorjpa.bean.inheritance.Client_;
 import com.datastax.hectorjpa.bean.inheritance.Manager;
 import com.datastax.hectorjpa.bean.inheritance.Person;
 import com.datastax.hectorjpa.bean.inheritance.Person_;
 import com.datastax.hectorjpa.bean.inheritance.User;
+import com.datastax.hectorjpa.bean.inheritance.User_;
 
 /**
  * 
@@ -263,7 +265,55 @@ public class SearchTest extends ManagedEntityTestBase {
    */
   @Test
   public void nullIndexedField() {
-    fail("Unimplemented");
+
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+
+    Person p1 = new Person();
+    p1.setEmail("p1@test.com");
+    p1.setFirstName("p1");
+    p1.setLastName("Person");
+
+    em.persist(p1);
+    
+
+    Client c1 = new Client();
+    c1.setEmail(p1.getEmail());
+    c1.setFirstName("c1");
+    c1.setLastName("Client");
+
+    em.persist(c1);
+    
+    em.getTransaction().commit();
+    em.close();
+
+    //
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+
+    CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+    CriteriaQuery<User> query = queryBuilder.createQuery(User.class);
+
+    Root<User> person = query.from(User.class);
+
+    Predicate predicate = queryBuilder.equal(person.get(User_.lastLogin), null);
+
+    query.where(predicate);
+
+    Order fn = queryBuilder.asc(person.get(Person_.firstName));
+    Order ln = queryBuilder.asc(person.get(Person_.lastName));
+
+    query.orderBy(fn, ln);
+
+    TypedQuery<User> saleQuery = em2.createQuery(query);
+
+    List<User> results = saleQuery.getResultList();
+    
+    assertEquals(1, results.size());
+    
+    assertEquals(c1, results.get(0));
+    
+
   }
 
 }
