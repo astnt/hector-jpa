@@ -55,7 +55,7 @@
     <dependency>
       <groupId>me.prettyprint</groupId>
       <artifactId>hector-core</artifactId>
-      <version>0.7.0-29-st-SNAPSHOT</version>
+      <version>0.8.0-1-SNAPSHOT</version>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -218,7 +218,6 @@
           <optimize>true</optimize>
           <showDeprecation>true</showDeprecation>
           <showWarnings>true</showWarnings>
-          <compilerArgument>-Aopenjpa.metamodel=true</compilerArgument>
         </configuration>
       </plugin>
       <plugin>
@@ -231,6 +230,64 @@
           <useProjectReferences>false</useProjectReferences>
         </configuration>
       </plugin>
+
+      <!-- generate metadata for typed queries we have to define the compiler 
+        plugin twice to make sure everything gets compiled during the normal test 
+        compile phase -->
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3</version>
+        <executions>
+          <execution>
+            <id>generate-query-metadata</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+          <optimize>true</optimize>
+          <showDeprecation>true</showDeprecation>
+          <showWarnings>true</showWarnings>
+          <compilerArgument>-Aopenjpa.metamodel=true</compilerArgument>
+          <testIncludes>
+            <includes>com/datastax/hectorjpa/bean/**/*.java</includes>
+          </testIncludes>
+        </configuration>
+      </plugin>
+
+      <!-- performs normal compilation of all classes in test package -->
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3</version>
+        <executions>
+          <execution>
+            <id>compile-all-tests</id>
+            <phase>test-compile</phase>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+          <optimize>true</optimize>
+          <showDeprecation>true</showDeprecation>
+          <showWarnings>true</showWarnings>
+          <testIncludes>
+
+            <includes>**/*.java</includes>
+
+          </testIncludes>
+        </configuration>
+      </plugin>
+
+
+      <!-- enhance our test entities -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>openjpa-maven-plugin</artifactId>
@@ -245,7 +302,7 @@
           </execution>
         </executions>
         <configuration>
-          <includes>com/datastax/hectorjpa/bean/*.class</includes>
+          <includes>com/datastax/hectorjpa/bean/**/*.class</includes>
         </configuration>
       </plugin>
     </plugins>
@@ -257,7 +314,7 @@
     <org.springframework.version>3.0.5.RELEASE</org.springframework.version>
     <slf4j.version>1.6.1</slf4j.version>
     <aspectj.version>1.6.8</aspectj.version>
-     <openjpa.version>2.1.0</openjpa.version>
+    <openjpa.version>2.1.0</openjpa.version>
   </properties>
 
 </project>
