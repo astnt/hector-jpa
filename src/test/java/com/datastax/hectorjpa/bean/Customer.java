@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -26,8 +27,8 @@ public class Customer extends AbstractEntity {
   @Persistent
   private String name;
 
-  @Persistent
-  private String phoneNumber;
+  @Embedded
+  private Phone phoneNumber;
 
   @Persistent
   private String email;
@@ -46,11 +47,16 @@ public class Customer extends AbstractEntity {
     this.name = name;
   }
 
-  public String getPhoneNumber() {
+  public Phone getPhoneNumber() {
     return phoneNumber;
   }
 
-  public void setPhoneNumber(String phoneNumber) {
+  
+
+  /**
+   * @param phoneNumber the phoneNumber to set
+   */
+  public void setPhoneNumber(Phone phoneNumber) {
     this.phoneNumber = phoneNumber;
   }
 

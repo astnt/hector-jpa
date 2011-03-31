@@ -234,10 +234,9 @@ public class CassandraStoreManager extends AbstractStoreManager {
 
 		// and add some that we don't support but the abstract store does
 		// TODO take these out one by one
-		c.add(OpenJPAConfiguration.OPTION_EMBEDDED_RELATION);
-		c.add(OpenJPAConfiguration.OPTION_EMBEDDED_COLLECTION_RELATION);
-		c.add(OpenJPAConfiguration.OPTION_EMBEDDED_MAP_RELATION);
-		// c.add(OpenJPAConfiguration.OPTION_OPTIMISTIC);
+//		c.add(OpenJPAConfiguration.OPTION_EMBEDDED_RELATION);
+//		c.add(OpenJPAConfiguration.OPTION_EMBEDDED_COLLECTION_RELATION);
+//		c.add(OpenJPAConfiguration.OPTION_EMBEDDED_MAP_RELATION);
 		return c;
 	}
 

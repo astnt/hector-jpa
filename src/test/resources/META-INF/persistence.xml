@@ -12,6 +12,7 @@
     <class>com.datastax.hectorjpa.bean.AbstractEntity</class>
     <class>com.datastax.hectorjpa.bean.Store</class>
     <class>com.datastax.hectorjpa.bean.Customer</class>
+    <class>com.datastax.hectorjpa.bean.Phone</class>
     <class>com.datastax.hectorjpa.bean.Sale</class>
     <class>com.datastax.hectorjpa.bean.inheritance.SmsMessage</class>
     <class>com.datastax.hectorjpa.bean.inheritance.VerificationSmsMessage</class>
@@ -21,6 +22,7 @@
     <class>com.datastax.hectorjpa.bean.inheritance.User</class>
     <class>com.datastax.hectorjpa.bean.inheritance.Client</class>
     <class>com.datastax.hectorjpa.bean.inheritance.Manager</class>
+    
 
 
 
@@ -47,6 +49,9 @@
       <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported" />
 
       <property name="openjpa.Log" value="log4j" />
+      
+      <!--  Used to test the serialization property.  If not set will default to java default serialization -->
+      <property name="com.datastax.jpa.embeddedserializer" value="com.datastax.hectorjpa.serialize.XStreamSerializer"/>
       <!-- <property name="openjpa.EntityManagerFactory" value="me.prettyprint.hom.EntityManagerFactoryImpl"/> -->
 
     </properties>

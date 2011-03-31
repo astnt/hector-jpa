@@ -1,6 +1,5 @@
 package com.datastax.hectorjpa.store;
 
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -19,11 +18,12 @@ import org.junit.Test;
 
 import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.Customer;
+import com.datastax.hectorjpa.bean.Phone;
+import com.datastax.hectorjpa.bean.Phone.PhoneType;
 import com.datastax.hectorjpa.bean.Sale;
 import com.datastax.hectorjpa.bean.Sale_;
 import com.datastax.hectorjpa.bean.Store;
 import com.datastax.hectorjpa.bean.inheritance.Client;
-import com.datastax.hectorjpa.bean.inheritance.Client_;
 import com.datastax.hectorjpa.bean.inheritance.Manager;
 import com.datastax.hectorjpa.bean.inheritance.Person;
 import com.datastax.hectorjpa.bean.inheritance.Person_;
@@ -60,7 +60,7 @@ public class SearchTest extends ManagedEntityTestBase {
     Customer james = new Customer();
     james.setEmail("james@test.com");
     james.setName("James");
-    james.setPhoneNumber("+641112223333");
+    james.setPhoneNumber(new Phone("+641112223333", PhoneType.MOBILE));
 
     store.addCustomer(james);
 

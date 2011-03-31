@@ -26,17 +26,21 @@ import org.slf4j.LoggerFactory;
 import com.datastax.hectorjpa.index.IndexDefinition;
 import com.datastax.hectorjpa.index.IndexDefinitions;
 import com.datastax.hectorjpa.meta.AbstractIndexOperation;
-import com.datastax.hectorjpa.meta.ColumnField;
+import com.datastax.hectorjpa.meta.SimpleColumnField;
 import com.datastax.hectorjpa.meta.DiscriminatorColumn;
+import com.datastax.hectorjpa.meta.EmbeddedColumnField;
+import com.datastax.hectorjpa.meta.Field;
 import com.datastax.hectorjpa.meta.IndexOperation;
 import com.datastax.hectorjpa.meta.MetaCache;
 import com.datastax.hectorjpa.meta.ObjectTypeColumnStrategy;
 import com.datastax.hectorjpa.meta.StaticColumn;
+import com.datastax.hectorjpa.meta.StringColumnField;
 import com.datastax.hectorjpa.meta.SubclassIndexOperation;
 import com.datastax.hectorjpa.meta.ToOneColumn;
 import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 import com.datastax.hectorjpa.meta.collection.OrderedCollectionField;
 import com.datastax.hectorjpa.meta.collection.UnorderedCollectionField;
+import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
 
 
 public class EntityFacade implements Serializable {
@@ -52,7 +56,7 @@ public class EntityFacade implements Serializable {
   /**
    * Fields indexed by id
    */
-  private final Map<Integer, ColumnField<?>> columnFieldIds;
+  private final Map<Integer, StringColumnField<?>> columnFieldIds;
   private final Map<Integer, AbstractCollectionField<?>> collectionFieldIds;
 
   /**
@@ -63,7 +67,7 @@ public class EntityFacade implements Serializable {
    * @param mappingUtils
    *          The mapping utils to use for byte mapping
    */
-  public EntityFacade(ClassMetaData classMetaData) {
+  public EntityFacade(ClassMetaData classMetaData, EmbeddedSerializer serializer) {
 
     CassandraClassMetaData cassMeta = (CassandraClassMetaData) classMetaData;
 
@@ -71,13 +75,13 @@ public class EntityFacade implements Serializable {
 
     clazz = cassMeta.getDescribedType();
 
-    columnFieldIds = new HashMap<Integer, ColumnField<?>>();
+    columnFieldIds = new HashMap<Integer, StringColumnField<?>>();
     collectionFieldIds = new HashMap<Integer, AbstractCollectionField<?>>();
 
     // indexMetaData = new HashSet<AbstractEntityIndex>();
 
     FieldMetaData[] fmds = cassMeta.getFields();
-    ColumnField<?> field = null;
+    SimpleColumnField<?> field = null;
 
     // parse all columns, we only want to do this on the first inti
     for (int i = 0; i < fmds.length; i++) {
@@ -122,6 +126,12 @@ public class EntityFacade implements Serializable {
 
         continue;
       }
+      
+      if(fmds[i].isEmbedded()){
+        EmbeddedColumnField embeddedColumn = new EmbeddedColumnField(fmds[i], serializer);
+        columnFieldIds.put(embeddedColumn.getFieldId(), embeddedColumn);
+        continue;
+      }
 
       if (log.isDebugEnabled()) {
         log.debug(
@@ -132,7 +142,7 @@ public class EntityFacade implements Serializable {
                 fmds[i].getElement().getDeclaredTypeMetaData() });
       }
 
-      field = new ColumnField(fmds[i]);
+      field = new SimpleColumnField(fmds[i]);
 
       // TODO if fmds[i].getAssociationType() > 0 .. we found an attached
       // entity
@@ -232,7 +242,7 @@ public class EntityFacade implements Serializable {
 
     List<String> fields = new ArrayList<String>();
 
-    ColumnField<?> field = null;
+    StringColumnField<?> field = null;
     AbstractCollectionField<?> collectionField = null;
     Object entityId = stateManager.getObjectId();
 
@@ -354,7 +364,7 @@ public class EntityFacade implements Serializable {
     byte[] keyBytes = MappingUtils.getKeyBytes(stateManager.getObjectId());
 
     for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet.nextSetBit(i + 1)) {
-      ColumnField field = columnFieldIds.get(i);
+      StringColumnField field = columnFieldIds.get(i);
 
       if (field == null) {
 

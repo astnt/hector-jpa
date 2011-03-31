@@ -30,177 +30,185 @@ import com.datastax.hectorjpa.consitency.JPAConsistency;
  */
 public class CassandraStore {
 
-	private static final Logger log = LoggerFactory
-			.getLogger(CassandraStore.class);
+  private static final Logger log = LoggerFactory
+      .getLogger(CassandraStore.class);
 
-	// bitset used on deleting fields
-	private static final BitSet NONE = new BitSet();
+  // bitset used on deleting fields
+  private static final BitSet NONE = new BitSet();
 
-	private final Cluster cluster;
-	private final CassandraStoreConfiguration conf;
-	private Keyspace keyspace;
+  private final Cluster cluster;
+  private final CassandraStoreConfiguration conf;
+  private Keyspace keyspace;
 
-	public CassandraStore(CassandraStoreConfiguration conf) {
-		this.conf = conf;
-		this.cluster = HFactory
-				.getCluster(conf.getValue(
-						EntityManagerConfigurator.CLUSTER_NAME_PROP)
-						.getOriginalValue());
-		// TODO needs passthrough of other configuration
+  public CassandraStore(CassandraStoreConfiguration conf) {
+    this.conf = conf;
+    this.cluster = HFactory.getCluster(conf.getValue(
+        EntityManagerConfigurator.CLUSTER_NAME_PROP).getOriginalValue());
+    // TODO needs passthrough of other configuration
 
-	}
+    //TODO TN ugly as sin, fix this!
+    String value = conf.getValue(EntityManagerConfigurator.SERIALIZER_PROP).getOriginalValue();
+    
+    conf.setSerializer(value);
+   
+  }
 
-	public CassandraStore open() {
-		this.keyspace = HFactory.createKeyspace(
-				conf.getValue(EntityManagerConfigurator.KEYSPACE_PROP)
-						.getOriginalValue(), cluster);
+  public CassandraStore open() {
+    this.keyspace = HFactory.createKeyspace(
+        conf.getValue(EntityManagerConfigurator.KEYSPACE_PROP)
+            .getOriginalValue(), cluster);
 
-		this.keyspace.setConsistencyLevelPolicy(new JPAConsistencyPolicy());
+    this.keyspace.setConsistencyLevelPolicy(new JPAConsistencyPolicy());
 
-		return this;
-	}
+    return this;
+  }
 
-	/**
-	 * Create a clock value to be passed to all operations
-	 * 
-	 * @return
-	 */
-	public long getClock() {
-		return keyspace.createClock();
-	}
+  /**
+   * Create a clock value to be passed to all operations
+   * 
+   * @return
+   */
+  public long getClock() {
+    return keyspace.createClock();
+  }
 
-	/**
-	 * Return a new mutator for the keyspace with a byte array.
-	 * 
-	 * @return
-	 */
-	public Mutator createMutator() {
-		return new MutatorImpl(keyspace, BytesArraySerializer.get());
-	}
-	
-	public Keyspace getKeyspace(){
-	  return this.keyspace;
-	}
+  /**
+   * Return a new mutator for the keyspace with a byte array.
+   * 
+   * @return
+   */
+  public Mutator createMutator() {
+    return new MutatorImpl(keyspace, BytesArraySerializer.get());
+  }
 
-	/**
-	 * Load this object for the statemanager
-	 * 
-	 * @param stateManager
-	 * @param fields
-	 *            The bitset of fields to load
-	 * @return true if the object was found, false otherwise
-	 */
-	public boolean getObject(OpenJPAStateManager stateManager, BitSet fields) {
+  public Keyspace getKeyspace() {
+    return this.keyspace;
+  }
 
-		ClassMetaData metaData = stateManager.getMetaData();
-		EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
+  /**
+   * Load this object for the statemanager
+   * 
+   * @param stateManager
+   * @param fields
+   *          The bitset of fields to load
+   * @return true if the object was found, false otherwise
+   */
+  public boolean getObject(OpenJPAStateManager stateManager, BitSet fields) {
 
-		return entityFacade.loadColumns(stateManager, fields, keyspace,
-				conf.getMetaCache());
+    ClassMetaData metaData = stateManager.getMetaData();
+    EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData,
+        conf.getSerializer());
 
-	}
+    return entityFacade.loadColumns(stateManager, fields, keyspace,
+        conf.getMetaCache());
 
-	/**
-	 * Load this object for the statemanager
-	 * 
-	 * @param stateManager
-	 * @param fields
-	 *            The bitset of fields to load
-	 * @return true if the object was found, false otherwise
-	 */
-	public boolean exists(OpenJPAStateManager stateManager) {
+  }
 
-		ClassMetaData metaData = stateManager.getMetaData();
-		EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
+  /**
+   * Load this object for the statemanager
+   * 
+   * @param stateManager
+   * @param fields
+   *          The bitset of fields to load
+   * @return true if the object was found, false otherwise
+   */
+  public boolean exists(OpenJPAStateManager stateManager) {
 
-		return entityFacade.exists(stateManager, keyspace, conf.getMetaCache());
+    ClassMetaData metaData = stateManager.getMetaData();
+    EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData,
+        conf.getSerializer());
 
-	}
+    return entityFacade.exists(stateManager, keyspace, conf.getMetaCache());
 
-	/**
-	 * Find the persisted class in cassandra. If this is not a subclass, the oid
-	 * is always returned
-	 * 
-	 * @param oid
-	 * @return
-	 */
-	public Class<?> getDataStoreId(Object oid, StoreContext ctx) {
+  }
 
-		Class<?> requested = ((OpenJPAId) oid).getType();
+  /**
+   * Find the persisted class in cassandra. If this is not a subclass, the oid
+   * is always returned
+   * 
+   * @param oid
+   * @return
+   */
+  public Class<?> getDataStoreId(Object oid, StoreContext ctx) {
 
-		ClassMetaData metaData = ctx.getConfiguration()
-				.getMetaDataRepositoryInstance()
-				.getMetaData(requested, ctx.getClassLoader(), true);
+    Class<?> requested = ((OpenJPAId) oid).getType();
 
-		EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
+    ClassMetaData metaData = ctx.getConfiguration()
+        .getMetaDataRepositoryInstance()
+        .getMetaData(requested, ctx.getClassLoader(), true);
 
-		return entityFacade.getStoredEntityType(oid, keyspace, conf.getMetaCache());
-	}
+    EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData,
+        conf.getSerializer());
 
-	/**
-	 * Store this object using the given mutator
-	 * 
-	 * @param mutator
-	 * @param stateManager
-	 * @param fields
-	 * @return
-	 */
-	public void storeObject(Mutator mutator, OpenJPAStateManager stateManager,
-			BitSet fields, long clock) {
+    return entityFacade.getStoredEntityType(oid, keyspace, conf.getMetaCache());
+  }
 
-		if (log.isDebugEnabled()) {
-			log.debug("Adding mutation (insertion) for class {}", stateManager
-					.getManagedInstance().getClass().getName());
-		}
+  /**
+   * Store this object using the given mutator
+   * 
+   * @param mutator
+   * @param stateManager
+   * @param fields
+   * @return
+   */
+  public void storeObject(Mutator mutator, OpenJPAStateManager stateManager,
+      BitSet fields, long clock) {
 
-		ClassMetaData metaData = stateManager.getMetaData();
-		EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
+    if (log.isDebugEnabled()) {
+      log.debug("Adding mutation (insertion) for class {}", stateManager
+          .getManagedInstance().getClass().getName());
+    }
 
-		entityFacade.addColumns(stateManager, fields, mutator, clock);
+    ClassMetaData metaData = stateManager.getMetaData();
+    EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData,
+        conf.getSerializer());
 
-	}
+    entityFacade.addColumns(stateManager, fields, mutator, clock);
 
-	/**
-	 * Remove this object
-	 * 
-	 * @param mutator
-	 * @param stateManager
-	 * @return
-	 */
-	public void removeObject(Mutator mutator, OpenJPAStateManager stateManager,
-			long clock) {
+  }
 
-		if (log.isDebugEnabled()) {
-			log.debug("Adding mutation (deletion) for class {}", stateManager
-					.getManagedInstance().getClass().getName());
-		}
-		ClassMetaData metaData = stateManager.getMetaData();
+  /**
+   * Remove this object
+   * 
+   * @param mutator
+   * @param stateManager
+   * @return
+   */
+  public void removeObject(Mutator mutator, OpenJPAStateManager stateManager,
+      long clock) {
 
-		// TODO get collections to remove as well
+    if (log.isDebugEnabled()) {
+      log.debug("Adding mutation (deletion) for class {}", stateManager
+          .getManagedInstance().getClass().getName());
+    }
+    ClassMetaData metaData = stateManager.getMetaData();
 
-		EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData);
+    // TODO get collections to remove as well
 
-		entityFacade.delete(stateManager, mutator, clock);
+    EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData,
+        conf.getSerializer());
 
-	}
+    entityFacade.delete(stateManager, mutator, clock);
 
-	/**
-	 * Inner class that delegates to the JPAConsistency value for consistency
-	 * 
-	 * @author Todd Nine
-	 * 
-	 */
-	private class JPAConsistencyPolicy implements ConsistencyLevelPolicy {
+  }
 
-		@Override
-		public HConsistencyLevel get(OperationType op) {
-			return JPAConsistency.get();
-		}
+  /**
+   * Inner class that delegates to the JPAConsistency value for consistency
+   * 
+   * @author Todd Nine
+   * 
+   */
+  private class JPAConsistencyPolicy implements ConsistencyLevelPolicy {
 
-		@Override
-		public HConsistencyLevel get(OperationType op, String cfName) {
-			return JPAConsistency.get();
-		}
-	}
+    @Override
+    public HConsistencyLevel get(OperationType op) {
+      return JPAConsistency.get();
+    }
+
+    @Override
+    public HConsistencyLevel get(OperationType op, String cfName) {
+      return JPAConsistency.get();
+    }
+  }
 
 }

@@ -21,6 +21,9 @@ public class EntityManagerConfigurator {
   public static final String KEYSPACE_PROP = PROP_PREFIX + "keyspace";
   public static final String HOST_LIST_PROP = PROP_PREFIX + "hostList";
   
+  public static final String SERIALIZER_PROP = "com.datastax.jpa.embeddedserializer";
+  
+  
   private final String classpathPrefix;
   private final String clusterName;
   private final String keyspace;

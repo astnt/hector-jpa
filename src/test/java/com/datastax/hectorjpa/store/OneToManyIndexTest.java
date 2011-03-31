@@ -8,7 +8,9 @@ import org.junit.Test;
 
 import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.Customer;
+import com.datastax.hectorjpa.bean.Phone;
 import com.datastax.hectorjpa.bean.Store;
+import com.datastax.hectorjpa.bean.Phone.PhoneType;
 
 /**
  * Test many to many indexing through an object graph. While many-to-many in
@@ -36,12 +38,12 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
     Customer james = new Customer();
     james.setEmail("james@test.com");
     james.setName("James");
-    james.setPhoneNumber("+641112223333");
+    james.setPhoneNumber(new Phone("+641112223333", PhoneType.MOBILE));
 
     Customer luke = new Customer();
     luke.setEmail("luke@test.com");
     luke.setName("Luke");
-    luke.setPhoneNumber("+64111222333");
+    luke.setPhoneNumber(new Phone("+64111222333", PhoneType.HOME));
 
     store.addCustomer(james);
     store.addCustomer(luke);
@@ -60,8 +62,13 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
     assertEquals(store, returnedStore);
 
     assertEquals(james, returnedStore.getCustomers().get(0));
+    
+    //test embedded objects
+    assertEquals(james.getPhoneNumber(), returnedStore.getCustomers().get(0).getPhoneNumber());
 
     assertEquals(luke, returnedStore.getCustomers().get(1));
+    
+    assertEquals(luke.getPhoneNumber(), returnedStore.getCustomers().get(1).getPhoneNumber());
 
   }
 
@@ -80,12 +87,12 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
     Customer james = new Customer();
     james.setEmail("james@test.com");
     james.setName("James");
-    james.setPhoneNumber("+641112223333");
+    james.setPhoneNumber(new Phone("+641112223333", PhoneType.MOBILE));
 
     Customer luke = new Customer();
     luke.setEmail("luke@test.com");
     luke.setName("Luke");
-    luke.setPhoneNumber("+64111222333");
+    luke.setPhoneNumber(new Phone("+641112223333", PhoneType.MOBILE));
 
     store.addCustomer(james);
     store.addCustomer(luke);

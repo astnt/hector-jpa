@@ -11,6 +11,7 @@ import org.apache.openjpa.meta.ClassMetaData;
 import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexDefinition;
 import com.datastax.hectorjpa.index.IndexOrder;
+import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.EntityFacade;
 
@@ -43,7 +44,7 @@ public class MetaCache {
    * @param meta
    * @return
    */
-  public EntityFacade getFacade(ClassMetaData meta) {
+  public EntityFacade getFacade(ClassMetaData meta, EmbeddedSerializer serializer) {
 
     CassandraClassMetaData cassMeta = (CassandraClassMetaData) meta;
 
@@ -53,7 +54,7 @@ public class MetaCache {
       return facade;
     }
 
-    facade = new EntityFacade(cassMeta);
+    facade = new EntityFacade(cassMeta, serializer);
 
     metaData.putIfAbsent(cassMeta, facade);
 

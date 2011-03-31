@@ -42,7 +42,6 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
   protected static final DynamicCompositeSerializer compositeSerializer = new DynamicCompositeSerializer();
 
   protected Serializer<Object> idSerializer;
-  protected String name;
   protected Class<?> targetClass;
 
   // The name of this entity serialzied as bytes
@@ -58,7 +57,7 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
   
 
   public AbstractCollectionField(FieldMetaData fmd) {
-    super(fmd.getIndex());
+    super(fmd.getIndex(), fmd.getName());
 
     Class<?> clazz = fmd.getDeclaredType();
 

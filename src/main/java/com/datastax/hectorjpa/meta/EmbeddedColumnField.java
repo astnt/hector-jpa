@@ -1,6 +1,9 @@
 package com.datastax.hectorjpa.meta;
 
+import java.nio.ByteBuffer;
+
 import me.prettyprint.cassandra.model.HColumnImpl;
+import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
@@ -11,7 +14,7 @@ import me.prettyprint.hector.api.query.QueryResult;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.FieldMetaData;
 
-import com.datastax.hectorjpa.store.MappingUtils;
+import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
 
 /**
  * Class for serializing columns
@@ -20,44 +23,18 @@ import com.datastax.hectorjpa.store.MappingUtils;
  * 
  * @param <V>
  */
-public class ColumnField<V> extends Field<V> {
+public class EmbeddedColumnField<V> extends StringColumnField<V> {
 
-  protected Serializer<?> serializer;
-  protected String name;
-  protected boolean indexed;
-  protected boolean ordered;
+  protected static final Serializer<?> serializer = ByteBufferSerializer.get();
+  
+  protected final EmbeddedSerializer embeddedSerializer;
 
-  public ColumnField(FieldMetaData fmd) {
-    this(fmd.getIndex(), fmd.getName(), false, fmd.isUsedInOrderBy(),
-        MappingUtils.getSerializer(fmd.getTypeCode()));
+  public EmbeddedColumnField(FieldMetaData fmd, EmbeddedSerializer embeddedSerializer) {
+    super(fmd.getIndex(), fmd.getName());
+    this.embeddedSerializer = embeddedSerializer;
   }
 
-  public ColumnField(int fieldId, String fieldName, boolean indexed,
-      boolean ordered, Serializer<?> serializer) {
-    super(fieldId);
-    this.name = fieldName;
-    this.indexed = indexed;
-    this.ordered = ordered;
-    this.serializer = serializer;
-  }
-
-  /**
-   * Only invoked from subclasses that can't determine serializer
-   * 
-   * @param fieldId
-   * @param name
-   */
-  protected ColumnField(int fieldId, String name) {
-    super(fieldId);
-    this.name = name;
-  }
-
-  /**
-   * @return the name
-   */
-  public String getName() {
-    return name;
-  }
+ 
 
   /**
    * Adds this field to the mutation with the given clock
@@ -79,8 +56,10 @@ public class ColumnField<V> extends Field<V> {
       mutator.addDeletion(key, cfName, name, StringSerializer.get(), clock);
       return;
     }
+    
+    ByteBuffer bytes = embeddedSerializer.getBytes(value);
 
-    mutator.addInsertion(key, cfName, new HColumnImpl(name, value, clock,
+    mutator.addInsertion(key, cfName, new HColumnImpl(name, bytes, clock,
         StringSerializer.get(), serializer));
 
   }
@@ -102,7 +81,9 @@ public class ColumnField<V> extends Field<V> {
       return false;
     }
 
-    Object value = serializer.fromBytes(column.getValue());
+    ByteBuffer bytes = (ByteBuffer) serializer.fromBytes(column.getValue());
+    
+    Object value = embeddedSerializer.getObject(bytes);
 
     stateManager.storeObject(fieldId, value);
 
