@@ -4,6 +4,7 @@ import java.util.BitSet;
 
 import me.prettyprint.cassandra.model.MutatorImpl;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
+import me.prettyprint.cassandra.service.CassandraHostConfigurator;
 import me.prettyprint.cassandra.service.OperationType;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.ConsistencyLevelPolicy;
@@ -42,8 +43,15 @@ public class CassandraStore {
 
   public CassandraStore(CassandraStoreConfiguration conf) {
     this.conf = conf;
-    this.cluster = HFactory.getCluster(conf.getValue(
-        EntityManagerConfigurator.CLUSTER_NAME_PROP).getOriginalValue());
+    
+    //need to create actual connection
+        
+    String clusterName =  conf.getValue(EntityManagerConfigurator.CLUSTER_NAME_PROP).getOriginalValue();
+    String clusterConnection =  conf.getValue(EntityManagerConfigurator.HOST_LIST_PROP).getOriginalValue();
+    
+    this.cluster = HFactory.getOrCreateCluster(clusterName, new CassandraHostConfigurator(clusterConnection));
+      
+   
     // TODO needs passthrough of other configuration
 
     //TODO TN ugly as sin, fix this!
