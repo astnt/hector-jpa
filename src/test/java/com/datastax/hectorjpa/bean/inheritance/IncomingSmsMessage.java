@@ -1,11 +1,10 @@
-package com.datastax.hectorjpa.bean;
+package com.datastax.hectorjpa.bean.inheritance;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 
-import com.datastax.hectorjpa.bean.inheritance.SmsMessage;
 
 /**
  * Incoming sms messages

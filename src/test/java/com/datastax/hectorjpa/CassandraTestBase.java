@@ -150,6 +150,12 @@ public class CassandraTestBase {
     .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
     
     
+    cfDefList.add(new CfDef("TestKeyspace", "PrimitiveTypes")
+    .setComparator_type(BytesType.class.getSimpleName())
+    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+    
+    
+    
     
 
 

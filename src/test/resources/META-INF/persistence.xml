@@ -7,6 +7,7 @@
     <provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
 
     <class>com.datastax.hectorjpa.bean.SimpleTestBean</class>
+    <class>com.datastax.hectorjpa.bean.PrimitiveTypes</class>
     <class>com.datastax.hectorjpa.bean.User</class>
     <class>com.datastax.hectorjpa.bean.Observe</class>
     <class>com.datastax.hectorjpa.bean.AbstractEntity</class>

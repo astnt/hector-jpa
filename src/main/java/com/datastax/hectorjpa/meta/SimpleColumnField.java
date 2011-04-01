@@ -98,7 +98,8 @@ public class SimpleColumnField<V> extends StringColumnField<V> {
 
     Object value = serializer.fromBytes(column.getValue());
 
-    stateManager.storeObject(fieldId, value);
+   
+    stateManager.store(fieldId, value);
 
     return true;
   }

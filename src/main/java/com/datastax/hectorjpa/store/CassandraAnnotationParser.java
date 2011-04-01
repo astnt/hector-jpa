@@ -5,16 +5,19 @@ package com.datastax.hectorjpa.store;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Embeddable;
+import javax.persistence.Embedded;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 
 import org.apache.openjpa.conf.OpenJPAConfiguration;
 import org.apache.openjpa.meta.ClassMetaData;
+import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.persistence.AnnotationPersistenceMetaDataParser;
 import org.apache.openjpa.util.MetaDataException;
 
@@ -41,6 +44,7 @@ public class CassandraAnnotationParser extends
     mapping.put(Inheritance.class, ClassMapping.INHERITANCE);
     mapping.put(ColumnFamily.class, ClassMapping.COLUMNFAMILY);
     mapping.put(Embeddable.class, ClassMapping.EMBEDDABLE);
+    mapping.put(Embedded.class, ClassMapping.EMBEDDED);
   }
 
   public CassandraAnnotationParser(OpenJPAConfiguration conf) {
@@ -82,7 +86,7 @@ public class CassandraAnnotationParser extends
       case INDEXES:
         handleIndexes(cm, (Indexes) anno);
         break;
-        
+
       case EMBEDDABLE:
         handleEmbeddable(cm, (Embeddable) anno);
 
@@ -91,37 +95,38 @@ public class CassandraAnnotationParser extends
     }
   }
 
-  // /*
-  // * (non-Javadoc)
-  // *
-  // * @see org.apache.openjpa.persistence.AnnotationPersistenceMetaDataParser#
-  // * parseMemberMappingAnnotations(org.apache.openjpa.meta.FieldMetaData)
-  // */
-  // @Override
-  // protected void parseMemberMappingAnnotations(FieldMetaData fmd) {
-  //
-  // CassandraFieldMetaData cassField = (CassandraFieldMetaData) fmd;
-  //
-  // AnnotatedElement el = (AnnotatedElement) getRepository()
-  // .getMetaDataFactory().getDefaults().getBackingMember(fmd);
-  //
-  // ClassMapping mapped = null;
-  //
-  // for (Annotation annotation : el.getDeclaredAnnotations()) {
-  // mapped = mapping.get(annotation.annotationType());
-  //
-  // if (mapped == null) {
-  // continue;
-  // }
-  //
-  // switch (mapped) {
-  //
-  // }
-  //
-  //
-  // }
-  //
-  // }
+  /*
+   * (non-Javadoc)
+   * 
+   * @see org.apache.openjpa.persistence.AnnotationPersistenceMetaDataParser#
+   * parseMemberMappingAnnotations(org.apache.openjpa.meta.FieldMetaData)
+   */
+  @Override
+  protected void parseMemberMappingAnnotations(FieldMetaData fmd) {
+
+    CassandraFieldMetaData cassField = (CassandraFieldMetaData) fmd;
+
+    AnnotatedElement el = (AnnotatedElement) getRepository()
+        .getMetaDataFactory().getDefaults().getBackingMember(fmd);
+
+    ClassMapping mapped = null;
+
+    for (Annotation annotation : el.getDeclaredAnnotations()) {
+      mapped = mapping.get(annotation.annotationType());
+
+      if (mapped == null) {
+        continue;
+      }
+
+      switch (mapped) {
+      case EMBEDDED:
+
+        break;
+      }
+
+    }
+
+  }
 
   /**
    * Parse the cassandra index expression
@@ -141,16 +146,22 @@ public class CassandraAnnotationParser extends
     defs.add(index.fields(), index.order(), cass);
 
   }
-  
+
   /**
    * Parse the cassandra index expression
    * 
    * @param fmd
    * @param index
    */
-  private void handleEmbeddable(CassandraClassMetaData cass, Embeddable embeddable) {
-    if(!Serializable.class.isAssignableFrom(cass.getDescribedType())){
-      throw new MetaDataException(String.format("Embeddable classes must implement the interface '%s'.  The class '%s' does not", Serializable.class.getName(), cass.getDescribedType().getName()));
+  private void handleEmbeddable(CassandraClassMetaData cass,
+      Embeddable embeddable) {
+    if (!Serializable.class.isAssignableFrom(cass.getDescribedType())) {
+      throw new MetaDataException(
+          String
+              .format(
+                  "Embeddable classes must implement the interface '%s'.  The class '%s' does not",
+                  Serializable.class.getName(), cass.getDescribedType()
+                      .getName()));
     }
 
   }
@@ -212,8 +223,22 @@ public class CassandraAnnotationParser extends
     cass.setColumnFamily(name);
 
   }
+  
+
+  /**
+   * Parse the cassandra index expression
+   * 
+   * @param fmd
+   * @param index
+   */
+  private void handleEmbedded(CassandraFieldMetaData fmd,
+      Embedded embeddable) {
+   
+    fmd.setSerializedEmbedded(true);
+
+  }
 
   private enum ClassMapping {
-    INDEX, INDEXES, DISCRIMINATOR, INHERITANCE, COLUMNFAMILY, EMBEDDABLE;
+    INDEX, INDEXES, DISCRIMINATOR, INHERITANCE, COLUMNFAMILY, EMBEDDABLE, EMBEDDED;
   }
 }

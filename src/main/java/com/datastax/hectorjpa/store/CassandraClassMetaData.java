@@ -69,6 +69,8 @@ public class CassandraClassMetaData extends ClassMetaData {
     return indexDefinitions;
   }
 
+
+
   /**
    * @param indexDefinitions
    */

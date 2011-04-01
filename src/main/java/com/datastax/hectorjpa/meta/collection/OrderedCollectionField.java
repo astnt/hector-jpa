@@ -139,7 +139,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
 
     // now load all the objects from the ids we were given.
 
-    stateManager.storeObject(fieldId, collection);
+    stateManager.store(fieldId, collection);
 
     return result.get().getColumns().size() > 0;
   }

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
+import me.prettyprint.cassandra.serializers.BooleanSerializer;
 import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.DateSerializer;
@@ -15,6 +16,7 @@ import me.prettyprint.cassandra.serializers.IntegerSerializer;
 import me.prettyprint.cassandra.serializers.LongSerializer;
 import me.prettyprint.cassandra.serializers.ObjectSerializer;
 import me.prettyprint.cassandra.serializers.SerializerTypeInferer;
+import me.prettyprint.cassandra.serializers.ShortSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.serializers.UUIDSerializer;
 import me.prettyprint.hector.api.Keyspace;
@@ -29,6 +31,8 @@ import org.apache.openjpa.util.OpenJPAId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.hectorjpa.serializer.CharSerializer;
+import com.datastax.hectorjpa.serializer.FloatSerializer;
 import com.datastax.hectorjpa.serializer.TimeUUIDSerializer;
 
 /**
@@ -46,11 +50,30 @@ public class MappingUtils {
   // TODO need to figure out UUID
   static {
     typeSerializerMap.put(JavaTypes.STRING, StringSerializer.get());
+    
+    typeSerializerMap.put(JavaTypes.BOOLEAN, BooleanSerializer.get());
+    typeSerializerMap.put(JavaTypes.BOOLEAN_OBJ, BooleanSerializer.get());
+    
+    
+    typeSerializerMap.put(JavaTypes.CHAR, CharSerializer.get());
+    typeSerializerMap.put(JavaTypes.CHAR_OBJ, CharSerializer.get());
+    
+    typeSerializerMap.put(JavaTypes.SHORT, ShortSerializer.get());
+    typeSerializerMap.put(JavaTypes.SHORT_OBJ, ShortSerializer.get());
+    
     typeSerializerMap.put(JavaTypes.INT, IntegerSerializer.get());
     typeSerializerMap.put(JavaTypes.INT_OBJ, IntegerSerializer.get());
+    
+    
+    typeSerializerMap.put(JavaTypes.FLOAT, FloatSerializer.get());
+    typeSerializerMap.put(JavaTypes.FLOAT_OBJ, FloatSerializer.get());
+    
+   
     typeSerializerMap.put(JavaTypes.DATE, DateSerializer.get());
+    
     typeSerializerMap.put(JavaTypes.LONG, LongSerializer.get());
     typeSerializerMap.put(JavaTypes.LONG_OBJ, LongSerializer.get());
+    
     typeSerializerMap.put(JavaTypes.DOUBLE, DoubleSerializer.get());
     typeSerializerMap.put(JavaTypes.DOUBLE_OBJ, DoubleSerializer.get());
 

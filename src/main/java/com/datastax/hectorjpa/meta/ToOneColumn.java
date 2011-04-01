@@ -115,7 +115,7 @@ public class ToOneColumn<V> extends SimpleColumnField<V> {
     }
     
     if (column == null) {
-      stateManager.storeObject(fieldId, null);
+      stateManager.store(fieldId, null);
       return false;
     }
 
@@ -127,7 +127,7 @@ public class ToOneColumn<V> extends SimpleColumnField<V> {
 
     Object returned = context.find(entityId, true, null);
 
-    stateManager.storeObject(fieldId, returned);
+    stateManager.store(fieldId, returned);
     
     return true;
   }

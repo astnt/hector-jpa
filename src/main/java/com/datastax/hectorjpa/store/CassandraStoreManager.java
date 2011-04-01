@@ -163,7 +163,8 @@ public class CassandraStoreManager extends AbstractStoreManager {
 	public boolean initialize(OpenJPAStateManager stateManager,
 			PCState pcState, FetchConfiguration fetchConfiguration, Object obj) {
 
-	  //if it's an abstract type, we couldn't find it in the datastore, just return false
+	  //if it's an abstract type, we couldn't find it in the datastore because getManagedType returned null
+	  //and the framework set the class type to the type the user queried. Just return false because it doesn't exist
 	  Class<?> type = stateManager.getMetaData().getDescribedType();
 	  
 	  if(Modifier.isAbstract(type.getModifiers())){

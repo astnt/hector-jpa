@@ -26,13 +26,12 @@ import org.slf4j.LoggerFactory;
 import com.datastax.hectorjpa.index.IndexDefinition;
 import com.datastax.hectorjpa.index.IndexDefinitions;
 import com.datastax.hectorjpa.meta.AbstractIndexOperation;
-import com.datastax.hectorjpa.meta.SimpleColumnField;
 import com.datastax.hectorjpa.meta.DiscriminatorColumn;
 import com.datastax.hectorjpa.meta.EmbeddedColumnField;
-import com.datastax.hectorjpa.meta.Field;
 import com.datastax.hectorjpa.meta.IndexOperation;
 import com.datastax.hectorjpa.meta.MetaCache;
 import com.datastax.hectorjpa.meta.ObjectTypeColumnStrategy;
+import com.datastax.hectorjpa.meta.SimpleColumnField;
 import com.datastax.hectorjpa.meta.StaticColumn;
 import com.datastax.hectorjpa.meta.StringColumnField;
 import com.datastax.hectorjpa.meta.SubclassIndexOperation;
@@ -41,7 +40,6 @@ import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 import com.datastax.hectorjpa.meta.collection.OrderedCollectionField;
 import com.datastax.hectorjpa.meta.collection.UnorderedCollectionField;
 import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
-
 
 public class EntityFacade implements Serializable {
   private static final Logger log = LoggerFactory.getLogger(EntityFacade.class);
@@ -81,54 +79,59 @@ public class EntityFacade implements Serializable {
     // indexMetaData = new HashSet<AbstractEntityIndex>();
 
     FieldMetaData[] fmds = cassMeta.getFields();
-    SimpleColumnField<?> field = null;
+    SimpleColumnField<?> columnField = null;
+
+    CassandraFieldMetaData field = null;
 
     // parse all columns, we only want to do this on the first inti
     for (int i = 0; i < fmds.length; i++) {
 
+      field = (CassandraFieldMetaData) fmds[i];
+      
       // not in the bit set to use, isn't managed or saved, or is a
       // primary key,
       // ignore
-      if (fmds[i].getManagement() == FieldMetaData.MANAGE_NONE
-          || fmds[i].isPrimaryKey()) {
+      if (field.getManagement() == FieldMetaData.MANAGE_NONE
+          || field.isPrimaryKey()) {
         continue;
       }
 
-      if (fmds[i].getAssociationType() == FieldMetaData.ONE_TO_MANY
-          || fmds[i].getAssociationType() == FieldMetaData.MANY_TO_MANY) {
+      if (field.getAssociationType() == FieldMetaData.ONE_TO_MANY
+          || field.getAssociationType() == FieldMetaData.MANY_TO_MANY) {
 
         AbstractCollectionField<?> collection = null;
 
-        if (fmds[i].getOrders().length > 0) {
-          collection = new OrderedCollectionField(fmds[i]);
+        if (field.getOrders().length > 0) {
+          collection = new OrderedCollectionField(field);
         } else {
-          collection = new UnorderedCollectionField(fmds[i]);
+          collection = new UnorderedCollectionField(field);
         }
 
-        // TODO if fmds[i].getAssociationType() > 0 .. we found an
+        // TODO if field.getAssociationType() > 0 .. we found an
         // attached
         // entity
         // and need to find it's entityFacade
         collectionFieldIds.put(collection.getFieldId(), collection);
 
-        // indexMetaData.add(new ManyEntityIndex(fmds[i],
+        // indexMetaData.add(new ManyEntityIndex(field,
         // mappingUtils));
 
         continue;
       }
 
-      if (fmds[i].getAssociationType() == FieldMetaData.MANY_TO_ONE
-          || fmds[i].getAssociationType() == FieldMetaData.ONE_TO_ONE) {
+      if (field.getAssociationType() == FieldMetaData.MANY_TO_ONE
+          || field.getAssociationType() == FieldMetaData.ONE_TO_ONE) {
 
-        ToOneColumn<?> toOne = new ToOneColumn(fmds[i]);
+        ToOneColumn<?> toOne = new ToOneColumn(field);
 
         columnFieldIds.put(i, toOne);
 
         continue;
       }
-      
-      if(fmds[i].isEmbedded()){
-        EmbeddedColumnField embeddedColumn = new EmbeddedColumnField(fmds[i], serializer);
+
+      if (field.isSerializedEmbedded()) {
+        EmbeddedColumnField embeddedColumn = new EmbeddedColumnField(field,
+            serializer);
         columnFieldIds.put(embeddedColumn.getFieldId(), embeddedColumn);
         continue;
       }
@@ -136,18 +139,18 @@ public class EntityFacade implements Serializable {
       if (log.isDebugEnabled()) {
         log.debug(
             "field name {} typeCode {} associationType: {} declaredType: {} embeddedMetaData: {}",
-            new Object[] { fmds[i].getName(), fmds[i].getTypeCode(),
-                fmds[i].getAssociationType(),
-                fmds[i].getDeclaredType().getName(),
-                fmds[i].getElement().getDeclaredTypeMetaData() });
+            new Object[] { field.getName(), field.getTypeCode(),
+                field.getAssociationType(),
+                field.getDeclaredType().getName(),
+                field.getElement().getDeclaredTypeMetaData() });
       }
 
-      field = new SimpleColumnField(fmds[i]);
+      columnField = new SimpleColumnField(field);
 
-      // TODO if fmds[i].getAssociationType() > 0 .. we found an attached
+      // TODO if field.getAssociationType() > 0 .. we found an attached
       // entity
       // and need to find it's entityFacade
-      columnFieldIds.put(field.getFieldId(), field);
+      columnFieldIds.put(columnField.getFieldId(), columnField);
 
     }
 
@@ -162,34 +165,35 @@ public class EntityFacade implements Serializable {
     }
 
     List<AbstractIndexOperation> newIndexOps = new ArrayList<AbstractIndexOperation>();
-    
+
     addIndexOperations(cassMeta, newIndexOps);
-    
+
     indexOps = new AbstractIndexOperation[newIndexOps.size()];
-    
+
     newIndexOps.toArray(indexOps);
-    
 
   }
-  
+
   /**
-   * Recursively add all index operations from this class up to the root class to this entity facade.
+   * Recursively add all index operations from this class up to the root class
+   * to this entity facade.
+   * 
    * @param current
    * @param indexOps
    */
-  private void addIndexOperations(CassandraClassMetaData cassMeta, List<AbstractIndexOperation> indexOps){
+  private void addIndexOperations(CassandraClassMetaData cassMeta,
+      List<AbstractIndexOperation> indexOps) {
     IndexDefinitions indexDefs = cassMeta.getIndexDefinitions();
 
     if (indexDefs != null) {
-      
-      for(IndexDefinition indexDef: indexDefs.getDefinitions()){
 
- 
+      for (IndexDefinition indexDef : indexDefs.getDefinitions()) {
+
         // construct an index with subclass queries
         if (cassMeta.getDiscriminatorColumn() != null) {
           indexOps.add(new SubclassIndexOperation(cassMeta, indexDef));
         }
-        
+
         // construct and index without discriminator for subclass queries
         else {
           indexOps.add(new IndexOperation(cassMeta, indexDef));
@@ -197,9 +201,10 @@ public class EntityFacade implements Serializable {
       }
 
     }
-    
-    if(cassMeta.getPCSuperclassMetaData() != null){
-      addIndexOperations((CassandraClassMetaData) cassMeta.getPCSuperclassMetaData(), indexOps);
+
+    if (cassMeta.getPCSuperclassMetaData() != null) {
+      addIndexOperations(
+          (CassandraClassMetaData) cassMeta.getPCSuperclassMetaData(), indexOps);
     }
   }
 

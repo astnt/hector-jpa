@@ -54,6 +54,8 @@ public class SubclassTest extends ManagedEntityTestBase {
     SmsMessage returned = em2.find(SmsMessage.class, verification.getId());
 
     assertEquals(verification, returned);
+    assertEquals(verification.getMessageId(), returned.getMessageId());
+    assertEquals(verification.getPhoneNumber(), returned.getPhoneNumber());
 
     em2.close();
 

@@ -58,7 +58,7 @@ public abstract class Field<V> {
   
   @Override
   public String toString() {  
-    return String.format("Field(fieldId: %d)", fieldId);
+    return String.format("Field(fieldId: %d, name: %s)", fieldId, name);
   }
   
  
