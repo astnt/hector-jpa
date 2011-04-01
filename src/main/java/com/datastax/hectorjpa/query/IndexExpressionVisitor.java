@@ -3,6 +3,8 @@ package com.datastax.hectorjpa.query;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
+
 import org.apache.openjpa.kernel.exps.CandidatePath;
 import org.apache.openjpa.kernel.exps.Expression;
 import org.apache.openjpa.kernel.exps.ExpressionVisitor;
@@ -69,8 +71,9 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
     
     if(exp instanceof EqualExpression){
       FieldExpression field = getFieldExpression();
-      field.setStart(value, true);
-      field.setEnd(value, true);
+      field.setStart(value, ComponentEquality.EQUAL);
+      //greater than equal is actually inclusive
+      field.setEnd(value, ComponentEquality.GREATER_THAN_EQUAL);
       
       return;
     }
@@ -78,28 +81,28 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
     
     if(exp instanceof LessThanEqualExpression){
       FieldExpression field = getFieldExpression();
-      field.setEnd(value, true);
+      field.setEnd(value, ComponentEquality.LESS_THAN_EQUAL);
       
       return;
     }
     
     if(exp instanceof LessThanExpression){
       FieldExpression field = getFieldExpression();
-      field.setEnd(value, false);
+      field.setEnd(value, ComponentEquality.EQUAL);
       
       return;
     }
     
     if(exp instanceof GreaterThanEqualExpression){
       FieldExpression field = getFieldExpression();
-      field.setStart(value, true);
+      field.setStart(value, ComponentEquality.GREATER_THAN_EQUAL);
       
       return;
     }
     
     if(exp instanceof GreaterThanExpression){
       FieldExpression field = getFieldExpression();
-      field.setStart(value, false);
+      field.setStart(value, ComponentEquality.EQUAL);
       
       return;
     }

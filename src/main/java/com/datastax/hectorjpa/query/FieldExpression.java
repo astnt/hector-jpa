@@ -1,5 +1,7 @@
 package com.datastax.hectorjpa.query;
 
+import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
+
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.util.UnsupportedException;
 
@@ -16,11 +18,11 @@ public class FieldExpression {
 
   private FieldMetaData field;
   
-  private boolean startInclusive;
+  private ComponentEquality startEquality;
   
   private Object start;
   
-  private boolean endInclusive;
+  private ComponentEquality endEquality;
   
   //the end value in a range scan
   private Object end;
@@ -29,6 +31,10 @@ public class FieldExpression {
   
   public FieldExpression(FieldMetaData field){
     this.field = field;
+    
+    startEquality = ComponentEquality.EQUAL;
+    endEquality = ComponentEquality.EQUAL;
+    
   }
 
   /**
@@ -39,25 +45,19 @@ public class FieldExpression {
   }
   
 
-  /**
-   * @return the startInclusive
-   */
-  public boolean isStartInclusive() {
-    return startInclusive;
-  }
 
 
   /**
    * @param start the start to set
    * @param inclusive True if this is contains an equality operand I.E =, <=, >=
    */
-  public void setStart(Object start, boolean inclusive) {
+  public void setStart(Object start, ComponentEquality equality) {
     if(this.start != null){
      throw new UnsupportedException(String.format("You attempted to define the start value on field %s twice.  You must use the || operand to combine the use of the same operand on the same field with 2 values", field));
     }
     
     this.start = start;
-    this.startInclusive = inclusive;
+    this.startEquality = equality;
   }
 
   /**
@@ -67,27 +67,32 @@ public class FieldExpression {
     return end;
   }
   
-  
-  
-
+ 
 
   /**
-   * @return the endInclusive
+   * @return the startEquality
    */
-  public boolean isEndInclusive() {
-    return endInclusive;
+  public ComponentEquality getStartEquality() {
+    return startEquality;
+  }
+
+  /**
+   * @return the endEquality
+   */
+  public ComponentEquality getEndEquality() {
+    return endEquality;
   }
 
   /**
    * @param end the end to set
    * @param inclusive True if this is contains an equality operand I.E =, <=, >=
    */
-  public void setEnd(Object end, boolean inclusive) {
+  public void setEnd(Object end, ComponentEquality equality) {
     if(this.end != null){
       throw new UnsupportedException(String.format("You attempted to define the end value on field %s twice.  You must use the || operand to combine the use of the same operand on the same field with 2 values", field));
      }
     this.end = end;
-    this.endInclusive = inclusive;
+    this.endEquality = equality;
   }
 
   /**

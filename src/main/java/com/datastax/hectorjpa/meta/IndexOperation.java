@@ -93,8 +93,8 @@ public class IndexOperation extends AbstractIndexOperation {
 
       //inclusive adds the byte 1 to the end of the field.  If it's inclusive on the start we want to set to false
       //so that this byte is 0
-      this.fields[index].addToComposite(startScan, index, exp.getStart(), !exp.isStartInclusive());
-      this.fields[index].addToComposite(endScan, index, exp.getEnd(), exp.isEndInclusive());
+      this.fields[index].addToComposite(startScan, index, exp.getStart(), exp.getStartEquality());
+      this.fields[index].addToComposite(endScan, index, exp.getEnd(), exp.getEndEquality());
     }
 
     super.executeQuery(startScan, endScan, results, keyspace);

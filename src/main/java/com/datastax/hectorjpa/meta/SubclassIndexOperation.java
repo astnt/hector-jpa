@@ -119,8 +119,8 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
       index = this.fieldIndexes.get(exp.getField().getName());
       //inclusive adds the byte 1 to the end of the field.  If it's inclusive on the start we want to set to false
       //so that this byte is 0
-      this.fields[index].addToComposite(startScan, index+1,  exp.getStart(), !exp.isStartInclusive());
-      this.fields[index].addToComposite(endScan, index+1, exp.getEnd(), exp.isEndInclusive());
+      this.fields[index].addToComposite(startScan, index+1,  exp.getStart(), exp.getStartEquality());
+      this.fields[index].addToComposite(endScan, index+1, exp.getEnd(), exp.getEndEquality());
     }
 
     // now query the values
