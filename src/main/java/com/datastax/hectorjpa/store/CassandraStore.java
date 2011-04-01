@@ -139,6 +139,11 @@ public class CassandraStore {
    */
   public Class<?> getDataStoreId(Object oid, StoreContext ctx) {
 
+    //If there's no id there's nothing to do, return null
+    if(((OpenJPAId)oid).getIdObject() == null){
+      return null;
+    }
+    
     Class<?> requested = ((OpenJPAId) oid).getType();
 
     ClassMetaData metaData = ctx.getConfiguration()

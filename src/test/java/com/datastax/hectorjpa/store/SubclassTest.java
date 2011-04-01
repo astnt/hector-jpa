@@ -1,6 +1,6 @@
 package com.datastax.hectorjpa.store;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import javax.persistence.EntityManager;
 
@@ -10,6 +10,7 @@ import org.junit.Test;
 import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.inheritance.SmsMessage;
 import com.datastax.hectorjpa.bean.inheritance.VerificationSmsMessage;
+import com.eaio.uuid.UUID;
 
 /**
  * 
@@ -25,36 +26,55 @@ import com.datastax.hectorjpa.bean.inheritance.VerificationSmsMessage;
  */
 public class SubclassTest extends ManagedEntityTestBase {
 
-	/**
-	 * Test simple instance with no collections to ensure we persist properly
-	 * without indexing
-	 */
-	@Test
-	public void basicLoad() {
+  /**
+   * Test simple instance with no collections to ensure we persist properly
+   * without indexing
+   */
+  @Test
+  public void basicLoad() {
 
-		EntityManager em = entityManagerFactory.createEntityManager();
-		em.getTransaction().begin();
-		
-		VerificationSmsMessage verification = new VerificationSmsMessage();
-		
-		verification.setCreatedDate(new DateTime(2011, 03, 01, 0, 0, 0, 0).toDate());
-		verification.setMessageId(10);
-		verification.setPhoneNumber("+64111222333");
-		
-		em.persist(verification);
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
 
-		em.getTransaction().commit();
-		em.close();
+    VerificationSmsMessage verification = new VerificationSmsMessage();
 
-		//verify we get the subclass
-		EntityManager em2 = entityManagerFactory.createEntityManager();
-		
-		SmsMessage returned = em2.find(SmsMessage.class, verification.getId());
-		
-		assertEquals(verification, returned);
-		
-		em2.close();
-		
-	}
+    verification
+        .setCreatedDate(new DateTime(2011, 03, 01, 0, 0, 0, 0).toDate());
+    verification.setMessageId(10);
+    verification.setPhoneNumber("+64111222333");
+
+    em.persist(verification);
+
+    em.getTransaction().commit();
+    em.close();
+
+    // verify we get the subclass
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+
+    SmsMessage returned = em2.find(SmsMessage.class, verification.getId());
+
+    assertEquals(verification, returned);
+
+    em2.close();
+
+  }
+
+  @Test
+  public void abstractClassInstanceTest() {
+    EntityManager em = entityManagerFactory.createEntityManager();
+
+    SmsMessage returned = em.find(SmsMessage.class, new UUID());
+
+    assertNull(returned);
+  }
+  
+  @Test
+  public void nullDeleteTest() {
+    EntityManager em = entityManagerFactory.createEntityManager();
+
+    SmsMessage returned = em.find(SmsMessage.class, null);
+
+    assertNull(returned);
+  }
 
 }
