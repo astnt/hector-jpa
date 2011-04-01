@@ -1,5 +1,6 @@
 package com.datastax.hectorjpa.store;
 
+import java.lang.reflect.Modifier;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Iterator;
@@ -162,8 +163,16 @@ public class CassandraStoreManager extends AbstractStoreManager {
 	public boolean initialize(OpenJPAStateManager stateManager,
 			PCState pcState, FetchConfiguration fetchConfiguration, Object obj) {
 
+	  //if it's an abstract type, we couldn't find it in the datastore, just return false
+	  Class<?> type = stateManager.getMetaData().getDescribedType();
+	  
+	  if(Modifier.isAbstract(type.getModifiers())){
+	    return false;
+	  }
+	  
+	  
 		log.debug("In initialize operation...");
-		stateManager.initialize(stateManager.getMetaData().getDescribedType(),
+		stateManager.initialize(type,
 				pcState);
 		return cassandraStore.getObject(stateManager,
 				stateManager.getUnloaded(fetchConfiguration));
