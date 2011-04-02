@@ -48,6 +48,7 @@
       <property name="openjpa.ConnectionURL" value="localhost:9161" />
       --><!--  explicitly disable runtime enhancement support.  It breaks a lot of proxy functionality needed for indexing -->
       <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported" />
+      <property name="openjpa.DynamicEnhancementAgent" value="false"/>
 
       <property name="openjpa.Log" value="log4j" />
       
