@@ -418,8 +418,13 @@ public class EntityFacade implements Serializable {
 	 */
 	public AbstractIndexOperation getIndexOperation(FieldOrder[] fields,
 			IndexOrder[] orders) {
-
+		
+		if(indexOps == null){
+			return null;
+		}
+		
 		IndexDefinition def = new IndexDefinition(fields, orders);
+		
 		
 		return indexOps.get(def);
 	}

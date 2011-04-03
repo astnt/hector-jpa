@@ -15,10 +15,8 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
 
 	private IndexOrder[] orderFields;
 
-//	private CassandraClassMetaData metaData;
 
 	public IndexDefinition(FieldOrder[] indexedFields, IndexOrder[] orderFields) {
-//		this.metaData = metaData;
 		this.indexedFields = indexedFields;
 		this.orderFields = orderFields;
 	}

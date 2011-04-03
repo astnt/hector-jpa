@@ -6,7 +6,7 @@ package com.datastax.hectorjpa.query;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import me.prettyprint.hector.api.beans.DynamicComposite;
@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexOrder;
 import com.datastax.hectorjpa.meta.AbstractIndexOperation;
-import com.datastax.hectorjpa.meta.IndexOperation;
 import com.datastax.hectorjpa.meta.MetaCache;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.CassandraStore;
@@ -79,7 +78,7 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
 		// the list of queries we need to execute
 		List<IndexQuery> queries = visitor.getVisitors();
 
-		Set<DynamicComposite> columnResults = null;
+		SortedSet<DynamicComposite> columnResults = null;
 
 		AbstractIndexOperation indexOp = null;
 
@@ -101,10 +100,35 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
 		}
 
 		// now use our limit to remove items we don't need
-		// TODO TN
-		if (range.start != -1) {
-
+		// TODO TN, this kind of sucks, figure out a better way
+		if (range.start != 0 || range.end != Long.MAX_VALUE) {
+			
+			long current = 0;
+			
+			DynamicComposite start = null;
+			DynamicComposite end = null;
+			
+			Iterator<DynamicComposite> currentSet = columnResults.iterator();
+			
+			
+			for(; current <= range.start && currentSet.hasNext(); current++){
+				start = currentSet.next();
+			}
+			
+			//Calculate our size
+			long size = range.end - range.start;
+			
+			
+			for(long index = 0; index <= size && currentSet.hasNext(); index++){
+				end = currentSet.next();
+			}
+			
+			//Get the set results between the start ane end
+			columnResults = columnResults.subSet(start, end);
+			
 		}
+		
+	
 
 		CassandraResultObjectProvider results = new CassandraResultObjectProvider(
 				columnResults, this.getContext().getStoreContext(),
