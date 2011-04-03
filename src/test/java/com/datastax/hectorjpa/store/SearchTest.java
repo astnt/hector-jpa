@@ -233,9 +233,9 @@ public class SearchTest extends ManagedEntityTestBase {
 
     query.orderBy(fn, ln);
 
-    TypedQuery<Person> saleQuery = em2.createQuery(query);
+    TypedQuery<Person> personQuery = em2.createQuery(query);
 
-    List<Person> results = saleQuery.getResultList();
+    List<Person> results = personQuery.getResultList();
 
     assertEquals(8, results.size());
 
@@ -254,6 +254,57 @@ public class SearchTest extends ManagedEntityTestBase {
     // user 1 and 2
     assertEquals(u1, results.get(6));
     assertEquals(u2, results.get(7));
+
+  }
+  
+  /**
+   * Test simple instance with no collections to ensure we persist properly
+   * without indexing
+   */
+  @Test
+  public void subclassSearchParentIndex() {
+
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+
+
+    User u1 = new User();
+    u1.setEmail("user1@foo.com");
+    u1.setFirstName("u1");
+    u1.setLastName("User");
+    u1.setLastLogin(new DateTime(2011, 3, 20, 1, 1, 1, 0).toDate());
+
+    em.persist(u1);
+
+    em.getTransaction().commit();
+    em.close();
+
+    //
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+
+    CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+    CriteriaQuery<User> query = queryBuilder.createQuery(User.class);
+
+    Root<User> person = query.from(User.class);
+
+    Predicate predicate = queryBuilder.equal(person.get(User_.email), u1.getEmail());
+
+    query.where(predicate);
+
+    Order fn = queryBuilder.asc(person.get(User_.firstName));
+    Order ln = queryBuilder.asc(person.get(User_.lastName));
+
+    query.orderBy(fn, ln);
+
+    TypedQuery<User> userQuery = em2.createQuery(query);
+
+    List<User> results = userQuery.getResultList();
+
+    assertEquals(1, results.size());
+
+    // client 1 and 2
+    assertEquals(u1, results.get(0));
 
   }
   

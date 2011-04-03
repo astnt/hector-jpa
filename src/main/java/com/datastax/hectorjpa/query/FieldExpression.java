@@ -1,5 +1,6 @@
 package com.datastax.hectorjpa.query;
 
+
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 
 import org.apache.openjpa.meta.FieldMetaData;

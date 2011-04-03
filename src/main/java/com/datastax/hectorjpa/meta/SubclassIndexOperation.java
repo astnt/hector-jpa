@@ -23,7 +23,7 @@ import com.datastax.hectorjpa.store.CassandraClassMetaData;
 
 /**
  * Class to perform all operations for secondary indexing on an instance in the
- * statemanager
+ * statemanager.  
  * 
  * @author Todd Nine
  * 
@@ -34,12 +34,17 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
    * String array of all subclass discriminator values
    */
   private String[] subClasses;
+  //the discirminator value for the class that owns this instance.  I.E. same from class metaData
+  
+  private String discriminatorValue;
 
   public SubclassIndexOperation(CassandraClassMetaData metaData,
       IndexDefinition indexDef) {
     super(metaData, indexDef);
 
     subClasses = getSubclasses(metaData);
+    
+    this.discriminatorValue = metaData.getDiscriminatorColumn();
 
   }
 
@@ -107,10 +112,9 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
 
     //add the discriminator value so we're querying for the specified class
     //and it's children
-    String discriminator = indexDefinition.getMetaData().getDiscriminatorColumn();
-    
-    startScan.addComponent(discriminator, stringSerializer);
-    endScan.addComponent(discriminator, stringSerializer);
+   
+    startScan.addComponent(discriminatorValue, stringSerializer);
+    endScan.addComponent(discriminatorValue, stringSerializer);
     
     int index = 0;
 

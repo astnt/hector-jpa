@@ -1,10 +1,10 @@
 package com.datastax.hectorjpa.meta;
 
-import me.prettyprint.hector.api.beans.DynamicComposite;
+
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
+import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.ddl.ComparatorType;
 
-import org.apache.cassandra.db.marshal.BytesType;
 import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 

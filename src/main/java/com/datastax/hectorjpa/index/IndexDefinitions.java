@@ -92,7 +92,7 @@ public class IndexDefinitions {
 
     }
 
-    IndexDefinition indexDef = new IndexDefinition(metaData, fields, orders);
+    IndexDefinition indexDef = new IndexDefinition(fields, orders);
 
     indexDefs.add(indexDef);
   }

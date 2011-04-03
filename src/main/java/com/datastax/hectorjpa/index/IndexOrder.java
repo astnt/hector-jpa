@@ -15,54 +15,83 @@ import org.apache.openjpa.meta.Order;
  */
 public class IndexOrder implements Order, Comparable<IndexOrder> {
 
-  /**
+	/**
    * 
    */
-  private static final long serialVersionUID = -2234285177676920926L;
+	private static final long serialVersionUID = -2234285177676920926L;
 
-  private String fieldName;
-  private boolean ascending;
+	private String fieldName;
+	private boolean ascending;
 
-  public IndexOrder(String fieldName, boolean ascending) {
-    this.fieldName = fieldName;
-    this.ascending = ascending;
-  }
+	public IndexOrder(String fieldName, boolean ascending) {
+		this.fieldName = fieldName;
+		this.ascending = ascending;
+	}
 
-  @Override
-  public String getName() {
-    return fieldName;
-  }
+	@Override
+	public String getName() {
+		return fieldName;
+	}
 
-  @Override
-  public boolean isAscending() {
-    return ascending;
-  }
+	@Override
+	public boolean isAscending() {
+		return ascending;
+	}
 
-  @Override
-  public Comparator<?> getComparator() {
-    return null;
-  }
+	@Override
+	public Comparator<?> getComparator() {
+		return null;
+	}
 
-  @Override
-  public int compareTo(IndexOrder o) {
-    if (o == null) {
-      return 1;
-    }
+	@Override
+	public int compareTo(IndexOrder o) {
+		if (o == null) {
+			return 1;
+		}
 
-    int compare = this.fieldName.compareTo(o.getName());
+		int compare = this.fieldName.compareTo(o.getName());
 
-    if (compare != 0) {
-      return compare;
-    }
+		if (compare != 0) {
+			return compare;
+		}
 
-    if (!ascending && o.isAscending()) {
-      return -1;
-    } else if (ascending && !o.isAscending()) {
-      return 1;
-    }
+		if (!ascending && o.isAscending()) {
+			return -1;
+		} else if (ascending && !o.isAscending()) {
+			return 1;
+		}
 
-    return 0;
+		return 0;
 
-  }
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (ascending ? 1231 : 1237);
+		result = prime * result
+				+ ((fieldName == null) ? 0 : fieldName.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof IndexOrder))
+			return false;
+		IndexOrder other = (IndexOrder) obj;
+		if (ascending != other.ascending)
+			return false;
+		if (fieldName == null) {
+			if (other.fieldName != null)
+				return false;
+		} else if (!fieldName.equals(other.fieldName))
+			return false;
+		return true;
+	}
 
 }
