@@ -71,6 +71,67 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
     assertEquals(luke.getPhoneNumber(), returnedStore.getCustomers().get(1).getPhoneNumber());
 
   }
+  
+
+  /**
+   * Test simple instance with no collections to ensure we persist properly
+   * without indexing
+   */
+  @Test
+  public void basicEmbeddedCollectionPersistence() {
+
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+
+    Store store = new Store();
+    store.setName("Manhattan");
+
+    Customer james = new Customer();
+    james.setEmail("james@test.com");
+    james.setName("James");
+    james.setPhoneNumber(new Phone("+641112223333", PhoneType.MOBILE));
+   
+    Phone other1 = new Phone("+641112223334", PhoneType.HOME);
+    Phone other2 = new Phone("+641112223335", PhoneType.HOME);
+    
+    james.addOtherPhone(other1);
+    james.addOtherPhone(other2);
+
+    store.addCustomer(james);
+    
+    em.persist(store);
+    em.getTransaction().commit();
+    em.close();
+
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+
+    
+    Store returnedStore = em2.find(Store.class, store.getId());
+
+    /**
+     * Make sure the stores are equal and everything is in sorted order
+     */
+    assertEquals(store, returnedStore);
+
+    assertEquals(james, returnedStore.getCustomers().get(0));
+    
+    Customer returnedCust = returnedStore.getCustomers().get(0);
+    
+    //test embedded objects
+    assertEquals(james.getPhoneNumber(), returnedCust.getPhoneNumber());
+    
+    assertEquals(other1, returnedCust.getOtherPhones().get(0));
+    
+    assertEquals(other1.getPhoneNumber(), returnedCust.getOtherPhones().get(0).getPhoneNumber());
+    assertEquals(other1.getType(), returnedCust.getOtherPhones().get(0).getType());
+    
+    assertEquals(other2, returnedCust.getOtherPhones().get(1));
+    
+    assertEquals(other2.getPhoneNumber(), returnedCust.getOtherPhones().get(1).getPhoneNumber());
+    assertEquals(other2.getType(), returnedCust.getOtherPhones().get(1).getType());
+
+
+  }
 
   /**
    * Delete the first index and make sure it's removed

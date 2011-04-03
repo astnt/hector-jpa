@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.CascadeType;
+import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
@@ -24,76 +25,91 @@ import com.datastax.hectorjpa.annotation.ColumnFamily;
 @ColumnFamily("CustomerColumnFamily")
 public class Customer extends AbstractEntity {
 
-  @Persistent
-  private String name;
+	@Persistent
+	private String name;
 
-  @Embedded
-  private Phone phoneNumber;
+	@Embedded
+	private Phone phoneNumber;
 
-  @Persistent
-  private String email;
+	@ElementCollection
+	private List<Phone> otherPhones;
 
-  @ManyToOne
-  private Store store;
+	@Persistent
+	private String email;
 
-  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "customer")
-  private List<Sale> sales;
+	@ManyToOne
+	private Store store;
 
-  public String getName() {
-    return name;
-  }
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "customer")
+	private List<Sale> sales;
 
-  public void setName(String name) {
-    this.name = name;
-  }
+	public String getName() {
+		return name;
+	}
 
-  public Phone getPhoneNumber() {
-    return phoneNumber;
-  }
+	public void setName(String name) {
+		this.name = name;
+	}
 
-  
+	public Phone getPhoneNumber() {
+		return phoneNumber;
+	}
 
-  /**
-   * @param phoneNumber the phoneNumber to set
-   */
-  public void setPhoneNumber(Phone phoneNumber) {
-    this.phoneNumber = phoneNumber;
-  }
+	/**
+	 * @param phoneNumber
+	 *            the phoneNumber to set
+	 */
+	public void setPhoneNumber(Phone phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
 
-  public String getEmail() {
-    return email;
-  }
+	public List<Phone> getOtherPhones() {
+		return otherPhones;
+	}
+	
+	public void addOtherPhone(Phone phone){
+		if(otherPhones == null){
+			otherPhones = new ArrayList<Phone>();
+		}
+		
+		otherPhones.add(phone);
+	}
 
-  public void setEmail(String email) {
-    this.email = email;
-  }
+	public String getEmail() {
+		return email;
+	}
 
-  public Store getStore() {
-    return store;
-  }
+	public void setEmail(String email) {
+		this.email = email;
+	}
 
-  public void setStore(Store store) {
-    this.store = store;
-  }
+	public Store getStore() {
+		return store;
+	}
 
-  /**
-   * @return the sales
-   */
-  public List<Sale> getSales() {
+	public void setStore(Store store) {
+		this.store = store;
+	}
 
-    return sales;
-  }
+	/**
+	 * @return the sales
+	 */
+	public List<Sale> getSales() {
 
-  /**
-   * Add the sale to the customer
-   * @param sale
-   */
-  public void addSale(Sale sale) {
-    if (sales == null) {
-      this.sales = new ArrayList<Sale>();
-    }
+		return sales;
+	}
 
-    this.sales.add(sale);
-  }
+	/**
+	 * Add the sale to the customer
+	 * 
+	 * @param sale
+	 */
+	public void addSale(Sale sale) {
+		if (sales == null) {
+			this.sales = new ArrayList<Sale>();
+		}
+
+		this.sales.add(sale);
+	}
 
 }
