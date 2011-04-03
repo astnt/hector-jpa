@@ -71,23 +71,23 @@ public class CassandraStoreManager extends AbstractStoreManager {
 	}
 
 	@Override
-  public StoreQuery newQuery(String language) {
-	  ExpressionParser ep = QueryLanguages.parserForLanguage(language);
-	  
-	  if(ep == null){
-	    throw new  UnsupportedException(language);
-	  }
+	public StoreQuery newQuery(String language) {
+		ExpressionParser ep = QueryLanguages.parserForLanguage(language);
 
-	  CassandraStoreConfiguration conf = ((CassandraStoreConfiguration)getContext().getConfiguration());
+		if (ep == null) {
+			throw new UnsupportedException(language);
+		}
 
-	  
-    return new CassandraStoreQuery(ep,  conf.getMetaCache(), cassandraStore);
-  }
+		CassandraStoreConfiguration conf = ((CassandraStoreConfiguration) getContext()
+				.getConfiguration());
 
-  @Override
-	public Class<?> getManagedType(Object oid) {
-		return cassandraStore.getDataStoreId(oid, this.getContext() );
+		return new CassandraStoreQuery(ep, conf.getMetaCache(), cassandraStore);
 	}
+
+//	@Override
+//	public Class<?> getManagedType(Object oid) {
+//		return cassandraStore.getDataStoreId(oid, this.getContext());
+//	}
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -163,20 +163,28 @@ public class CassandraStoreManager extends AbstractStoreManager {
 	public boolean initialize(OpenJPAStateManager stateManager,
 			PCState pcState, FetchConfiguration fetchConfiguration, Object obj) {
 
-	  //if it's an abstract type, we couldn't find it in the datastore because getManagedType returned null
-	  //and the framework set the class type to the type the user queried. Just return false because it doesn't exist
-	  Class<?> type = stateManager.getMetaData().getDescribedType();
-	  
-	  if(Modifier.isAbstract(type.getModifiers())){
-	    return false;
-	  }
-	  
-	  
+		// if it's an abstract type, we couldn't find it in the datastore
+		// because getManagedType returned null
+		// and the framework set the class type to the type the user queried.
+		// Just return false because it doesn't exist
+		Class<?> type = cassandraStore.getDataStoreId(stateManager.getId(), this.getContext());
+//
+//		if (Modifier.isAbstract(type.getModifiers())) {
+//			return false;
+//		}
+//		
+//		
+		if(type == null){
+			return false;
+		}
+
 		log.debug("In initialize operation...");
-		stateManager.initialize(type,
-				pcState);
-		return cassandraStore.getObject(stateManager,
-				stateManager.getUnloaded(fetchConfiguration));
+		stateManager.initialize(type, pcState);
+		stateManager.load(fetchConfiguration);
+		
+		return true;
+//		return cassandraStore.getObject(stateManager,
+//				stateManager.getUnloaded(fetchConfiguration));
 
 	}
 
@@ -244,9 +252,9 @@ public class CassandraStoreManager extends AbstractStoreManager {
 
 		// and add some that we don't support but the abstract store does
 		// TODO take these out one by one
-//		c.add(OpenJPAConfiguration.OPTION_EMBEDDED_RELATION);
-//		c.add(OpenJPAConfiguration.OPTION_EMBEDDED_COLLECTION_RELATION);
-//		c.add(OpenJPAConfiguration.OPTION_EMBEDDED_MAP_RELATION);
+		// c.add(OpenJPAConfiguration.OPTION_EMBEDDED_RELATION);
+		// c.add(OpenJPAConfiguration.OPTION_EMBEDDED_COLLECTION_RELATION);
+		// c.add(OpenJPAConfiguration.OPTION_EMBEDDED_MAP_RELATION);
 		return c;
 	}
 

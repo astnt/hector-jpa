@@ -39,4 +39,10 @@ public interface ObjectTypeColumnStrategy {
 	 * @return
 	 */
 	public Class<?> getClass(String value, Class<?> candidate, MetaCache metaCache);
+	
+	/**
+	 * Return the column name used to store this value
+	 * @return
+	 */
+	public String getColumnName();
 }

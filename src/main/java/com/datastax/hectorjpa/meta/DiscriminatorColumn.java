@@ -84,5 +84,10 @@ public class DiscriminatorColumn implements ObjectTypeColumnStrategy {
 	  
 	}
 
+	@Override
+	public String getColumnName() {
+		return DISCRIMINAATOR_COL;
+	}
+
 	
 }

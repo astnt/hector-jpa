@@ -71,5 +71,10 @@ public class StaticColumn implements ObjectTypeColumnStrategy {
 	public Class<?> getClass(String value, Class<?> candidate, MetaCache metaCache) {
 		return candidate;
 	}
+
+	@Override
+	public String getColumnName() {
+		return EMPTY_COL;
+	}
 	
 }

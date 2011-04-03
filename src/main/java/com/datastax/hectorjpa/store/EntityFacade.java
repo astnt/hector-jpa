@@ -250,7 +250,6 @@ public class EntityFacade implements Serializable {
 		AbstractCollectionField<?> collectionField = null;
 		Object entityId = stateManager.getObjectId();
 
-		boolean read = false;
 
 		// This entity has never been persisted, we can't possibly load it
 		if (MappingUtils.getTargetObject(entityId) == null) {
@@ -279,7 +278,7 @@ public class EntityFacade implements Serializable {
 				SliceQuery<byte[], DynamicComposite, byte[]> query = collectionField
 						.createQuery(entityId, keyspace, size);
 
-				read |= collectionField
+				collectionField
 						.readField(stateManager, query.execute());
 
 				continue;
@@ -288,6 +287,8 @@ public class EntityFacade implements Serializable {
 			fields.add(field.getName());
 		}
 
+		fields.add(this.strategy.getColumnName());
+		
 		// now load all the columns in the CF.
 		SliceQuery<byte[], String, byte[]> query = MappingUtils
 				.buildSliceQuery(entityId, fields, columnFamilyName, keyspace);
@@ -303,16 +304,10 @@ public class EntityFacade implements Serializable {
 				continue;
 			}
 
-			read |= field.readField(stateManager, result);
+			field.readField(stateManager, result);
 		}
 
-		// only need to check > 0. If the entity wasn't tombstoned then we would
-		// have loaded the static jpa marker column
-		if (!read) {
-			return exists(stateManager, keyspace, metaCache);
-		}
-
-		return true;
+		return result.get().getColumns().size() > 0;
 
 	}
 
