@@ -42,6 +42,8 @@ public abstract class AbstractIndexField {
 
   }
   
+  
+  
   /**
    * Default constructor
    */
@@ -151,6 +153,10 @@ public abstract class AbstractIndexField {
     return serializer;
   }
 
+  
+  public FieldMetaData getMetaData(){
+    return targetField;
+  }
 //  /**
 //   * @return the targetFieldIndex
 //   */

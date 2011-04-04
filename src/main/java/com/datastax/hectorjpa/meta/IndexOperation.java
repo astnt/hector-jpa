@@ -84,17 +84,17 @@ public class IndexOperation extends AbstractIndexOperation {
 
     DynamicComposite startScan = newComposite();
     DynamicComposite endScan = newComposite();
+    
+    int length = fields.length;
 
-    int index = 0;
+    for (int i = 0; i < length; i++) {
 
-    // add all fields
-    for (FieldExpression exp : query.getExpressions()) {
-      index = this.fieldIndexes.get(exp.getField().getName());
+      FieldExpression exp = query.getExpression(this.fields[i].getMetaData());
 
-      //inclusive adds the byte 1 to the end of the field.  If it's inclusive on the start we want to set to false
-      //so that this byte is 0
-      this.fields[index].addToComposite(startScan, index, exp.getStart(), exp.getStartEquality());
-      this.fields[index].addToComposite(endScan, index, exp.getEnd(), exp.getEndEquality());
+      this.fields[i].addToComposite(startScan, i, exp.getStart(),
+          getEquality(exp.getStartEquality(), i, length));
+      this.fields[i].addToComposite(endScan, i, exp.getEnd(),
+          getEquality(exp.getEndEquality(), i, length));
     }
 
     super.executeQuery(startScan, endScan, results, keyspace);

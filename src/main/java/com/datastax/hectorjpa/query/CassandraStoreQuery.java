@@ -27,6 +27,7 @@ import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexOrder;
 import com.datastax.hectorjpa.meta.AbstractIndexOperation;
 import com.datastax.hectorjpa.meta.MetaCache;
+import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.CassandraStore;
 import com.datastax.hectorjpa.store.EntityFacade;
@@ -39,202 +40,203 @@ import com.datastax.hectorjpa.store.EntityFacade;
  */
 public class CassandraStoreQuery extends ExpressionStoreQuery {
 
-	private static final Logger log = LoggerFactory
-			.getLogger(CassandraStoreQuery.class);
+  private static final Logger log = LoggerFactory
+      .getLogger(CassandraStoreQuery.class);
 
-	private MetaCache metaCache;
+  private MetaCache metaCache;
+  
+  private EmbeddedSerializer serializer;
 
-	private CassandraStore store;
+  private CassandraStore store;
 
-	/**
+  /**
    * 
    */
-	private static final long serialVersionUID = -756133912086570146L;
+  private static final long serialVersionUID = -756133912086570146L;
 
-	public CassandraStoreQuery(ExpressionParser parser, MetaCache metaCache,
-			CassandraStore store) {
-		super(parser);
-		this.metaCache = metaCache;
-		this.store = store;
-		this.store.open();
-	}
+  public CassandraStoreQuery(ExpressionParser parser, MetaCache metaCache, EmbeddedSerializer serializer,
+      CassandraStore store) {
+    super(parser);
+    this.metaCache = metaCache;
+    this.serializer = serializer;
+    this.store = store;
+    this.store.open();
+  }
 
-	@Override
-	public boolean supportsDataStoreExecution() {
-		return true;
-	}
+  @Override
+  public boolean supportsDataStoreExecution() {
+    return true;
+  }
 
-	@Override
-	protected ResultObjectProvider executeQuery(Executor ex,
-			ClassMetaData base, ClassMetaData[] types, boolean subclasses,
-			ExpressionFactory[] facts, QueryExpressions[] parsed,
-			Object[] params, Range range) {
+  @Override
+  protected ResultObjectProvider executeQuery(Executor ex, ClassMetaData base,
+      ClassMetaData[] types, boolean subclasses, ExpressionFactory[] facts,
+      QueryExpressions[] parsed, Object[] params, Range range) {
 
-		IndexExpressionVisitor visitor = new IndexExpressionVisitor(
-				(CassandraClassMetaData) base);
+    IndexExpressionVisitor visitor = new IndexExpressionVisitor(
+        (CassandraClassMetaData) base);
 
-		parsed[0].filter.acceptVisit(visitor);
+    parsed[0].filter.acceptVisit(visitor);
 
-		// the list of queries we need to execute
-		List<IndexQuery> queries = visitor.getVisitors();
+    // the list of queries we need to execute
+    List<IndexQuery> queries = visitor.getVisitors();
 
-		SortedSet<DynamicComposite> columnResults = null;
+    SortedSet<DynamicComposite> columnResults = null;
 
-		AbstractIndexOperation indexOp = null;
+    AbstractIndexOperation indexOp = null;
 
-		// TODO TN, this is a mess, comparator operations for index ops aren't
-		// properly setup in the class structure. Refactor to fix this
+    // TODO TN, this is a mess, comparator operations for index ops aren't
+    // properly setup in the class structure. Refactor to fix this
 
-		for (IndexQuery query : queries) {
+    for (IndexQuery query : queries) {
 
-			indexOp = getIndexOp(query, parsed[0].ordering, parsed[0].ascending, (CassandraClassMetaData) base);
+      indexOp = getIndexOp(query, parsed[0].ordering, parsed[0].ascending,
+          (CassandraClassMetaData) base);
 
-			if (columnResults == null) {
-				columnResults = new TreeSet<DynamicComposite>(
-						indexOp.getComprator());
-			}
+      if (columnResults == null) {
+        columnResults = new TreeSet<DynamicComposite>(indexOp.getComprator());
+      }
 
-			// we have an index operation, now get the columns from it
-			indexOp.scanIndex(query, columnResults, store.getKeyspace());
+      // we have an index operation, now get the columns from it
+      indexOp.scanIndex(query, columnResults, store.getKeyspace());
 
-		}
+    }
 
-		// now use our limit to remove items we don't need
-		// TODO TN, this kind of sucks, figure out a better way
-		if (range.start != 0 || range.end != Long.MAX_VALUE) {
-			
-			long current = 0;
-			
-			DynamicComposite start = null;
-			DynamicComposite end = null;
-			
-			Iterator<DynamicComposite> currentSet = columnResults.iterator();
-			
-			
-			for(; current <= range.start && currentSet.hasNext(); current++){
-				start = currentSet.next();
-			}
-			
-			//Calculate our size
-			long size = range.end - range.start;
-			
-			
-			for(long index = 0; index <= size && currentSet.hasNext(); index++){
-				end = currentSet.next();
-			}
-			
-			//Get the set results between the start ane end
-			columnResults = columnResults.subSet(start, end);
-			
-		}
-		
-	
+    // now use our limit to remove items we don't need
+    // TODO TN, this kind of sucks, figure out a better way
+    if (range.start != 0 || range.end != Long.MAX_VALUE) {
 
-		CassandraResultObjectProvider results = new CassandraResultObjectProvider(
-				columnResults, this.getContext().getStoreContext(),
-				ctx.getFetchConfiguration(), (CassandraClassMetaData) base);
+      long current = 0;
 
-		// TODO Auto-generated method stub
+      DynamicComposite start = null;
+      DynamicComposite end = null;
 
-		return results;
-	}
+      Iterator<DynamicComposite> currentSet = columnResults.iterator();
 
-	@Override
-	protected ExpressionFactory getExpressionFactory(ClassMetaData type) {
-		return new CassandraExpressionFactory();
-	}
+      for (; current <= range.start && currentSet.hasNext(); current++) {
+        start = currentSet.next();
+      }
 
-	/**
-	 * Get the index for the query
-	 * 
-	 * @param query
-	 * @return
-	 */
-	private AbstractIndexOperation getIndexOp(IndexQuery query,
-			Value[] ordering, boolean[] orderAscending, CassandraClassMetaData metaData) {
+      // Calculate our size
+      long size = range.end - range.start;
 
-		Collection<FieldExpression> expFields = query.getExpressions();
+      for (long index = 0; index <= size && currentSet.hasNext(); index++) {
+        end = currentSet.next();
+      }
 
-		FieldOrder[] fields = new FieldOrder[expFields.size()];
+      // Get the set results between the start and end.  If start or end or null, we can't properly page the result set
+      if (start != null && end != null) {
+        columnResults = columnResults.subSet(start, end);
+      }
 
-		IndexOrder[] orders = new IndexOrder[ordering.length];
+    }
 
-		Iterator<FieldExpression> expFieldsItr = expFields.iterator();
+    CassandraResultObjectProvider results = new CassandraResultObjectProvider(
+        columnResults, this.getContext().getStoreContext(),
+        ctx.getFetchConfiguration(), (CassandraClassMetaData) base);
 
-		//all fields are ascending by default in field equality.
-		for (int i = 0; i < fields.length; i++) {
-			FieldExpression current = expFieldsItr.next();
+    // TODO Auto-generated method stub
 
-			// if there's not start but an end then this column must be
-			// descending in
-			// the index
+    return results;
+  }
 
-			fields[i] = new FieldOrder(current.getField().getName(), true);
-		}
+  @Override
+  protected ExpressionFactory getExpressionFactory(ClassMetaData type) {
+    return new CassandraExpressionFactory();
+  }
 
-		for (int i = 0; i < orders.length; i++) {
-			orders[i] = new IndexOrder(((Path) ordering[i]).last().getName(),
-					orderAscending[i]);
-		}
-		
-		
-		EntityFacade classMeta = metaCache.getFacade(metaData);
+  /**
+   * Get the index for the query
+   * 
+   * @param query
+   * @return
+   */
+  private AbstractIndexOperation getIndexOp(IndexQuery query, Value[] ordering,
+      boolean[] orderAscending, CassandraClassMetaData metaData) {
 
-		AbstractIndexOperation indexOp = classMeta.getIndexOperation(fields, orders);
+    Collection<FieldExpression> expFields = query.getExpressions();
 
-		if (indexOp == null) {
-			throw new UnsupportedException(
-					String.format(
-							"You attempted to query an index that does not exist.  To perform this query you must define an index in the following format.  '%s'",
-							getIndexExpression(fields, orders)));
-		}
+    FieldOrder[] fields = new FieldOrder[expFields.size()];
 
-		return indexOp;
+    IndexOrder[] orders = new IndexOrder[ordering.length];
 
-	}
+    Iterator<FieldExpression> expFieldsItr = expFields.iterator();
 
-	/**
-	 * Return the string representation of the index
-	 * 
-	 * @param fields
-	 * @param orders
-	 * @return
-	 */
-	private String getIndexExpression(FieldOrder[] fields, IndexOrder[] orders) {
-		StringBuffer buff = new StringBuffer();
+    // all fields are ascending by default in field equality.
+    for (int i = 0; i < fields.length; i++) {
+      FieldExpression current = expFieldsItr.next();
 
-		buff.append("@Index(fields=\"");
+      // if there's not start but an end then this column must be
+      // descending in
+      // the index
 
-		for (int i = 0; i < fields.length; i++) {
-			buff.append(fields[i].getName());
+      fields[i] = new FieldOrder(current.getField().getName(), true);
+    }
 
-			if (!fields[i].isAscending()) {
-				buff.append(" desc");
-			}
+    for (int i = 0; i < orders.length; i++) {
+      orders[i] = new IndexOrder(((Path) ordering[i]).last().getName(),
+          orderAscending[i]);
+    }
 
-			buff.append(",");
-		}
+    EntityFacade classMeta = metaCache.getFacade(metaData, serializer);
 
-		buff.setLength(buff.length() - 1);
+    AbstractIndexOperation indexOp = classMeta
+        .getIndexOperation(fields, orders);
 
-		if (orders.length > 1) {
-			buff.append("\" order=\"");
+    if (indexOp == null) {
+      throw new UnsupportedException(
+          String
+              .format(
+                  "You attempted to query an index that does not exist.  To perform this query you must define an index in the following format.  '%s'",
+                  getIndexExpression(fields, orders)));
+    }
 
-			for (int i = 0; i < orders.length; i++) {
-				buff.append(orders[i].getName());
+    return indexOp;
 
-				if (!orders[i].isAscending()) {
-					buff.append(" desc");
-				}
+  }
 
-				buff.append(",");
-			}
+  /**
+   * Return the string representation of the index
+   * 
+   * @param fields
+   * @param orders
+   * @return
+   */
+  private String getIndexExpression(FieldOrder[] fields, IndexOrder[] orders) {
+    StringBuffer buff = new StringBuffer();
 
-			buff.setLength(buff.length() - 1);
-		}
-		buff.append("\")");
+    buff.append("@Index(fields=\"");
 
-		return buff.toString();
-	}
+    for (int i = 0; i < fields.length; i++) {
+      buff.append(fields[i].getName());
+
+      if (!fields[i].isAscending()) {
+        buff.append(" desc");
+      }
+
+      buff.append(",");
+    }
+
+    buff.setLength(buff.length() - 1);
+
+    if (orders.length > 1) {
+      buff.append("\" order=\"");
+
+      for (int i = 0; i < orders.length; i++) {
+        buff.append(orders[i].getName());
+
+        if (!orders[i].isAscending()) {
+          buff.append(" desc");
+        }
+
+        buff.append(",");
+      }
+
+      buff.setLength(buff.length() - 1);
+    }
+    buff.append("\")");
+
+    return buff.toString();
+  }
 
 }

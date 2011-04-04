@@ -5,8 +5,6 @@ package com.datastax.hectorjpa.meta;
 
 import java.nio.ByteBuffer;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
@@ -19,6 +17,7 @@ import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.beans.HColumn;
+import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
@@ -56,11 +55,6 @@ public abstract class AbstractIndexOperation {
 			.get();
 
 	protected static int MAX_SIZE = 500;
-
-	/**
-	 * Field name to dynamic composite index mapping
-	 */
-	protected Map<String, Integer> fieldIndexes = new HashMap<String, Integer>();
 
 	/**
 	 * the byte value for the row key of our index
@@ -101,8 +95,6 @@ public abstract class AbstractIndexOperation {
 			}
 
 			fields[i] = new QueryIndexField(fmd);
-
-			fieldIndexes.put(fmd.getName(), i);
 
 			outputStream.write(stringSerializer.toByteBuffer(fieldDirections[i]
 					.getName()));
@@ -259,6 +251,24 @@ public abstract class AbstractIndexOperation {
 		} while (result.get().getColumns().size() == MAX_SIZE);
 	}
 
+	/**
+	 * We can only write non 0 separators at the last value in our composite type
+	 * @param orig
+	 * @param index
+	 * @param length
+	 * @return
+	 */
+  protected ComponentEquality getEquality(ComponentEquality orig, int index, int length){
+    //not the last value in the scan range, so we reset it from trailing 1 bytes on the slice column to a 0 byte
+    if(index != length -1){
+      return ComponentEquality.EQUAL;
+    }
+    
+    return orig;
+    
+  }
+  
+
 	public Comparator<DynamicComposite> getComprator() {
 		return new ResultComparator();
 	}
@@ -275,9 +285,22 @@ public abstract class AbstractIndexOperation {
 		@Override
 		public int compare(DynamicComposite c1, DynamicComposite c2) {
 
+		  
+		  if(c1==null && c2 != null){
+		    return -1;
+		  }
+		  
+		  if(c2 == null && c1 != null){
+		    return 1;
+		  }
+		  
+		  if(c1 == null && c2 == null){
+		    return 0;
+		  }
+		  
 			int compare = 0;
 			
-			int size = c1.getComponents().size();
+			int size = 0;
 			
 			Comparable<Object> c1Id = null;
 			Comparable<Object> c2Id = null;
@@ -285,7 +308,10 @@ public abstract class AbstractIndexOperation {
 			
 			// no order by, just order by each field starting from the bginning
 			if (orders.length == 0) {
-				for(int i = 0; i < size-1; i ++){
+			  
+			  size = fields.length;
+			  
+				for(int i = 0; i < size; i ++){
 					c1Id = (Comparable<Object>) c1.get(i, fields[i].getSerializer());
 
 					c2Id = (Comparable<Object>) c2.get(i, fields[i].getSerializer());
@@ -297,14 +323,16 @@ public abstract class AbstractIndexOperation {
 					}
 				}
 				
-				c1Id = (Comparable<Object>) c1.get(size-1, idSerializer);
+				c1Id = (Comparable<Object>) c1.get(c1.size()-1, idSerializer);
 
-				c2Id = (Comparable<Object>) c2.get(size-1, idSerializer);
+				c2Id = (Comparable<Object>) c2.get(c2.size()-1, idSerializer);
 
 				return c1Id.compareTo(c2Id);
 				
 			}
 
+			size = c1.getComponents().size();
+			
 			int c1StartIndex = size - orders.length - 1; // c1.getComponents().size()
 			// -
 			// orders.length-2;

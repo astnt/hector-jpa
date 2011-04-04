@@ -7,6 +7,8 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
@@ -52,7 +54,7 @@ public class EntityFacade implements Serializable {
 	private final String columnFamilyName;
 	private final Class<?> clazz;
 	private final ObjectTypeColumnStrategy strategy;
-	private final Map<IndexDefinition, AbstractIndexOperation> indexOps;
+	private final NavigableMap<IndexDefinition, AbstractIndexOperation> indexOps;
 
 	/**
 	 * Fields indexed by id
@@ -167,7 +169,7 @@ public class EntityFacade implements Serializable {
 			strategy = new StaticColumn();
 		}
 
-		Map<IndexDefinition, AbstractIndexOperation> ops = new HashMap<IndexDefinition, AbstractIndexOperation>();
+		NavigableMap<IndexDefinition, AbstractIndexOperation> ops = new TreeMap<IndexDefinition, AbstractIndexOperation>();
 
 		addIndexOperations(cassMeta, ops);
 

@@ -12,6 +12,7 @@ import java.util.Set;
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.DynamicComposite;
+import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 import me.prettyprint.hector.api.mutation.Mutator;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
@@ -112,26 +113,29 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
 
     //add the discriminator value so we're querying for the specified class
     //and it's children
-   
+     
     startScan.addComponent(discriminatorValue, stringSerializer);
     endScan.addComponent(discriminatorValue, stringSerializer);
+
+    int length = fields.length;
     
-    int index = 0;
+    for (int i = 0; i < length; i++) {
 
-    // add all fields
-    for (FieldExpression exp : query.getExpressions()) {
-      index = this.fieldIndexes.get(exp.getField().getName());
-      //inclusive adds the byte 1 to the end of the field.  If it's inclusive on the start we want to set to false
-      //so that this byte is 0
-      this.fields[index].addToComposite(startScan, index+1,  exp.getStart(), exp.getStartEquality());
-      this.fields[index].addToComposite(endScan, index+1, exp.getEnd(), exp.getEndEquality());
+      FieldExpression exp = query.getExpression(this.fields[i].getMetaData());
+
+      this.fields[i].addToComposite(startScan, i+1, exp.getStart(),
+          getEquality(exp.getStartEquality(), i , length));
+      this.fields[i].addToComposite(endScan, i+1, exp.getEnd(),
+          getEquality(exp.getEndEquality(), i, length));
     }
-
+    
     // now query the values
     // get our slice range
     super.executeQuery(startScan, endScan, results, keyspace);
 
   }
+  
+
 
   /**
    * Get all discriminator values including the current class. If one is not

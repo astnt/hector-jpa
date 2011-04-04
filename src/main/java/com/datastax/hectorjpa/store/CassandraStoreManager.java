@@ -1,6 +1,5 @@
 package com.datastax.hectorjpa.store;
 
-import java.lang.reflect.Modifier;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Iterator;
@@ -81,7 +80,7 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		CassandraStoreConfiguration conf = ((CassandraStoreConfiguration) getContext()
 				.getConfiguration());
 
-		return new CassandraStoreQuery(ep, conf.getMetaCache(), cassandraStore);
+		return new CassandraStoreQuery(ep, conf.getMetaCache(), conf.getSerializer(), cassandraStore);
 	}
 
 //	@Override

@@ -62,14 +62,6 @@ public class MetaCache {
 
   }
 
-  /**
-   * Get meta data but only if it has been initialized.  If the facade does not exist.  Null is returned.
-   * @param meta
-   * @return
-   */
-  public EntityFacade getFacade(CassandraClassMetaData meta){
-	  return metaData.get(meta);
-  }
   
   /**
    * Get the class name from the discriminator string. Null if one doesn't exist
