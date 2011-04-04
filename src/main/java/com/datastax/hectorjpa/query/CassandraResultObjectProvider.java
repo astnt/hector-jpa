@@ -20,86 +20,82 @@ import com.datastax.hectorjpa.store.MappingUtils;
  */
 public class CassandraResultObjectProvider implements ResultObjectProvider {
 
-  private Set<DynamicComposite> results;
-  private StoreContext ctx;
-  private int currentIndex;
-  private CassandraClassMetaData classMeta;
-  private Serializer<Object> idSerializer;
-  private FetchConfiguration fetchConfig;
-  private Iterator<DynamicComposite> iterator;
-  
+	private Set<DynamicComposite> results;
+	private StoreContext ctx;
+	private int currentIndex;
+	private CassandraClassMetaData classMeta;
+	private Serializer<Object> idSerializer;
+	private FetchConfiguration fetchConfig;
+	private Iterator<DynamicComposite> iterator;
 
-  public CassandraResultObjectProvider(Set<DynamicComposite> results,
-      StoreContext ctx, FetchConfiguration fetchConfig, CassandraClassMetaData classMeta) {
-    this.results = results;
-    this.ctx = ctx;
-    this.currentIndex = -1;
-    this.classMeta = classMeta;
-    this.fetchConfig = fetchConfig;
+	public CassandraResultObjectProvider(Set<DynamicComposite> results,
+			StoreContext ctx, FetchConfiguration fetchConfig,
+			CassandraClassMetaData classMeta) {
+		this.results = results;
+		this.ctx = ctx;
+		this.currentIndex = -1;
+		this.classMeta = classMeta;
+		this.fetchConfig = fetchConfig;
 
-    
-    idSerializer = MappingUtils.getSerializerForPk(classMeta);
-  }
+		idSerializer = MappingUtils.getSerializerForPk(classMeta);
+	}
 
-  @Override
-  public boolean supportsRandomAccess() {
-    return false;
-  }
+	@Override
+	public boolean supportsRandomAccess() {
+		return false;
+	}
 
-  @Override
-  public void open() throws Exception {
-    this.iterator = results.iterator();
+	@Override
+	public void open() throws Exception {
+		this.iterator = results.iterator();
 
-  }
+	}
 
-  @Override
-  public Object getResultObject() throws Exception {
-    
-    DynamicComposite current =  iterator.next();
-    
-    int length = current.getComponents().size();
-   
-    
-    Object id = current.get(length -1, idSerializer);
+	@Override
+	public Object getResultObject() throws Exception {
 
-    Object jpaId = ctx.newObjectId(classMeta.getDescribedType(), id);
+		DynamicComposite current = iterator.next();
 
-    return ctx.find(jpaId, fetchConfig, null, null, 0);
-  }
+		int length = current.getComponents().size();
 
-  @Override
-  public boolean next() throws Exception {
-    return iterator.hasNext();
-  }
+		Object id = current.get(length - 1, idSerializer);
 
-  @Override
-  public boolean absolute(int pos) throws Exception {
-    currentIndex = pos;
+		Object jpaId = ctx.newObjectId(classMeta.getDescribedType(), id);
 
-    return currentIndex < results.size();
+		return ctx.find(jpaId, fetchConfig, null, null, 0);
+	}
 
-  }
+	@Override
+	public boolean next() throws Exception {
+		return iterator.hasNext();
+	}
 
-  @Override
-  public int size() throws Exception {
-    return results.size();
-  }
+	@Override
+	public boolean absolute(int pos) throws Exception {
+		return false;
 
-  @Override
-  public void reset() throws Exception {
-    this.iterator = results.iterator();
-  }
+	}
 
-  @Override
-  public void close() throws Exception {
-    // no op
+	@Override
+	public int size() throws Exception {
+		return results.size();
+	}
 
-  }
+	@Override
+	public void reset() throws Exception {
+		this.iterator = results.iterator();
+	}
 
-  @Override
-  public void handleCheckedException(Exception e) {
-    // no op
+	@Override
+	public void close() throws Exception {
+		// no op
 
-  }
+	}
+
+	@Override
+	public void handleCheckedException(Exception e) {
+		// no op
+
+	}
 
 }

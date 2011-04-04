@@ -120,7 +120,7 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
       // Calculate our size
       long size = range.end - range.start;
 
-      for (long index = 0; index <= size && currentSet.hasNext(); index++) {
+      for (long index = 0; index < size && currentSet.hasNext(); index++) {
         end = currentSet.next();
       }
 
