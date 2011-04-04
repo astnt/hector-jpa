@@ -93,4 +93,10 @@ public class FieldOrder implements Order, Comparable<FieldOrder> {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return "FieldOrder [fieldName=" + fieldName + ", ascending="
+				+ ascending + "]";
+	}
+
 }

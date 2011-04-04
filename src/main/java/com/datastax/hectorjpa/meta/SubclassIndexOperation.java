@@ -43,7 +43,7 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
       IndexDefinition indexDef) {
     super(metaData, indexDef);
 
-    subClasses = getSubclasses(metaData);
+    subClasses = metaData.getSuperClassDiscriminators();
     
     this.discriminatorValue = metaData.getDiscriminatorColumn();
 
@@ -137,43 +137,6 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
   
 
 
-  /**
-   * Get all discriminator values including the current class. If one is not
-   * present an null array is returned
-   * 
-   * @param cmd
-   * @return
-   */
-  private String[] getSubclasses(CassandraClassMetaData cmd) {
-    if (cmd.getDiscriminatorColumn() == null) {
-      return null;
-    }
-
-    // TODO TN use a depth weight algorithm to determine the maximum common
-    // ancestor for all fields in the index. For now this naive approach
-    // just uses discriminator values from all parent classes.
-
-    List<String> subclasses = new ArrayList<String>();
-
-    CassandraClassMetaData current = cmd;
-
-    do {
-      // TODO TN, should probably throw a metadata exception here
-      if (current.getDiscriminatorColumn() == null) {
-        break;
-      }
-
-      subclasses.add(current.getDiscriminatorColumn());
-      current = (CassandraClassMetaData) current.getPCSuperclassMetaData();
-    } while (current != null);
-
-    String[] subArray = new String[subclasses.size()];
-
-    subclasses.toArray(subArray);
-
-    return subArray;
-
-  }
 
   /**
    * @return the indexDefinition

@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexDefinition;
-import com.datastax.hectorjpa.index.IndexDefinitions;
 import com.datastax.hectorjpa.index.IndexOrder;
 import com.datastax.hectorjpa.meta.AbstractIndexOperation;
 import com.datastax.hectorjpa.meta.DiscriminatorColumn;
@@ -82,7 +81,6 @@ public class EntityFacade implements Serializable {
 		columnFieldIds = new HashMap<Integer, StringColumnField<?>>();
 		collectionFieldIds = new HashMap<Integer, AbstractCollectionField<?>>();
 
-	
 		FieldMetaData[] fmds = cassMeta.getFields();
 		SimpleColumnField<?> columnField = null;
 
@@ -169,32 +167,12 @@ public class EntityFacade implements Serializable {
 			strategy = new StaticColumn();
 		}
 
-		NavigableMap<IndexDefinition, AbstractIndexOperation> ops = new TreeMap<IndexDefinition, AbstractIndexOperation>();
+		//this class has index definitions.  Retrieve them.
+		if (cassMeta.getAllDefinitions() != null) {
+			this.indexOps = new TreeMap<IndexDefinition, AbstractIndexOperation>();
 
-		addIndexOperations(cassMeta, ops);
-
-		if (ops.size() == 0) {
-			indexOps = null;
-		} else {
-			indexOps = ops;
-		}
-
-	}
-
-	/**
-	 * Recursively add all index operations from this class up to the root class
-	 * to this entity facade.
-	 * 
-	 * @param current
-	 * @param indexOps
-	 */
-	private void addIndexOperations(CassandraClassMetaData cassMeta,
-			Map<IndexDefinition, AbstractIndexOperation> indexOps) {
-		IndexDefinitions indexDefs = cassMeta.getIndexDefinitions();
-
-		if (indexDefs != null) {
-
-			for (IndexDefinition indexDef : indexDefs.getDefinitions()) {
+			for (IndexDefinition indexDef : cassMeta.getAllDefinitions()
+					.getDefinitions()) {
 
 				// construct an index with subclass queries
 				if (cassMeta.getDiscriminatorColumn() != null) {
@@ -205,20 +183,14 @@ public class EntityFacade implements Serializable {
 				// construct and index without discriminator for subclass
 				// queries
 				else {
-					indexOps.put(indexDef, new IndexOperation(cassMeta,
-							indexDef));
+					indexOps.put(indexDef, new IndexOperation(cassMeta, indexDef));
 				}
 			}
-
+		}else{
+			this.indexOps = null;
 		}
 
-		if (cassMeta.getPCSuperclassMetaData() != null) {
-			addIndexOperations(
-					(CassandraClassMetaData) cassMeta.getPCSuperclassMetaData(),
-					indexOps);
-		}
 	}
-
 
 	/**
 	 * Delete the entity with the given statemanager. The given clock time is
@@ -252,7 +224,6 @@ public class EntityFacade implements Serializable {
 		AbstractCollectionField<?> collectionField = null;
 		Object entityId = stateManager.getObjectId();
 
-
 		// This entity has never been persisted, we can't possibly load it
 		if (MappingUtils.getTargetObject(entityId) == null) {
 			return false;
@@ -280,8 +251,7 @@ public class EntityFacade implements Serializable {
 				SliceQuery<byte[], DynamicComposite, byte[]> query = collectionField
 						.createQuery(entityId, keyspace, size);
 
-				collectionField
-						.readField(stateManager, query.execute());
+				collectionField.readField(stateManager, query.execute());
 
 				continue;
 			}
@@ -290,7 +260,7 @@ public class EntityFacade implements Serializable {
 		}
 
 		fields.add(this.strategy.getColumnName());
-		
+
 		// now load all the columns in the CF.
 		SliceQuery<byte[], String, byte[]> query = MappingUtils
 				.buildSliceQuery(entityId, fields, columnFamilyName, keyspace);
@@ -420,14 +390,13 @@ public class EntityFacade implements Serializable {
 	 */
 	public AbstractIndexOperation getIndexOperation(FieldOrder[] fields,
 			IndexOrder[] orders) {
-		
-		if(indexOps == null){
+
+		if (indexOps == null) {
 			return null;
 		}
-		
+
 		IndexDefinition def = new IndexDefinition(fields, orders);
-		
-		
+
 		return indexOps.get(def);
 	}
 

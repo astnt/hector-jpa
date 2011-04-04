@@ -30,6 +30,12 @@ import com.datastax.hectorjpa.bean.inheritance.Person;
 import com.datastax.hectorjpa.bean.inheritance.Person_;
 import com.datastax.hectorjpa.bean.inheritance.User;
 import com.datastax.hectorjpa.bean.inheritance.User_;
+import com.datastax.hectorjpa.bean.tree.Geek;
+import com.datastax.hectorjpa.bean.tree.Geek_;
+import com.datastax.hectorjpa.bean.tree.Nerd;
+import com.datastax.hectorjpa.bean.tree.Nerd_;
+import com.datastax.hectorjpa.bean.tree.Techie;
+import com.datastax.hectorjpa.bean.tree.Techie_;
 
 /**
  * 
@@ -455,5 +461,108 @@ public class SearchTest extends ManagedEntityTestBase {
 		assertEquals(c1, results.get(0));
 
 	}
+	
+	
+	/**
+	 * Tests that we can save an index with one of the fields nulled and still
+	 * query for null
+	 * 
+	 * without indexing
+	 */
+	@Test
+	public void treeTest() {
+
+		EntityManager em = entityManagerFactory.createEntityManager();
+		em.getTransaction().begin();
+
+		Techie techie = new Techie();
+		techie.setName("test");
+		
+		Geek g = new Geek();
+		g.setName("test");
+		
+		Nerd nerd = new Nerd();
+		nerd.setName("test");
+
+		em.persist(techie);
+		em.persist(g);
+		em.persist(nerd);
+		
+		em.getTransaction().commit();
+		em.close();
+
+		//
+		EntityManager em2 = entityManagerFactory.createEntityManager();
+
+		
+		//should only return geek
+		CriteriaBuilder geekBuilder = em2.getCriteriaBuilder();
+
+		CriteriaQuery<Geek> geekQuery = geekBuilder.createQuery(Geek.class);
+
+		Root<Geek> geekRoot = geekQuery.from(Geek.class);
+
+		Predicate predicate = geekBuilder.equal(geekRoot.get(Geek_.name), g.getName());
+
+		geekQuery.where(predicate);
+
+		TypedQuery<Geek> gQuery = em2.createQuery(geekQuery);
+
+		List<Geek> results = gQuery.getResultList();
+
+		assertEquals(1, results.size());
+		
+		assertTrue(results.contains(g));
+		
+		//should only return nerd
+		CriteriaBuilder nerdBuilder = em2.getCriteriaBuilder();
+
+		CriteriaQuery<Nerd> nerdQuery = nerdBuilder.createQuery(Nerd.class);
+
+		Root<Nerd> nerdRoot = nerdQuery.from(Nerd.class);
+
+		predicate = nerdBuilder.equal(nerdRoot.get(Nerd_.name), g.getName());
+
+		nerdQuery.where(predicate);
+
+		TypedQuery<Nerd> nQuery = em2.createQuery(nerdQuery);
+
+		List<Nerd> nResults = nQuery.getResultList();
+
+		assertEquals(1, nResults.size());
+		
+		assertTrue(nResults.contains(nerd));
+		
+		
+		//should only return all three
+		CriteriaBuilder techieBuilder = em2.getCriteriaBuilder();
+
+		CriteriaQuery<Techie> techieQuery = techieBuilder.createQuery(Techie.class);
+
+		Root<Techie> techiRoot = techieQuery.from(Techie.class);
+
+		predicate = techieBuilder.equal(techiRoot.get(Techie_.name), g.getName());
+
+		techieQuery.where(predicate);
+
+		TypedQuery<Techie> tQuery = em2.createQuery(techieQuery);
+
+		List<Techie> tResults = tQuery.getResultList();
+
+		assertEquals(3, tResults.size());
+		
+		assertTrue(tResults.contains(nerd));
+		assertTrue(tResults.contains(g));
+		assertTrue(tResults.contains(techie));
+		
+		
+		
+		
+		
+		
+
+
+	}
+
 
 }

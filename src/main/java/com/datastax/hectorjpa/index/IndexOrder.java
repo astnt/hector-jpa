@@ -94,4 +94,10 @@ public class IndexOrder implements Order, Comparable<IndexOrder> {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return "IndexOrder [fieldName=" + fieldName + ", ascending="
+				+ ascending + "]";
+	}
+
 }

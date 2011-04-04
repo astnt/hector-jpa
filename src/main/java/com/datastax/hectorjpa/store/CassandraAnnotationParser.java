@@ -91,10 +91,13 @@ public class CassandraAnnotationParser extends
 
 			case EMBEDDABLE:
 				handleEmbeddable(cm, (Embeddable) anno);
+				break;
 
 			}
 
 		}
+		
+
 	}
 
 	/*
@@ -238,13 +241,13 @@ public class CassandraAnnotationParser extends
 	 */
 	private void handleEmbedded(CassandraFieldMetaData fmd) {
 		fmd.setSerializedEmbedded(true);
-//	TODO TN do we actually need this check?
-//		if (!Serializable.class.isAssignableFrom(fmd.getDeclaredType())) {
-//			throw new MetaDataException(
-//					String.format(
-//							"Field '%s' was declared as embedded, but it is not serializable on class '%s'",
-//							fmd.getName(), fmd.getDeclaringType()));
-//		}
+		// TODO TN do we actually need this check?
+		// if (!Serializable.class.isAssignableFrom(fmd.getDeclaredType())) {
+		// throw new MetaDataException(
+		// String.format(
+		// "Field '%s' was declared as embedded, but it is not serializable on class '%s'",
+		// fmd.getName(), fmd.getDeclaringType()));
+		// }
 
 	}
 

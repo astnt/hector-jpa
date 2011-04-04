@@ -24,6 +24,10 @@
     <class>com.datastax.hectorjpa.bean.inheritance.Client</class>
     <class>com.datastax.hectorjpa.bean.inheritance.Manager</class>
     
+     <class>com.datastax.hectorjpa.bean.tree.Geek</class>
+     <class>com.datastax.hectorjpa.bean.tree.Nerd</class>
+     <class>com.datastax.hectorjpa.bean.tree.Techie</class>
+    
 
 
 

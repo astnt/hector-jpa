@@ -21,7 +21,6 @@ import org.apache.cassandra.thrift.KsDef;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.BeforeClass;
 
-import com.datastax.hectorjpa.index.IndexDefinition;
 import com.datastax.hectorjpa.meta.IndexOperation;
 import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 
@@ -154,6 +153,10 @@ public class CassandraTestBase {
     .setComparator_type(BytesType.class.getSimpleName())
     .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
     
+    
+    cfDefList.add(new CfDef("TestKeyspace", "TechieColumnFamily")
+    .setComparator_type(BytesType.class.getSimpleName())
+    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
     
     
     
