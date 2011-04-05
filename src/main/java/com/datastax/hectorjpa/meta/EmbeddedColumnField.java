@@ -83,10 +83,7 @@ public class EmbeddedColumnField<V> extends StringColumnField<V> {
 
     ByteBuffer bytes = (ByteBuffer) serializer.fromBytes(column.getValue());
     
-    
-    Object value = null;
-    
-    value = embeddedSerializer.getObject(bytes);
+    Object value = embeddedSerializer.getObject(bytes);
 
     stateManager.store(fieldId, value);
 

@@ -1,5 +1,6 @@
 package com.datastax.hectorjpa.store;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
 import javax.persistence.EntityManager;
@@ -130,6 +131,52 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
     assertEquals(other2.getPhoneNumber(), returnedCust.getOtherPhones().get(1).getPhoneNumber());
     assertEquals(other2.getType(), returnedCust.getOtherPhones().get(1).getType());
 
+
+  }
+  
+
+  /**
+   * Test simple instance with no collections to ensure we persist properly
+   * without indexing
+   */
+  @Test
+  public void basicEmbeddedNullValue() {
+
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+
+    Store store = new Store();
+    store.setName("Manhattan");
+
+    Customer james = new Customer();
+    james.setEmail("james@test.com");
+    james.setName("James");
+    james.setPhoneNumber(null);
+    
+    
+    store.addCustomer(james);
+    
+    em.persist(store);
+    em.getTransaction().commit();
+    em.close();
+
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+
+    
+    Store returnedStore = em2.find(Store.class, store.getId());
+
+    /**
+     * Make sure the stores are equal and everything is in sorted order
+     */
+    assertEquals(store, returnedStore);
+
+    assertEquals(james, returnedStore.getCustomers().get(0));
+    
+    Customer returnedCust = returnedStore.getCustomers().get(0);
+    
+    //test embedded objects
+    assertNull(returnedCust.getPhoneNumber());
+    
 
   }
 
