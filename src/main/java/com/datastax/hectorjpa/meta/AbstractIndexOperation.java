@@ -189,15 +189,17 @@ public abstract class AbstractIndexOperation {
    * @return
    */
   protected boolean constructComposites(DynamicComposite newComposite,
-      DynamicComposite oldComposite, OpenJPAStateManager stateManager) {
+      DynamicComposite oldComposite, DynamicComposite tombstoneComposite, OpenJPAStateManager stateManager) {
 
     //TODO TN add reverse index writes
-    
+	 
     boolean changed = false;
 
     Object key = MappingUtils.getTargetObject(stateManager.getObjectId());
 
     Object field;
+    
+    tombstoneComposite.setComponent(0, key, idSerializer, tombstoneComposite.getSerializerToComparatorMapping().get(idSerializer.getClass()), ComponentEquality.EQUAL);
 
     // now construct the composite with order by the ids at the end.
     for (QueryIndexField indexField : fields) {
@@ -206,8 +208,9 @@ public abstract class AbstractIndexOperation {
 
       // add this to all deletes for the order composite.
       indexField.addFieldWrite(newComposite, field);
+      indexField.addFieldWrite(tombstoneComposite, field);
 
-      // The deletes to teh is composite
+      // The deletes to the is composite
       changed |= indexField.addFieldDelete(oldComposite, field);
     }
 
@@ -220,12 +223,15 @@ public abstract class AbstractIndexOperation {
 
       // add this to all deletes for the order composite.
       order.addFieldWrite(newComposite, field);
+      order.addFieldWrite(tombstoneComposite, field);
 
       // The deletes to teh is composite
       changed |= order.addFieldDelete(oldComposite, field);
     }
 
     // add it to our new value
+    
+    
 
     newComposite.addComponent(key, idSerializer);
 

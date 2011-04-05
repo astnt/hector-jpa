@@ -48,6 +48,7 @@ public class IndexOperation extends AbstractIndexOperation {
 
     DynamicComposite newComposite = null;
     DynamicComposite oldComposite = null;
+    DynamicComposite tombstoneComposite = null;
 
     // loop through all added objects and create the writes for them.
     // create our composite of the format of id+order*
@@ -55,13 +56,21 @@ public class IndexOperation extends AbstractIndexOperation {
 
     // create our composite of the format order*+id
     oldComposite = newComposite();
+    
+    
+    // create our composite of the format id+order*
+    tombstoneComposite = newComposite();
 
-    boolean changed = constructComposites(newComposite, oldComposite,
+    boolean changed = constructComposites(newComposite, oldComposite, tombstoneComposite,
         stateManager);
 
     mutator.addInsertion(indexName, CF_NAME,
         new HColumnImpl<DynamicComposite, byte[]>(newComposite, HOLDER, clock,
             compositeSerializer, bytesSerializer));
+    
+    mutator.addInsertion(reverseIndexName, CF_NAME,
+            new HColumnImpl<DynamicComposite, byte[]>(tombstoneComposite, HOLDER, clock,
+                compositeSerializer, bytesSerializer));
 
     // value has changed since we loaded. Remove the old value
     if (changed) {
