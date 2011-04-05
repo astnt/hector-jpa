@@ -73,7 +73,8 @@ public class EntityFacade implements Serializable {
 			EmbeddedSerializer serializer) {
 
 		CassandraClassMetaData cassMeta = (CassandraClassMetaData) classMetaData;
-
+		
+	
 		this.columnFamilyName = MappingUtils.getColumnFamily(cassMeta);
 
 		clazz = cassMeta.getDescribedType();
@@ -307,6 +308,11 @@ public class EntityFacade implements Serializable {
 	public Class<?> getStoredEntityType(Object oid, Keyspace keyspace,
 			MetaCache metaCache) {
 
+	  //nothing to do
+	  if(oid == null){
+	    return null;
+	  }
+	  
 		Class<?> oidType = ((OpenJPAId) oid).getType();
 
 		// This entity has never been persisted, we can't possibly load it

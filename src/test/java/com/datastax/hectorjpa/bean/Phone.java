@@ -6,6 +6,7 @@ package com.datastax.hectorjpa.bean;
 import java.io.Serializable;
 
 import javax.persistence.Embeddable;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Id;
 
 /**
@@ -24,7 +25,6 @@ public class Phone implements Serializable{
   private static final long serialVersionUID = -6553906640946010478L;
 
 
-  @Id
   private String phoneNumber;
   
   

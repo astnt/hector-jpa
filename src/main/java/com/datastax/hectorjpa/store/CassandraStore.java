@@ -2,6 +2,9 @@ package com.datastax.hectorjpa.store;
 
 import java.util.BitSet;
 
+import javax.persistence.Entity;
+import javax.persistence.MappedSuperclass;
+
 import me.prettyprint.cassandra.model.MutatorImpl;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.service.CassandraHostConfigurator;
@@ -16,9 +19,11 @@ import me.prettyprint.hector.api.mutation.Mutator;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.ClassMetaData;
+import org.apache.openjpa.util.MetaDataException;
 import org.apache.openjpa.util.OpenJPAId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.support.MetaDataAccessException;
 
 import com.datastax.hectorjpa.consitency.JPAConsistency;
 
@@ -152,6 +157,10 @@ public class CassandraStore {
 
     EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData,
         conf.getSerializer());
+    
+    if(entityFacade == null){
+      throw new MetaDataException(String.format("You attempted to load an object that has no mapping.  Please check that class %s is mapped with a %s annotation, not a %s annoation", metaData.getDescribedType(), Entity.class.getName(), MappedSuperclass.class.getName()));
+    }
 
     return entityFacade.getStoredEntityType(oid, keyspace, conf.getMetaCache());
   }

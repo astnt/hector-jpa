@@ -5,6 +5,8 @@ package com.datastax.hectorjpa.bean.inheritance;
 
 import java.util.Date;
 
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
 import javax.persistence.MappedSuperclass;
 
 import org.apache.openjpa.persistence.Persistent;
@@ -18,7 +20,8 @@ import com.datastax.hectorjpa.bean.AbstractEntity;
  * @author Todd Nine
  *
  */
-@MappedSuperclass
+@Entity
+@DiscriminatorValue("SmsMessage")
 @ColumnFamily("SmsMessageColumnFamily")
 public abstract class SmsMessage extends AbstractEntity {
 

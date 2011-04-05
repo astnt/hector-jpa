@@ -34,6 +34,8 @@ public class CassandraClassMetaData extends ClassMetaData {
 	private IndexDefinitions allDefinitions;
 
 	private String[] superClassDiscriminators;
+	
+	private boolean mappedSuperClass = false;
 
 	protected CassandraClassMetaData(Class<?> type, MetaDataRepository repos) {
 		super(type, repos);
@@ -85,6 +87,20 @@ public class CassandraClassMetaData extends ClassMetaData {
 	}
 
 	/**
+   * @return the mappedSuperClass
+   */
+  public boolean isMappedSuperClass() {
+    return mappedSuperClass;
+  }
+
+  /**
+   * @param mappedSuperClass the mappedSuperClass to set
+   */
+  public void setMappedSuperClass(boolean mappedSuperClass) {
+    this.mappedSuperClass = mappedSuperClass;
+  }
+
+  /**
 	 * Get a string array of all discriminators starting at the current class.  This is a lazy init and should not be invoked until all 
 	 * meta data has been parsed
 	 * 
