@@ -33,7 +33,7 @@ public class AsyncInMemoryIndexingService extends InMemoryIndexingService {
   private LinkedBlockingQueue<IndexAudit> deleteQueue = new LinkedBlockingQueue<IndexAudit>(
       1000);
 
-  public AsyncInMemoryIndexingService(CassandraStoreConfiguration conf) {
+  public AsyncInMemoryIndexingService() {
 
     Thread audit = new Thread(new AuditThread());
     audit.setDaemon(true);

@@ -75,8 +75,16 @@ public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
       return serializer;
     }
 
-    serializer = (EmbeddedSerializer) createInstance(SERIALIZER_PROP,
-        JavaSerializer.class.getName());
+    String className = getValue(SERIALIZER_PROP).getOriginalValue();
+
+    try {
+      serializer = (EmbeddedSerializer) createInstance(className,
+          JavaSerializer.class.getName());
+    } catch (Exception e) {
+      throw new UserException(String.format(
+          "Unable to load class '%s' as an instance of %s", className,
+          EmbeddedSerializer.class), e);
+    }
 
     return serializer;
   }
@@ -96,10 +104,19 @@ public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
       return indexingService;
     }
 
-    this.indexingService = (IndexingService) createInstance(INDEXING_PROP,   SyncInMemoryIndexingService.class.getName());
+    String className = getValue(INDEXING_PROP).getString();
+
+    try {
+      this.indexingService = (IndexingService) createInstance(className,
+          SyncInMemoryIndexingService.class.getName());
+    } catch (Exception e) {
+      throw new UserException(String.format(
+          "Unable to load class '%s' as an instance of %s", className,
+          IndexingService.class), e);
+    }
 
     this.indexingService.postCreate(this);
-    
+
     return this.indexingService;
   }
 
@@ -128,8 +145,9 @@ public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
     if (keyspace != null) {
       return keyspace;
     }
-    
-    keyspace = HFactory.createKeyspace(getValue(KEYSPACE_PROP).getString(), getCluster());
+
+    keyspace = HFactory.createKeyspace(getValue(KEYSPACE_PROP).getString(),
+        getCluster());
 
     keyspace.setConsistencyLevelPolicy(new JPAConsistencyPolicy());
 
@@ -144,23 +162,22 @@ public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
    * @param propKey
    * @param defaultClass
    * @return
+   * @throws ClassNotFoundException
+   * @throws IllegalAccessException
+   * @throws InstantiationException
    */
-  private Object createInstance(String propKey, String defaultClass) {
-    String className = getValue(propKey).getOriginalValue();
+  private Object createInstance(String className, String defaultClass)
+      throws ClassNotFoundException, InstantiationException,
+      IllegalAccessException {
 
     if (className == null) {
       className = defaultClass;
     }
 
-    try {
-      Class<?> clazz = Class.forName(className);
+    Class<?> clazz = Class.forName(className);
 
-      return clazz.newInstance();
-    } catch (Exception e) {
-      throw new UserException(String.format(
-          "Unable to load class '%s' as an instance of %s", className,
-          EmbeddedSerializer.class), e);
-    }
+    return clazz.newInstance();
+
   }
 
   /**
