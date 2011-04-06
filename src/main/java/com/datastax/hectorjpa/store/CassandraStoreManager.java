@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.query.CassandraStoreQuery;
+import com.datastax.hectorjpa.service.IndexQueue;
 
 public class CassandraStoreManager extends AbstractStoreManager {
 
@@ -111,15 +112,21 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		long clock = cassandraStore.getClock();
 
 		Mutator<?> mutator = cassandraStore.createMutator();
+		
+		IndexQueue queue = new IndexQueue();
 
-		writeEntities(pNew, mutator, clock);
-		writeEntities(pNewUpdated, mutator, clock);
-		writeEntities(pDirty, mutator, clock);
+		writeEntities(pNew, mutator, clock, queue);
+		writeEntities(pNewUpdated, mutator, clock, queue);
+		writeEntities(pDirty, mutator, clock, queue);
 
-		deleteEntities(pNewFlushedDeleted, mutator, clock);
-		deleteEntities(pDeleted, mutator, clock);
+		deleteEntities(pNewFlushedDeleted, mutator, clock, queue);
+		deleteEntities(pDeleted, mutator, clock, queue);
 
 		mutator.execute();
+		//now that the mutator has returned.  Execute index cleanup
+		
+		queue.writeAudits(cassandraStore.getIndexingService());
+		
 
 		return null;
 	}
@@ -130,14 +137,15 @@ public class CassandraStoreManager extends AbstractStoreManager {
 	 * @param writes
 	 * @param mutator
 	 * @param clock
+	 * @param queue 
 	 */
-	private void writeEntities(Collection writes, Mutator mutator, long clock) {
+	private void writeEntities(Collection writes, Mutator mutator, long clock, IndexQueue queue) {
 
 		OpenJPAStateManager sm = null;
 
 		for (Iterator itr = writes.iterator(); itr.hasNext();) {
 			sm = (OpenJPAStateManager) itr.next();
-			cassandraStore.storeObject(mutator, sm, sm.getDirty(), clock);
+			cassandraStore.storeObject(mutator, sm, sm.getDirty(), clock, queue);
 		}
 
 	}
@@ -148,12 +156,13 @@ public class CassandraStoreManager extends AbstractStoreManager {
 	 * @param deletes
 	 * @param mutator
 	 * @param clock
+	 * @param queue 
 	 */
-	private void deleteEntities(Collection deletes, Mutator mutator, long clock) {
+	private void deleteEntities(Collection deletes, Mutator mutator, long clock, IndexQueue queue) {
 		for (Iterator itr = deletes.iterator(); itr.hasNext();) {
 			// create new object data for instance
 			OpenJPAStateManager sm = (OpenJPAStateManager) itr.next();
-			cassandraStore.removeObject(mutator, sm, clock);
+			cassandraStore.removeObject(mutator, sm, clock, queue);
 
 		}
 	}
@@ -239,6 +248,9 @@ public class CassandraStoreManager extends AbstractStoreManager {
 
 		cassandraStore = new CassandraStore((CassandraStoreConfiguration) conf);
 		cassandraStore.open();
+		
+		((CassandraStoreConfiguration)conf).initializeIndexingService(cassandraStore);
+		
 		log.debug("in CSM.open()");
 	}
 

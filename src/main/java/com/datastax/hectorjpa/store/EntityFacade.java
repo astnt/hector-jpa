@@ -43,6 +43,7 @@ import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 import com.datastax.hectorjpa.meta.collection.OrderedCollectionField;
 import com.datastax.hectorjpa.meta.collection.UnorderedCollectionField;
 import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
+import com.datastax.hectorjpa.service.IndexQueue;
 
 public class EntityFacade implements Serializable {
 	private static final Logger log = LoggerFactory
@@ -69,7 +70,8 @@ public class EntityFacade implements Serializable {
 	 * @param mappingUtils
 	 *            The mapping utils to use for byte mapping
 	 */
-	public EntityFacade(ClassMetaData classMetaData,
+	@SuppressWarnings("rawtypes")
+  public EntityFacade(ClassMetaData classMetaData,
 			EmbeddedSerializer serializer) {
 
 		CassandraClassMetaData cassMeta = (CassandraClassMetaData) classMetaData;
@@ -201,7 +203,8 @@ public class EntityFacade implements Serializable {
 	 * @param mutator
 	 * @param clock
 	 */
-	public void delete(OpenJPAStateManager stateManager, Mutator mutator,
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+  public void delete(OpenJPAStateManager stateManager, Mutator mutator,
 			long clock) {
 		mutator.addDeletion(
 				MappingUtils.getKeyBytes(stateManager.getObjectId()),
@@ -339,9 +342,11 @@ public class EntityFacade implements Serializable {
 	 * @param m
 	 * @param clockTime
 	 *            The time to use for write and deletes
+	 * @param audits A set to add all audit operations to for collection and index verification
 	 */
-	public void addColumns(OpenJPAStateManager stateManager, BitSet fieldSet,
-			Mutator<byte[]> m, long clockTime) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+  public void addColumns(OpenJPAStateManager stateManager, BitSet fieldSet,
+			Mutator<byte[]> m, long clockTime, IndexQueue queue) {
 
 		byte[] keyBytes = MappingUtils.getKeyBytes(stateManager.getObjectId());
 
@@ -361,14 +366,14 @@ public class EntityFacade implements Serializable {
 
 				// we have a collection, persist it
 				collection.addField(stateManager, m, clockTime, keyBytes,
-						this.columnFamilyName);
+						this.columnFamilyName, queue);
 
 				continue;
 
 			}
 
 			field.addField(stateManager, m, clockTime, keyBytes,
-					this.columnFamilyName);
+					this.columnFamilyName, queue);
 
 		}
 
@@ -380,7 +385,7 @@ public class EntityFacade implements Serializable {
 		 */
 		if (indexOps != null) {
 			for (AbstractIndexOperation op : indexOps.values()) {
-				op.writeIndex(stateManager, m, clockTime);
+				op.writeIndex(stateManager, m, clockTime, queue);
 			}
 
 		}

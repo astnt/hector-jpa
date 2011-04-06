@@ -15,6 +15,7 @@ import org.apache.openjpa.util.UserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.hectorjpa.service.IndexQueue;
 import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
@@ -56,8 +57,9 @@ public class ToOneColumn<V> extends SimpleColumnField<V> {
    * @param cfName
    *          the column family name
    */
+  @Override
   public void addField(OpenJPAStateManager stateManager,
-      Mutator<byte[]> mutator, long clock, byte[] key, String cfName) {
+      Mutator<byte[]> mutator, long clock, byte[] key, String cfName, IndexQueue queue) {
 
     Object instance = stateManager.fetch(fieldId);
 

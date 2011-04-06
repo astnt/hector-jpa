@@ -109,6 +109,7 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
     return key;
 
   }
+
  
   /**
    * Create the slice query for this field

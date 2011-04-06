@@ -15,6 +15,7 @@ import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.FieldMetaData;
 
 import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
+import com.datastax.hectorjpa.service.IndexQueue;
 
 /**
  * Class for serializing columns
@@ -48,7 +49,7 @@ public class EmbeddedColumnField<V> extends StringColumnField<V> {
    *          the column family name
    */
   public void addField(OpenJPAStateManager stateManager,
-      Mutator<byte[]> mutator, long clock, byte[] key, String cfName) {
+      Mutator<byte[]> mutator, long clock, byte[] key, String cfName,  IndexQueue queue) {
 
     Object value = stateManager.fetch(fieldId);
     

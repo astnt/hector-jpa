@@ -11,6 +11,7 @@ import me.prettyprint.hector.api.query.QueryResult;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.FieldMetaData;
 
+import com.datastax.hectorjpa.service.IndexQueue;
 import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
@@ -64,8 +65,9 @@ public class SimpleColumnField<V> extends StringColumnField<V> {
    * @param cfName
    *          the column family name
    */
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   public void addField(OpenJPAStateManager stateManager,
-      Mutator<byte[]> mutator, long clock, byte[] key, String cfName) {
+      Mutator<byte[]> mutator, long clock, byte[] key, String cfName, IndexQueue queue) {
 
     Object value = stateManager.fetch(fieldId);
     

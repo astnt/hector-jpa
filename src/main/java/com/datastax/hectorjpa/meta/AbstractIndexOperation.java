@@ -30,6 +30,7 @@ import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexDefinition;
 import com.datastax.hectorjpa.index.IndexOrder;
 import com.datastax.hectorjpa.query.IndexQuery;
+import com.datastax.hectorjpa.service.IndexQueue;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.MappingUtils;
 
@@ -169,7 +170,7 @@ public abstract class AbstractIndexOperation {
    * @param clock
    */
   public abstract void writeIndex(OpenJPAStateManager stateManager,
-      Mutator<byte[]> mutator, long clock);
+      Mutator<byte[]> mutator, long clock, IndexQueue queue);
 
   /**
    * Scan the given index query and add the results to the provided set. The set
@@ -189,7 +190,7 @@ public abstract class AbstractIndexOperation {
    * @return
    */
   protected boolean constructComposites(DynamicComposite newComposite,
-      DynamicComposite oldComposite, DynamicComposite tombstoneComposite, OpenJPAStateManager stateManager) {
+      DynamicComposite oldComposite, DynamicComposite tombstoneComposite, DynamicComposite auditComposite, OpenJPAStateManager stateManager) {
 
     //TODO TN add reverse index writes
 	 
@@ -200,6 +201,9 @@ public abstract class AbstractIndexOperation {
     Object field;
     
     tombstoneComposite.setComponent(0, key, idSerializer, tombstoneComposite.getSerializerToComparatorMapping().get(idSerializer.getClass()), ComponentEquality.EQUAL);
+    
+    
+    auditComposite.setComponent(0, key, idSerializer, tombstoneComposite.getSerializerToComparatorMapping().get(idSerializer.getClass()), ComponentEquality.EQUAL);
 
     // now construct the composite with order by the ids at the end.
     for (QueryIndexField indexField : fields) {

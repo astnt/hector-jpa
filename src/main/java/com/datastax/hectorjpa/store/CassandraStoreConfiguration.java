@@ -2,18 +2,21 @@ package com.datastax.hectorjpa.store;
 
 import org.apache.openjpa.conf.OpenJPAConfigurationImpl;
 import org.apache.openjpa.lib.conf.ProductDerivations;
-import org.apache.openjpa.lib.conf.Value;
 import org.apache.openjpa.util.UserException;
 
 import com.datastax.hectorjpa.meta.MetaCache;
 import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
 import com.datastax.hectorjpa.serialize.JavaSerializer;
+import com.datastax.hectorjpa.service.InMemoryIndexingService;
+import com.datastax.hectorjpa.service.IndexingService;
 
 public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
 
   private MetaCache metaCache;
 
   private EmbeddedSerializer serializer;
+  
+  private IndexingService indexingService;
 
   public CassandraStoreConfiguration() {
     super(false, false);
@@ -38,9 +41,22 @@ public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
 
     this.metaCache = new MetaCache();
 
-  
+    
   }
 
+  /**
+   * Initialize the indexing service
+   * @param store
+   */
+  public void initializeIndexingService(CassandraStore store){
+    if(this.indexingService != null){
+      return;
+    }
+    
+    this.indexingService = new InMemoryIndexingService(store);
+  }
+  
+  
   /**
    * This is a fugly hack, figure out proper configuration parsing
    * @param value
@@ -82,6 +98,13 @@ public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
    */
   public MetaCache getMetaCache() {
     return metaCache;
+  }
+
+  /**
+   * @return the indexingService
+   */
+  public IndexingService getIndexingService() {
+    return indexingService;
   }
 
 }

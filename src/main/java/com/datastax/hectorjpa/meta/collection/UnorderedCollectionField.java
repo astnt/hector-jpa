@@ -21,6 +21,8 @@ import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.util.Proxy;
 
+import com.datastax.hectorjpa.service.IndexAudit;
+import com.datastax.hectorjpa.service.IndexQueue;
 import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
@@ -88,9 +90,17 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
 
   @Override
   public void addField(OpenJPAStateManager stateManager,
-      Mutator<byte[]> mutator, long clock, byte[] key, String cfName) {
+      Mutator<byte[]> mutator, long clock, byte[] key, String cfName,
+      IndexQueue queue) {
 
     Object field = stateManager.fetch(fieldId);
+
+    byte[] idKey = constructKey(key, unorderedMarker);
+
+    // could have been removed, blitz everything from the index
+    if (field == null) {
+      mutator.addDeletion(idKey, CF_NAME, null, null);
+    }
 
     // nothing to do
     if (field == null) {
@@ -98,10 +108,10 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     }
 
     // construct the key
-    byte[] idKey = constructKey(key, unorderedMarker);
 
-    writeAdds(stateManager, (Collection<?>) field, mutator, clock, idKey);
-    writeDeletes(stateManager, (Collection<?>) field, mutator, clock, idKey);
+    writeAdds(stateManager, (Collection<?>) field, mutator, clock, idKey, queue);
+    writeDeletes(stateManager, (Collection<?>) field, mutator, clock, idKey,
+        queue);
 
   }
 
@@ -117,7 +127,7 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
    * @param cfName
    */
   private void writeDeletes(OpenJPAStateManager stateManager, Collection value,
-      Mutator<byte[]> mutator, long clock, byte[] idKey) {
+      Mutator<byte[]> mutator, long clock, byte[] idKey, IndexQueue queue) {
 
     Collection objects = getRemoved(value);
 
@@ -146,6 +156,12 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       mutator.addDeletion(idKey, CF_NAME, idComposite, compositeSerializer,
           clock);
 
+      DynamicComposite idAudit = new DynamicComposite();
+      idAudit.addComponent(currentId, idSerializer);
+
+      // add the check to the audit queue
+      queue.addDelete(new IndexAudit(idKey, idKey, idAudit, clock, CF_NAME));
+
     }
 
   }
@@ -162,7 +178,7 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
    * @param cfName
    */
   private void writeAdds(OpenJPAStateManager stateManager, Collection value,
-      Mutator<byte[]> mutator, long clock, byte[] idKey) {
+      Mutator<byte[]> mutator, long clock, byte[] idKey, IndexQueue queue) {
 
     Collection objects = getAdded(value);
 
@@ -191,6 +207,10 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
           new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
               compositeSerializer, BytesArraySerializer.get()));
 
+      DynamicComposite idAudit = new DynamicComposite();
+      idAudit.addComponent(currentId, idSerializer);
+
+      queue.addAudit(new IndexAudit(idKey, idKey, idAudit, clock, CF_NAME));
     }
   }
 

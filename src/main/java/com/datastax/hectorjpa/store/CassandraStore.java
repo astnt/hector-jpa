@@ -26,6 +26,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.support.MetaDataAccessException;
 
 import com.datastax.hectorjpa.consitency.JPAConsistency;
+import com.datastax.hectorjpa.service.InMemoryIndexingService;
+import com.datastax.hectorjpa.service.IndexQueue;
+import com.datastax.hectorjpa.service.IndexingService;
 
 /**
  * Holds the {@link Cluster} and {@link Keyspace} references needed for
@@ -45,6 +48,7 @@ public class CassandraStore {
   private final Cluster cluster;
   private final CassandraStoreConfiguration conf;
   private Keyspace keyspace;
+  private IndexingService indexingService;
 
   public CassandraStore(CassandraStoreConfiguration conf) {
     this.conf = conf;
@@ -63,6 +67,8 @@ public class CassandraStore {
     String value = conf.getValue(EntityManagerConfigurator.SERIALIZER_PROP).getOriginalValue();
     
     conf.setSerializer(value);
+    
+    this.indexingService = new InMemoryIndexingService(this);
    
   }
 
@@ -90,12 +96,16 @@ public class CassandraStore {
    * 
    * @return
    */
-  public Mutator createMutator() {
-    return new MutatorImpl(keyspace, BytesArraySerializer.get());
+  public Mutator<byte[]> createMutator() {
+    return new MutatorImpl<byte[]>(keyspace, BytesArraySerializer.get());
   }
 
   public Keyspace getKeyspace() {
     return this.keyspace;
+  }
+  
+  public IndexingService getIndexingService(){
+    return this.indexingService;
   }
 
   /**
@@ -171,10 +181,11 @@ public class CassandraStore {
    * @param mutator
    * @param stateManager
    * @param fields
+   * @param queue 
    * @return
    */
   public void storeObject(Mutator mutator, OpenJPAStateManager stateManager,
-      BitSet fields, long clock) {
+      BitSet fields, long clock, IndexQueue queue) {
 
     if (log.isDebugEnabled()) {
       log.debug("Adding mutation (insertion) for class {}", stateManager
@@ -185,7 +196,7 @@ public class CassandraStore {
     EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData,
         conf.getSerializer());
 
-    entityFacade.addColumns(stateManager, fields, mutator, clock);
+    entityFacade.addColumns(stateManager, fields, mutator, clock, queue);
 
   }
 
@@ -194,10 +205,11 @@ public class CassandraStore {
    * 
    * @param mutator
    * @param stateManager
+   * @param queue 
    * @return
    */
   public void removeObject(Mutator mutator, OpenJPAStateManager stateManager,
-      long clock) {
+      long clock, IndexQueue queue) {
 
     if (log.isDebugEnabled()) {
       log.debug("Adding mutation (deletion) for class {}", stateManager
