@@ -1,5 +1,6 @@
 package com.datastax.hectorjpa.meta;
 
+import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 
@@ -22,8 +23,6 @@ public abstract class AbstractIndexField {
 
   
   protected Serializer<Object> serializer;
-//  protected int targetFieldIndex;
-//  protected String targetFieldName;
   protected FieldMetaData targetField;
 
   
@@ -93,7 +92,7 @@ public abstract class AbstractIndexField {
     // write the current value from the proxy
     Object current = ProxyUtils.getAdded(instance);
 
-    composite.addComponent(current, serializer);
+    composite.addComponent(current, serializer, getCassType(serializer));
 
   }
 
@@ -112,7 +111,7 @@ public abstract class AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      composite.addComponent(original, serializer);
+      composite.addComponent(original, serializer, getCassType(serializer));
       return true;
     }
     
@@ -120,7 +119,7 @@ public abstract class AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      composite.addComponent(original, serializer);
+      composite.addComponent(original, serializer, getCassType(serializer));
       return true;
     }
 
@@ -128,7 +127,7 @@ public abstract class AbstractIndexField {
     // other fields could.
     Object current = ProxyUtils.getAdded(instance);
 
-    composite.addComponent(current, serializer);
+    composite.addComponent(current, serializer, getCassType(serializer));
 
     return false;
 

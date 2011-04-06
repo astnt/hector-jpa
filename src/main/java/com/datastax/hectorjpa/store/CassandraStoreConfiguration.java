@@ -1,22 +1,44 @@
 package com.datastax.hectorjpa.store;
 
+import me.prettyprint.cassandra.service.CassandraHostConfigurator;
+import me.prettyprint.cassandra.service.OperationType;
+import me.prettyprint.hector.api.Cluster;
+import me.prettyprint.hector.api.ConsistencyLevelPolicy;
+import me.prettyprint.hector.api.HConsistencyLevel;
+import me.prettyprint.hector.api.Keyspace;
+import me.prettyprint.hector.api.factory.HFactory;
+
 import org.apache.openjpa.conf.OpenJPAConfigurationImpl;
 import org.apache.openjpa.lib.conf.ProductDerivations;
 import org.apache.openjpa.util.UserException;
 
+import com.datastax.hectorjpa.consitency.JPAConsistency;
 import com.datastax.hectorjpa.meta.MetaCache;
 import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
 import com.datastax.hectorjpa.serialize.JavaSerializer;
-import com.datastax.hectorjpa.service.InMemoryIndexingService;
 import com.datastax.hectorjpa.service.IndexingService;
+import com.datastax.hectorjpa.service.SyncInMemoryIndexingService;
 
 public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
+
+  public static final String PROP_PREFIX = "me.prettyprint.hom.";
+  public static final String CLASSPATH_PREFIX_PROP = PROP_PREFIX
+      + "classpathPrefix";
+  public static final String CLUSTER_NAME_PROP = PROP_PREFIX + "clusterName";
+  public static final String KEYSPACE_PROP = PROP_PREFIX + "keyspace";
+  public static final String HOST_LIST_PROP = PROP_PREFIX + "hostList";
+
+  public static final String SERIALIZER_PROP = "com.datastax.jpa.embeddedserializer";
+  public static final String INDEXING_PROP = "com.datastax.jpa.indexservice";
 
   private MetaCache metaCache;
 
   private EmbeddedSerializer serializer;
-  
+
   private IndexingService indexingService;
+
+  private Cluster cluster;
+  private Keyspace keyspace;
 
   public CassandraStoreConfiguration() {
     super(false, false);
@@ -25,12 +47,12 @@ public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
     // from our superclass to use the single-jvm lock manager
     lockManagerPlugin.setDefault("version");
     lockManagerPlugin.setString("version");
-    addString("me.prettyprint.hom.classpathPrefix");
-    addString("me.prettyprint.hom.keyspace");
-    addString("me.prettyprint.hom.clusterName");
-    addString("me.prettyprint.hom.hostList");
-    addString(EntityManagerConfigurator.SERIALIZER_PROP);
-   
+    addString(CLASSPATH_PREFIX_PROP);
+    addString(KEYSPACE_PROP);
+    addString(CLUSTER_NAME_PROP);
+    addString(HOST_LIST_PROP);
+    addString(SERIALIZER_PROP);
+    addString(INDEXING_PROP);
 
     // TODO map our metadata plugin parser factory for parsing index
     // annotations
@@ -41,58 +63,24 @@ public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
 
     this.metaCache = new MetaCache();
 
-    
   }
 
-  /**
-   * Initialize the indexing service
-   * @param store
-   */
-  public void initializeIndexingService(CassandraStore store){
-    if(this.indexingService != null){
-      return;
-    }
-    
-    this.indexingService = new InMemoryIndexingService(store);
-  }
-  
-  
-  /**
-   * This is a fugly hack, figure out proper configuration parsing
-   * @param value
-   */
-  public void setSerializer(String value){
-    if(serializer != null){
-      return;
-    }
-    
-    String className = getValue(EntityManagerConfigurator.SERIALIZER_PROP).getOriginalValue();
-
-    if(className == null){
-      className = JavaSerializer.class.getName();
-    }
-    
-    try {
-      Class<?> clazz = Class.forName(className);
-
-      this.serializer = (EmbeddedSerializer) clazz.newInstance();
-    } catch (Exception e) {
-      throw new UserException(String.format(
-          "Unable to load class '%s' as an instance of %s", className,
-          EmbeddedSerializer.class), e);
-    }
-
-    
-  }
-  
   /**
    * Get the serializer configured
+   * 
    * @return
    */
-  public EmbeddedSerializer getSerializer(){
-    return this.serializer;
+  public EmbeddedSerializer getSerializer() {
+    if (serializer != null) {
+      return serializer;
+    }
+
+    serializer = (EmbeddedSerializer) createInstance(SERIALIZER_PROP,
+        JavaSerializer.class.getName());
+
+    return serializer;
   }
-  
+
   /**
    * @return the cache
    */
@@ -104,7 +92,94 @@ public class CassandraStoreConfiguration extends OpenJPAConfigurationImpl {
    * @return the indexingService
    */
   public IndexingService getIndexingService() {
-    return indexingService;
+    if (indexingService != null) {
+      return indexingService;
+    }
+
+    this.indexingService = (IndexingService) createInstance(INDEXING_PROP,   SyncInMemoryIndexingService.class.getName());
+
+    this.indexingService.postCreate(this);
+    
+    return this.indexingService;
+  }
+
+  /**
+   * @return the cluster
+   */
+  public Cluster getCluster() {
+    if (cluster != null) {
+      return cluster;
+    }
+
+    String clusterName = getValue(CLUSTER_NAME_PROP).getString();
+
+    String clusterConnection = getValue(HOST_LIST_PROP).getString();
+
+    cluster = HFactory.getOrCreateCluster(clusterName,
+        new CassandraHostConfigurator(clusterConnection));
+
+    return cluster;
+  }
+
+  /**
+   * @return the keyspace
+   */
+  public Keyspace getKeyspace() {
+    if (keyspace != null) {
+      return keyspace;
+    }
+    
+    keyspace = HFactory.createKeyspace(getValue(KEYSPACE_PROP).getString(), getCluster());
+
+    keyspace.setConsistencyLevelPolicy(new JPAConsistencyPolicy());
+
+    return keyspace;
+
+  }
+
+  /**
+   * Create an instance of the object set from the given prop key. If one is not
+   * preset, defaultClass will be used
+   * 
+   * @param propKey
+   * @param defaultClass
+   * @return
+   */
+  private Object createInstance(String propKey, String defaultClass) {
+    String className = getValue(propKey).getOriginalValue();
+
+    if (className == null) {
+      className = defaultClass;
+    }
+
+    try {
+      Class<?> clazz = Class.forName(className);
+
+      return clazz.newInstance();
+    } catch (Exception e) {
+      throw new UserException(String.format(
+          "Unable to load class '%s' as an instance of %s", className,
+          EmbeddedSerializer.class), e);
+    }
+  }
+
+  /**
+   * Inner class that delegates to the JPAConsistency value for consistency
+   * 
+   * @author Todd Nine
+   * 
+   */
+  private class JPAConsistencyPolicy implements ConsistencyLevelPolicy {
+
+    @Override
+    public HConsistencyLevel get(OperationType op) {
+      return JPAConsistency.get();
+    }
+
+    @Override
+    public HConsistencyLevel get(OperationType op, String cfName) {
+      return JPAConsistency.get();
+    }
   }
 
 }

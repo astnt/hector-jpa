@@ -46,4 +46,19 @@ public class CompositeUtils {
     
   }
   
+  /**
+   * Get a cass type for the given serializer
+   * @param instance
+   * @return
+   */
+  public static String getCassType(Serializer<?> instance){
+    String type= mapping.get(instance.getClass());
+    
+    if(type != null){
+      return type;
+    }
+    
+   return ComparatorType.BYTESTYPE.getTypeName();
+  }
+  
 }

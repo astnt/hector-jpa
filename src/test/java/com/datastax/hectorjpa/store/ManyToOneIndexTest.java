@@ -147,7 +147,7 @@ public class ManyToOneIndexTest extends ManagedEntityTestBase {
   }
 
   @Test
-  @Ignore("Skipping to perform alpha build.  Delete still needs a fair amount of work")
+//  @Ignore("Skipping to perform alpha build.  Delete still needs a fair amount of work")
   public void basicFollowingDelete() {
 
     EntityManager em = entityManagerFactory.createEntityManager();

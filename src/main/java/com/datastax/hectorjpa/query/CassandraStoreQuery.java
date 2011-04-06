@@ -26,10 +26,8 @@ import org.slf4j.LoggerFactory;
 import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexOrder;
 import com.datastax.hectorjpa.meta.AbstractIndexOperation;
-import com.datastax.hectorjpa.meta.MetaCache;
-import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
-import com.datastax.hectorjpa.store.CassandraStore;
+import com.datastax.hectorjpa.store.CassandraStoreConfiguration;
 import com.datastax.hectorjpa.store.EntityFacade;
 
 /**
@@ -43,24 +41,16 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
   private static final Logger log = LoggerFactory
       .getLogger(CassandraStoreQuery.class);
 
-  private MetaCache metaCache;
-  
-  private EmbeddedSerializer serializer;
-
-  private CassandraStore store;
+  private CassandraStoreConfiguration conf;
 
   /**
    * 
    */
   private static final long serialVersionUID = -756133912086570146L;
 
-  public CassandraStoreQuery(ExpressionParser parser, MetaCache metaCache, EmbeddedSerializer serializer,
-      CassandraStore store) {
+  public CassandraStoreQuery(ExpressionParser parser, CassandraStoreConfiguration conf) {
     super(parser);
-    this.metaCache = metaCache;
-    this.serializer = serializer;
-    this.store = store;
-    this.store.open();
+    this.conf = conf;
   }
 
   @Override
@@ -98,7 +88,7 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
       }
 
       // we have an index operation, now get the columns from it
-      indexOp.scanIndex(query, columnResults, store.getKeyspace());
+      indexOp.scanIndex(query, columnResults, conf.getKeyspace());
 
     }
 
@@ -178,7 +168,7 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
           orderAscending[i]);
     }
 
-    EntityFacade classMeta = metaCache.getFacade(metaData, serializer);
+    EntityFacade classMeta = conf.getMetaCache().getFacade(metaData, conf.getSerializer());
 
     AbstractIndexOperation indexOp = classMeta
         .getIndexOperation(fields, orders);

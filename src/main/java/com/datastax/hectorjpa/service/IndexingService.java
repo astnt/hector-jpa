@@ -3,6 +3,8 @@
  */
 package com.datastax.hectorjpa.service;
 
+import com.datastax.hectorjpa.store.CassandraStoreConfiguration;
+
 /**
  * Service that defines all indexing operations
  * 
@@ -28,5 +30,11 @@ public interface IndexingService {
    * @param 
    */
   public void delete(IndexAudit audit);
+  
+  /**
+   * inject the configuration post creation.  Will only be called on initialisation
+   * @param config
+   */
+  public void postCreate(CassandraStoreConfiguration config);
  
 }

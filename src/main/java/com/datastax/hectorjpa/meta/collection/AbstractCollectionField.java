@@ -11,6 +11,7 @@ import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.DynamicComposite;
+import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
 
@@ -21,6 +22,7 @@ import org.apache.openjpa.util.MetaDataException;
 import org.apache.openjpa.util.Proxy;
 
 import com.datastax.hectorjpa.meta.Field;
+import com.datastax.hectorjpa.service.IndexQueue;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.MappingUtils;
 
@@ -186,16 +188,29 @@ public abstract class AbstractCollectionField<V> extends Field<V> {
   
   
   /**
+   * Remove this collection by removing the row key represending it
+   * @param stateManager 
+   * @param mutator
+   * @param long clock
+   * @param key The key of the stateManager's entity
+   */
+  public abstract void removeCollection(OpenJPAStateManager stateManager, Mutator<byte[]> mutator, long clock, byte[] key);
+  
+  /**
    * Return the default end bytes on the rowkey for searching an index
    * @return
    */
   protected abstract byte[] getDefaultSearchmarker();
+  
+  
 
   @Override
   public String toString() {  
     return String.format("AbstractCollectionField(fieldId: %d, name: %s)", fieldId, name);
   }
  
+  
+  
   
   
 }

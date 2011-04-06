@@ -46,379 +46,384 @@ import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
 import com.datastax.hectorjpa.service.IndexQueue;
 
 public class EntityFacade implements Serializable {
-	private static final Logger log = LoggerFactory
-			.getLogger(EntityFacade.class);
+  private static final Logger log = LoggerFactory.getLogger(EntityFacade.class);
 
-	private static final long serialVersionUID = 4777260639119126462L;
+  private static final long serialVersionUID = 4777260639119126462L;
 
-	private final String columnFamilyName;
-	private final Class<?> clazz;
-	private final ObjectTypeColumnStrategy strategy;
-	private final NavigableMap<IndexDefinition, AbstractIndexOperation> indexOps;
+  private final String columnFamilyName;
+  private final Class<?> clazz;
+  private final ObjectTypeColumnStrategy strategy;
+  private final NavigableMap<IndexDefinition, AbstractIndexOperation> indexOps;
 
-	/**
-	 * Fields indexed by id
-	 */
-	private final Map<Integer, StringColumnField<?>> columnFieldIds;
-	private final Map<Integer, AbstractCollectionField<?>> collectionFieldIds;
+  /**
+   * Fields indexed by id
+   */
+  private final Map<Integer, StringColumnField<?>> columnFieldIds;
+  private final Map<Integer, AbstractCollectionField<?>> collectionFieldIds;
 
-	/**
-	 * Default constructor
-	 * 
-	 * @param classMetaData
-	 *            The class meta data
-	 * @param mappingUtils
-	 *            The mapping utils to use for byte mapping
-	 */
-	@SuppressWarnings("rawtypes")
-  public EntityFacade(ClassMetaData classMetaData,
-			EmbeddedSerializer serializer) {
+  /**
+   * Default constructor
+   * 
+   * @param classMetaData
+   *          The class meta data
+   * @param mappingUtils
+   *          The mapping utils to use for byte mapping
+   */
+  @SuppressWarnings("rawtypes")
+  public EntityFacade(ClassMetaData classMetaData, EmbeddedSerializer serializer) {
 
-		CassandraClassMetaData cassMeta = (CassandraClassMetaData) classMetaData;
-		
-	
-		this.columnFamilyName = MappingUtils.getColumnFamily(cassMeta);
+    CassandraClassMetaData cassMeta = (CassandraClassMetaData) classMetaData;
 
-		clazz = cassMeta.getDescribedType();
+    this.columnFamilyName = MappingUtils.getColumnFamily(cassMeta);
 
-		columnFieldIds = new HashMap<Integer, StringColumnField<?>>();
-		collectionFieldIds = new HashMap<Integer, AbstractCollectionField<?>>();
+    clazz = cassMeta.getDescribedType();
 
-		FieldMetaData[] fmds = cassMeta.getFields();
-		SimpleColumnField<?> columnField = null;
+    columnFieldIds = new HashMap<Integer, StringColumnField<?>>();
+    collectionFieldIds = new HashMap<Integer, AbstractCollectionField<?>>();
 
-		CassandraFieldMetaData field = null;
+    FieldMetaData[] fmds = cassMeta.getFields();
+    SimpleColumnField<?> columnField = null;
 
-		// parse all columns, we only want to do this on the first inti
-		for (int i = 0; i < fmds.length; i++) {
+    CassandraFieldMetaData field = null;
 
-			field = (CassandraFieldMetaData) fmds[i];
+    // parse all columns, we only want to do this on the first inti
+    for (int i = 0; i < fmds.length; i++) {
 
-			// not in the bit set to use, isn't managed or saved, or is a
-			// primary key,
-			// ignore
-			if (field.getManagement() == FieldMetaData.MANAGE_NONE
-					|| field.isPrimaryKey()) {
-				continue;
-			}
+      field = (CassandraFieldMetaData) fmds[i];
 
-			if (field.getAssociationType() == FieldMetaData.ONE_TO_MANY
-					|| field.getAssociationType() == FieldMetaData.MANY_TO_MANY) {
+      // not in the bit set to use, isn't managed or saved, or is a
+      // primary key,
+      // ignore
+      if (field.getManagement() == FieldMetaData.MANAGE_NONE
+          || field.isPrimaryKey()) {
+        continue;
+      }
 
-				AbstractCollectionField<?> collection = null;
+      if (field.getAssociationType() == FieldMetaData.ONE_TO_MANY
+          || field.getAssociationType() == FieldMetaData.MANY_TO_MANY) {
 
-				if (field.getOrders().length > 0) {
-					collection = new OrderedCollectionField(field);
-				} else {
-					collection = new UnorderedCollectionField(field);
-				}
+        AbstractCollectionField<?> collection = null;
 
-				// TODO if field.getAssociationType() > 0 .. we found an
-				// attached
-				// entity
-				// and need to find it's entityFacade
-				collectionFieldIds.put(collection.getFieldId(), collection);
+        if (field.getOrders().length > 0) {
+          collection = new OrderedCollectionField(field);
+        } else {
+          collection = new UnorderedCollectionField(field);
+        }
 
-				// indexMetaData.add(new ManyEntityIndex(field,
-				// mappingUtils));
+        // TODO if field.getAssociationType() > 0 .. we found an
+        // attached
+        // entity
+        // and need to find it's entityFacade
+        collectionFieldIds.put(collection.getFieldId(), collection);
 
-				continue;
-			}
+        // indexMetaData.add(new ManyEntityIndex(field,
+        // mappingUtils));
 
-			if (field.getAssociationType() == FieldMetaData.MANY_TO_ONE
-					|| field.getAssociationType() == FieldMetaData.ONE_TO_ONE) {
+        continue;
+      }
 
-				ToOneColumn<?> toOne = new ToOneColumn(field);
+      if (field.getAssociationType() == FieldMetaData.MANY_TO_ONE
+          || field.getAssociationType() == FieldMetaData.ONE_TO_ONE) {
 
-				columnFieldIds.put(i, toOne);
+        ToOneColumn<?> toOne = new ToOneColumn(field);
 
-				continue;
-			}
+        columnFieldIds.put(i, toOne);
 
-			if (field.isSerializedEmbedded()) {
-				EmbeddedColumnField embeddedColumn = new EmbeddedColumnField(
-						field, serializer);
-				columnFieldIds.put(embeddedColumn.getFieldId(), embeddedColumn);
-				continue;
-			}
+        continue;
+      }
 
-			if (log.isDebugEnabled()) {
-				log.debug(
-						"field name {} typeCode {} associationType: {} declaredType: {} embeddedMetaData: {}",
-						new Object[] { field.getName(), field.getTypeCode(),
-								field.getAssociationType(),
-								field.getDeclaredType().getName(),
-								field.getElement().getDeclaredTypeMetaData() });
-			}
+      if (field.isSerializedEmbedded()) {
+        EmbeddedColumnField embeddedColumn = new EmbeddedColumnField(field,
+            serializer);
+        columnFieldIds.put(embeddedColumn.getFieldId(), embeddedColumn);
+        continue;
+      }
 
-			columnField = new SimpleColumnField(field);
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "field name {} typeCode {} associationType: {} declaredType: {} embeddedMetaData: {}",
+            new Object[] { field.getName(), field.getTypeCode(),
+                field.getAssociationType(), field.getDeclaredType().getName(),
+                field.getElement().getDeclaredTypeMetaData() });
+      }
 
-			// TODO if field.getAssociationType() > 0 .. we found an attached
-			// entity
-			// and need to find it's entityFacade
-			columnFieldIds.put(columnField.getFieldId(), columnField);
+      columnField = new SimpleColumnField(field);
 
-		}
+      // TODO if field.getAssociationType() > 0 .. we found an attached
+      // entity
+      // and need to find it's entityFacade
+      columnFieldIds.put(columnField.getFieldId(), columnField);
 
-		// TODO TN pick the strategy if theres a discriminator
+    }
 
-		String discriminator = cassMeta.getDiscriminatorColumn();
+    // TODO TN pick the strategy if theres a discriminator
 
-		if (discriminator != null || cassMeta.isAbstract()) {
-			strategy = new DiscriminatorColumn(discriminator);
-		} else {
-			strategy = new StaticColumn();
-		}
+    String discriminator = cassMeta.getDiscriminatorColumn();
 
-		//this class has index definitions.  Retrieve them.
-		if (cassMeta.getAllDefinitions() != null) {
-			this.indexOps = new TreeMap<IndexDefinition, AbstractIndexOperation>();
+    if (discriminator != null || cassMeta.isAbstract()) {
+      strategy = new DiscriminatorColumn(discriminator);
+    } else {
+      strategy = new StaticColumn();
+    }
 
-			for (IndexDefinition indexDef : cassMeta.getAllDefinitions()
-					.getDefinitions()) {
+    // this class has index definitions. Retrieve them.
+    if (cassMeta.getAllDefinitions() != null) {
+      this.indexOps = new TreeMap<IndexDefinition, AbstractIndexOperation>();
 
-				// construct an index with subclass queries
-				if (cassMeta.getDiscriminatorColumn() != null) {
-					indexOps.put(indexDef, new SubclassIndexOperation(cassMeta,
-							indexDef));
-				}
+      for (IndexDefinition indexDef : cassMeta.getAllDefinitions()
+          .getDefinitions()) {
 
-				// construct and index without discriminator for subclass
-				// queries
-				else {
-					indexOps.put(indexDef, new IndexOperation(cassMeta, indexDef));
-				}
-			}
-		}else{
-			this.indexOps = null;
-		}
+        // construct an index with subclass queries
+        if (cassMeta.getDiscriminatorColumn() != null) {
+          indexOps
+              .put(indexDef, new SubclassIndexOperation(cassMeta, indexDef));
+        }
 
-	}
+        // construct and index without discriminator for subclass
+        // queries
+        else {
+          indexOps.put(indexDef, new IndexOperation(cassMeta, indexDef));
+        }
+      }
+    } else {
+      this.indexOps = null;
+    }
 
-	/**
-	 * Delete the entity with the given statemanager. The given clock time is
-	 * used for the delete of indexes
-	 * 
-	 * @param stateManager
-	 * @param mutator
-	 * @param clock
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+  }
+
+  /**
+   * Delete the entity with the given statemanager. The given clock time is used
+   * for the delete of indexes
+   * 
+   * @param stateManager
+   * @param mutator
+   * @param clock
+   */
+  @SuppressWarnings({ "unchecked", "rawtypes", "unused" })
   public void delete(OpenJPAStateManager stateManager, Mutator mutator,
-			long clock) {
-		mutator.addDeletion(
-				MappingUtils.getKeyBytes(stateManager.getObjectId()),
-				columnFamilyName, null, StringSerializer.get());
-	}
+      long clock, IndexQueue queue) {
 
-	/**
-	 * Load all columns for this class specified in the bit set
-	 * 
-	 * @param stateManager
-	 * @param fieldSet
-	 * @return true if the entity was present (I.E the marker column was found)
-	 *         otherwise false is returned.
-	 */
-	public boolean loadColumns(OpenJPAStateManager stateManager,
-			BitSet fieldSet, Keyspace keyspace, MetaCache metaCache) {
+    byte[] keyBytes = MappingUtils.getKeyBytes(stateManager.getObjectId());
 
-		List<String> fields = new ArrayList<String>();
+    // queue up direct column deletes
+    for (AbstractCollectionField<?> field : collectionFieldIds.values()) {
+      field.removeCollection(stateManager, mutator, clock, keyBytes);
+    }
 
-		StringColumnField<?> field = null;
-		AbstractCollectionField<?> collectionField = null;
-		Object entityId = stateManager.getObjectId();
+    mutator.addDeletion(keyBytes, columnFamilyName, null,
+        StringSerializer.get());
 
-		// This entity has never been persisted, we can't possibly load it
-		if (MappingUtils.getTargetObject(entityId) == null) {
-			return false;
-		}
+    // queue all index removals
+    for (AbstractIndexOperation current : indexOps.values()) {
+      current.removeIndexes(stateManager, queue, clock);
+    }
 
-		// load all collections as we encounter them since they're seperate row
-		// reads and construct columns for sliceQuery in primary CF
-		for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet
-				.nextSetBit(i + 1)) {
-			field = columnFieldIds.get(i);
+  }
 
-			if (field == null) {
+  /**
+   * Load all columns for this class specified in the bit set
+   * 
+   * @param stateManager
+   * @param fieldSet
+   * @return true if the entity was present (I.E the marker column was found)
+   *         otherwise false is returned.
+   */
+  public boolean loadColumns(OpenJPAStateManager stateManager, BitSet fieldSet,
+      Keyspace keyspace, MetaCache metaCache) {
 
-				collectionField = collectionFieldIds.get(i);
+    List<String> fields = new ArrayList<String>();
 
-				// nothting to do
-				if (collectionField == null) {
-					continue;
-				}
+    StringColumnField<?> field = null;
+    AbstractCollectionField<?> collectionField = null;
+    Object entityId = stateManager.getObjectId();
 
-				int size = stateManager.getContext().getFetchConfiguration()
-						.getFetchBatchSize();
+    // This entity has never been persisted, we can't possibly load it
+    if (MappingUtils.getTargetObject(entityId) == null) {
+      return false;
+    }
 
-				// now query and load this field
-				SliceQuery<byte[], DynamicComposite, byte[]> query = collectionField
-						.createQuery(entityId, keyspace, size);
+    // load all collections as we encounter them since they're seperate row
+    // reads and construct columns for sliceQuery in primary CF
+    for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet.nextSetBit(i + 1)) {
+      field = columnFieldIds.get(i);
 
-				collectionField.readField(stateManager, query.execute());
+      if (field == null) {
 
-				continue;
-			}
+        collectionField = collectionFieldIds.get(i);
 
-			fields.add(field.getName());
-		}
+        // nothting to do
+        if (collectionField == null) {
+          continue;
+        }
 
-		fields.add(this.strategy.getColumnName());
+        int size = stateManager.getContext().getFetchConfiguration()
+            .getFetchBatchSize();
 
-		// now load all the columns in the CF.
-		SliceQuery<byte[], String, byte[]> query = MappingUtils
-				.buildSliceQuery(entityId, fields, columnFamilyName, keyspace);
+        // now query and load this field
+        SliceQuery<byte[], DynamicComposite, byte[]> query = collectionField
+            .createQuery(entityId, keyspace, size);
 
-		QueryResult<ColumnSlice<String, byte[]>> result = query.execute();
+        collectionField.readField(stateManager, query.execute());
 
-		// read the field
-		for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet
-				.nextSetBit(i + 1)) {
-			field = columnFieldIds.get(i);
+        continue;
+      }
 
-			if (field == null) {
-				continue;
-			}
+      fields.add(field.getName());
+    }
 
-			field.readField(stateManager, result);
-		}
+    fields.add(this.strategy.getColumnName());
 
-		return result.get().getColumns().size() > 0;
+    // now load all the columns in the CF.
+    SliceQuery<byte[], String, byte[]> query = MappingUtils.buildSliceQuery(
+        entityId, fields, columnFamilyName, keyspace);
 
-	}
+    QueryResult<ColumnSlice<String, byte[]>> result = query.execute();
 
-	/**
-	 * Loads only the jpa marker column to check for cassandra existence
-	 * 
-	 * @param stateManager
-	 * @param fieldSet
-	 * @return true if the entity was present (I.E the marker column was found)
-	 *         otherwise false is returned.
-	 */
-	public boolean exists(OpenJPAStateManager stateManager, Keyspace keyspace,
-			MetaCache metaCache) {
-		return getStoredEntityType(stateManager.getObjectId(), keyspace,
-				metaCache) != null;
-	}
+    // read the field
+    for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet.nextSetBit(i + 1)) {
+      field = columnFieldIds.get(i);
 
-	/**
-	 * Get the stored entity and it's object id if it exists in the datastore
-	 * 
-	 * @param stateManager
-	 * @param keyspace
-	 * @return
-	 */
-	public Class<?> getStoredEntityType(Object oid, Keyspace keyspace,
-			MetaCache metaCache) {
+      if (field == null) {
+        continue;
+      }
 
-	  //nothing to do
-	  if(oid == null){
-	    return null;
-	  }
-	  
-		Class<?> oidType = ((OpenJPAId) oid).getType();
+      field.readField(stateManager, result);
+    }
 
-		// This entity has never been persisted, we can't possibly load it
-		if (oidType == null) {
-			return null;
-		}
+    return result.get().getColumns().size() > 0;
 
-		String descrim = strategy
-				.getStoredType(oid, columnFamilyName, keyspace);
+  }
 
-		if (descrim == null) {
-			return null;
-		}
+  /**
+   * Loads only the jpa marker column to check for cassandra existence
+   * 
+   * @param stateManager
+   * @param fieldSet
+   * @return true if the entity was present (I.E the marker column was found)
+   *         otherwise false is returned.
+   */
+  public boolean exists(OpenJPAStateManager stateManager, Keyspace keyspace,
+      MetaCache metaCache) {
+    return getStoredEntityType(stateManager.getObjectId(), keyspace, metaCache) != null;
+  }
 
-		return strategy.getClass(descrim, oidType, metaCache);
+  /**
+   * Get the stored entity and it's object id if it exists in the datastore
+   * 
+   * @param stateManager
+   * @param keyspace
+   * @return
+   */
+  public Class<?> getStoredEntityType(Object oid, Keyspace keyspace,
+      MetaCache metaCache) {
 
-	}
+    // nothing to do
+    if (oid == null) {
+      return null;
+    }
 
-	/**
-	 * Add the columns from the bit set to the mutator with the given time
-	 * 
-	 * @param stateManager
-	 * @param fieldSet
-	 * @param m
-	 * @param clockTime
-	 *            The time to use for write and deletes
-	 * @param audits A set to add all audit operations to for collection and index verification
-	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+    Class<?> oidType = ((OpenJPAId) oid).getType();
+
+    // This entity has never been persisted, we can't possibly load it
+    if (oidType == null) {
+      return null;
+    }
+
+    String descrim = strategy.getStoredType(oid, columnFamilyName, keyspace);
+
+    if (descrim == null) {
+      return null;
+    }
+
+    return strategy.getClass(descrim, oidType, metaCache);
+
+  }
+
+  /**
+   * Add the columns from the bit set to the mutator with the given time
+   * 
+   * @param stateManager
+   * @param fieldSet
+   * @param m
+   * @param clockTime
+   *          The time to use for write and deletes
+   * @param audits
+   *          A set to add all audit operations to for collection and index
+   *          verification
+   */
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   public void addColumns(OpenJPAStateManager stateManager, BitSet fieldSet,
-			Mutator<byte[]> m, long clockTime, IndexQueue queue) {
+      Mutator<byte[]> m, long clockTime, IndexQueue queue) {
 
-		byte[] keyBytes = MappingUtils.getKeyBytes(stateManager.getObjectId());
+    byte[] keyBytes = MappingUtils.getKeyBytes(stateManager.getObjectId());
 
-		for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet
-				.nextSetBit(i + 1)) {
-			StringColumnField field = columnFieldIds.get(i);
+    for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet.nextSetBit(i + 1)) {
+      StringColumnField field = columnFieldIds.get(i);
 
-			if (field == null) {
+      if (field == null) {
 
-				AbstractCollectionField<?> collection = collectionFieldIds
-						.get(i);
+        AbstractCollectionField<?> collection = collectionFieldIds.get(i);
 
-				// nothing to do
-				if (collection == null) {
-					continue;
-				}
+        // nothing to do
+        if (collection == null) {
+          continue;
+        }
 
-				// we have a collection, persist it
-				collection.addField(stateManager, m, clockTime, keyBytes,
-						this.columnFamilyName, queue);
+        // we have a collection, persist it
+        collection.addField(stateManager, m, clockTime, keyBytes,
+            this.columnFamilyName, queue);
 
-				continue;
+        continue;
 
-			}
+      }
 
-			field.addField(stateManager, m, clockTime, keyBytes,
-					this.columnFamilyName, queue);
+      field.addField(stateManager, m, clockTime, keyBytes,
+          this.columnFamilyName, queue);
 
-		}
+    }
 
-		// add our object type column strategy
-		this.strategy.write(m, clockTime, keyBytes, columnFamilyName);
+    // add our object type column strategy
+    this.strategy.write(m, clockTime, keyBytes, columnFamilyName);
 
-		/**
-		 * We have indexes, write them
-		 */
-		if (indexOps != null) {
-			for (AbstractIndexOperation op : indexOps.values()) {
-				op.writeIndex(stateManager, m, clockTime, queue);
-			}
+    /**
+     * We have indexes, write them
+     */
+    if (indexOps != null) {
+      for (AbstractIndexOperation op : indexOps.values()) {
+        op.writeIndex(stateManager, m, clockTime, queue);
+      }
 
-		}
+    }
 
-	}
+  }
 
-	/**
-	 * Return an indexOperation that matches this criteria
-	 * 
-	 * @param fields
-	 * @param orders
-	 * @return
-	 */
-	public AbstractIndexOperation getIndexOperation(FieldOrder[] fields,
-			IndexOrder[] orders) {
+  /**
+   * Return an indexOperation that matches this criteria
+   * 
+   * @param fields
+   * @param orders
+   * @return
+   */
+  public AbstractIndexOperation getIndexOperation(FieldOrder[] fields,
+      IndexOrder[] orders) {
 
-		if (indexOps == null) {
-			return null;
-		}
+    if (indexOps == null) {
+      return null;
+    }
 
-		IndexDefinition def = new IndexDefinition(fields, orders);
+    IndexDefinition def = new IndexDefinition(fields, orders);
 
-		return indexOps.get(def);
-	}
+    return indexOps.get(def);
+  }
 
-	@Override
-	public String toString() {
+  @Override
+  public String toString() {
 
-		return String.format(
-				"EntityFacade[class: %s, columnFamily: %s, columnNames: %s]",
-				clazz.getName(), columnFamilyName,
-				Arrays.toString(columnFieldIds.entrySet().toArray()));
+    return String.format(
+        "EntityFacade[class: %s, columnFamily: %s, columnNames: %s]",
+        clazz.getName(), columnFamilyName,
+        Arrays.toString(columnFieldIds.entrySet().toArray()));
 
-	}
+  }
 
 }

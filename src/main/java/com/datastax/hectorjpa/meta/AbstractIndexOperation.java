@@ -3,10 +3,12 @@
  */
 package com.datastax.hectorjpa.meta;
 
+import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Set;
 
+import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.DynamicCompositeSerializer;
@@ -30,6 +32,7 @@ import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexDefinition;
 import com.datastax.hectorjpa.index.IndexOrder;
 import com.datastax.hectorjpa.query.IndexQuery;
+import com.datastax.hectorjpa.service.IndexAudit;
 import com.datastax.hectorjpa.service.IndexQueue;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.MappingUtils;
@@ -169,8 +172,7 @@ public abstract class AbstractIndexOperation {
    * @param mutator
    * @param clock
    */
-  public abstract void writeIndex(OpenJPAStateManager stateManager,
-      Mutator<byte[]> mutator, long clock, IndexQueue queue);
+  public abstract void writeIndex(OpenJPAStateManager stateManager, Mutator<byte[]> mutator, long clock, IndexQueue queue);
 
   /**
    * Scan the given index query and add the results to the provided set. The set
@@ -178,8 +180,26 @@ public abstract class AbstractIndexOperation {
    * 
    * @param query
    */
-  public abstract void scanIndex(IndexQuery query,
-      Set<DynamicComposite> results, Keyspace keyspace);
+  public abstract void scanIndex(IndexQuery query, Set<DynamicComposite> results, Keyspace keyspace);
+  
+  /**
+   * Remove all values from the index that were for the given statemanager
+   * @param stateManager
+   * @param queue
+   */
+  public void removeIndexes(OpenJPAStateManager stateManager, IndexQueue queue, long clock){
+   
+    Object key = MappingUtils.getTargetObject(stateManager.getObjectId());
+    
+    DynamicComposite composite = newComposite();
+    
+    composite.addComponent(key, idSerializer);
+    
+    //queue the index values to be deleted
+    queue.addDelete(new IndexAudit(indexName, reverseIndexName, composite, clock, CF_NAME, true));
+    
+  }
+  
 
   /**
    * Construct the 2 composites from the fields in this index. Returns true if
@@ -200,10 +220,9 @@ public abstract class AbstractIndexOperation {
 
     Object field;
     
-    tombstoneComposite.setComponent(0, key, idSerializer, tombstoneComposite.getSerializerToComparatorMapping().get(idSerializer.getClass()), ComponentEquality.EQUAL);
+    tombstoneComposite.setComponent(0, key, idSerializer, getCassType(idSerializer), ComponentEquality.EQUAL);
     
-    
-    auditComposite.setComponent(0, key, idSerializer, tombstoneComposite.getSerializerToComparatorMapping().get(idSerializer.getClass()), ComponentEquality.EQUAL);
+    auditComposite.setComponent(0, key, idSerializer, getCassType(idSerializer), ComponentEquality.EQUAL);
 
     // now construct the composite with order by the ids at the end.
     for (QueryIndexField indexField : fields) {
@@ -237,9 +256,9 @@ public abstract class AbstractIndexOperation {
     
     
 
-    newComposite.addComponent(key, idSerializer);
+    newComposite.addComponent(key, idSerializer, getCassType(idSerializer));
 
-    oldComposite.addComponent(key, idSerializer);
+    oldComposite.addComponent(key, idSerializer, getCassType(idSerializer));
 
     return changed;
   }

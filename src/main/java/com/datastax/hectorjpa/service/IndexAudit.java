@@ -16,20 +16,23 @@ public class IndexAudit {
   private DynamicComposite columnId;
   private long clock;
   private String columnFamily;
+  private boolean biDirectional;
   
   /**
    * 
-   * @param readRowKey The row key for the index users read from
+   * @param readRowKey The row key for the index users read from format of <fields>+<order>+id
    * @param idRowKey The row key for the columns in the format id+<fields>+<order>
    * @param columnId The column id to use in the range scan
    * @param clock The clock time to use for all update operations
    */
-  public IndexAudit(byte[] readRowKey, byte[] idRowKey, DynamicComposite columnId, long clock, String columnFamily) {
+  public IndexAudit(byte[] readRowKey, byte[] idRowKey, DynamicComposite columnId, long clock, String columnFamily, boolean biDirectional) {
     super();
     this.readRowKey = readRowKey;
     this.idRowKey = idRowKey;
     this.columnId = columnId;
     this.columnFamily = columnFamily;
+    this.clock = clock;
+    this.biDirectional = biDirectional;
   }
 
   /**
@@ -65,6 +68,13 @@ public class IndexAudit {
    */
   public String getColumnFamily() {
     return columnFamily;
+  }
+
+  /**
+   * @return the hasReverse
+   */
+  public boolean isBiDirectional() {
+    return biDirectional;
   }
 
   /* (non-Javadoc)

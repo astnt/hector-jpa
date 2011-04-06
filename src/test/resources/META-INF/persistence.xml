@@ -58,6 +58,7 @@
       
       <!--  Used to test the serialization property.  If not set will default to java default serialization -->
       <property name="com.datastax.jpa.embeddedserializer" value="com.datastax.hectorjpa.serialize.XStreamSerializer"/>
+      <property name="com.datastax.jpa.indexservice" value="com.datastax.hectorjpa.service.SyncInMemoryIndexingService"/>
       <!-- <property name="openjpa.EntityManagerFactory" value="me.prettyprint.hom.EntityManagerFactoryImpl"/> -->
 
     </properties>

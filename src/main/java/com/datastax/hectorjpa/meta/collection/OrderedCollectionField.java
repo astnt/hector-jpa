@@ -3,6 +3,7 @@
  */
 package com.datastax.hectorjpa.meta.collection;
 
+import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
 import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 
 import java.util.Collection;
@@ -98,6 +99,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     if (field == null) {
       mutator.addDeletion(orderKey, CF_NAME, null, null);
       mutator.addDeletion(idKey, CF_NAME, null, null);
+      return;
     }
 
     writeAdds(stateManager, (Collection<?>) field, mutator, clock, orderKey,
@@ -122,6 +124,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       log.debug("readField returned {} columns in OrderedCollection", result
           .get().getColumns().size());
     }
+
     StoreContext context = stateManager.getContext();
 
     // TODO TN use our CollectionProxy here
@@ -180,6 +183,27 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
     query.setKey(key);
     query.setColumnFamily(columnFamilyName);
     return query;
+
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * com.datastax.hectorjpa.meta.collection.AbstractCollectionField#removeCollection
+   * (org.apache.openjpa.kernel.OpenJPAStateManager,
+   * me.prettyprint.hector.api.mutation.Mutator, long)
+   */
+  @Override
+  public void removeCollection(OpenJPAStateManager stateManager,
+      Mutator<byte[]> mutator, long clock, byte[] key) {
+    // construct the keys
+    byte[] orderKey = constructKey(key, orderedMarker);
+    byte[] idKey = constructKey(key, idMarker);
+
+    // could have been removed, blitz everything from the index
+    mutator.addDeletion(orderKey, CF_NAME, null, null);
+    mutator.addDeletion(idKey, CF_NAME, null, null);
 
   }
 
@@ -258,11 +282,11 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       mutator.addDeletion(idKey, CF_NAME, idComposite, compositeSerializer,
           clock);
 
-      DynamicComposite idAudit = new DynamicComposite();
+      DynamicComposite idAudit = newComposite();
       idAudit.addComponent(currentId, idSerializer);
 
       // add the check to the audit queue
-      queue.addDelete(new IndexAudit(orderKey, idKey, idAudit, clock, CF_NAME));
+      queue.addDelete(new IndexAudit(orderKey, idKey, idAudit, clock, CF_NAME, true));
 
     }
 
@@ -308,7 +332,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       orderComposite = newComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.addComponent(currentId, idSerializer);
+      idComposite.addComponent(currentId, idSerializer, getCassType(idSerializer));
 
       // now construct the composite with order by the ids at the end.
       for (AbstractIndexField order : orderBy) {
@@ -323,7 +347,7 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
       }
 
       // add our id to the end of our order based composite
-      orderComposite.addComponent(currentId, idSerializer);
+      orderComposite.addComponent(currentId, idSerializer, getCassType(idSerializer));
 
       mutator.addInsertion(orderKey, CF_NAME,
           new HColumnImpl<DynamicComposite, byte[]>(orderComposite, HOLDER,
@@ -333,11 +357,11 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
           new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
               compositeSerializer, BytesArraySerializer.get()));
 
-      DynamicComposite idAudit = new DynamicComposite();
+      DynamicComposite idAudit = newComposite();
       idAudit.addComponent(currentId, idSerializer);
 
       // add the check to the audit queue
-      queue.addAudit(new IndexAudit(orderKey, idKey, idAudit, clock, CF_NAME));
+      queue.addAudit(new IndexAudit(orderKey, idKey, idAudit, clock, CF_NAME, true));
 
     }
   }
@@ -426,11 +450,11 @@ public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
           new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
               compositeSerializer, BytesArraySerializer.get()));
 
-      DynamicComposite idAudit = new DynamicComposite();
+      DynamicComposite idAudit = newComposite();
       idAudit.addComponent(currentId, idSerializer);
 
       // add the check to the audit queue
-      queue.addAudit(new IndexAudit(orderKey, idKey, idAudit, clock, CF_NAME));
+      queue.addAudit(new IndexAudit(orderKey, idKey, idAudit, clock, CF_NAME, true));
 
       if (changed) {
         mutator.addDeletion(orderKey, CF_NAME, deleteOrderComposite,

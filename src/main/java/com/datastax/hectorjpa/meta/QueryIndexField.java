@@ -1,6 +1,7 @@
 package com.datastax.hectorjpa.meta;
 
 
+import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.ddl.ComparatorType;
@@ -34,14 +35,7 @@ public class QueryIndexField extends AbstractIndexField {
    * @param value
    */
   public void addToComposite(DynamicComposite composite, int index, Object value, ComponentEquality equality) {
-    //TODO TN, this feels a bit hacky.  Should the abstract composite default to Bytes if the serializer is null?
-    String type = composite.getSerializerToComparatorMapping().get(serializer.getClass());
-    
-    if(type == null){
-      type = ComparatorType.BYTESTYPE.getTypeName();
-    }
-    
-    composite.addComponent(index, value, serializer, type, equality);
+    composite.addComponent(index, value, serializer, getCassType(serializer), equality);
   }
 
 

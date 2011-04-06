@@ -45,68 +45,14 @@ public class CassandraStore {
   // bitset used on deleting fields
   private static final BitSet NONE = new BitSet();
 
-  private final Cluster cluster;
+ 
   private final CassandraStoreConfiguration conf;
-  private Keyspace keyspace;
-  private IndexingService indexingService;
+  
 
   public CassandraStore(CassandraStoreConfiguration conf) {
-    this.conf = conf;
-    
-    //need to create actual connection
-        
-    String clusterName =  conf.getValue(EntityManagerConfigurator.CLUSTER_NAME_PROP).getOriginalValue();
-    String clusterConnection =  conf.getValue(EntityManagerConfigurator.HOST_LIST_PROP).getOriginalValue();
-    
-    this.cluster = HFactory.getOrCreateCluster(clusterName, new CassandraHostConfigurator(clusterConnection));
-      
-   
-    // TODO needs passthrough of other configuration
-
-    //TODO TN ugly as sin, fix this!
-    String value = conf.getValue(EntityManagerConfigurator.SERIALIZER_PROP).getOriginalValue();
-    
-    conf.setSerializer(value);
-    
-    this.indexingService = new InMemoryIndexingService(this);
-   
+   this.conf = conf;
   }
 
-  public CassandraStore open() {
-    this.keyspace = HFactory.createKeyspace(
-        conf.getValue(EntityManagerConfigurator.KEYSPACE_PROP)
-            .getOriginalValue(), cluster);
-
-    this.keyspace.setConsistencyLevelPolicy(new JPAConsistencyPolicy());
-
-    return this;
-  }
-
-  /**
-   * Create a clock value to be passed to all operations
-   * 
-   * @return
-   */
-  public long getClock() {
-    return keyspace.createClock();
-  }
-
-  /**
-   * Return a new mutator for the keyspace with a byte array.
-   * 
-   * @return
-   */
-  public Mutator<byte[]> createMutator() {
-    return new MutatorImpl<byte[]>(keyspace, BytesArraySerializer.get());
-  }
-
-  public Keyspace getKeyspace() {
-    return this.keyspace;
-  }
-  
-  public IndexingService getIndexingService(){
-    return this.indexingService;
-  }
 
   /**
    * Load this object for the statemanager
@@ -122,7 +68,7 @@ public class CassandraStore {
     EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData,
         conf.getSerializer());
 
-    return entityFacade.loadColumns(stateManager, fields, keyspace,
+    return entityFacade.loadColumns(stateManager, fields, conf.getKeyspace(),
         conf.getMetaCache());
 
   }
@@ -141,7 +87,7 @@ public class CassandraStore {
     EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData,
         conf.getSerializer());
 
-    return entityFacade.exists(stateManager, keyspace, conf.getMetaCache());
+    return entityFacade.exists(stateManager, conf.getKeyspace(), conf.getMetaCache());
 
   }
 
@@ -172,7 +118,7 @@ public class CassandraStore {
       throw new MetaDataException(String.format("You attempted to load an object that has no mapping.  Please check that class %s is mapped with a %s annotation, not a %s annoation", metaData.getDescribedType(), Entity.class.getName(), MappedSuperclass.class.getName()));
     }
 
-    return entityFacade.getStoredEntityType(oid, keyspace, conf.getMetaCache());
+    return entityFacade.getStoredEntityType(oid, conf.getKeyspace(), conf.getMetaCache());
   }
 
   /**
@@ -208,7 +154,7 @@ public class CassandraStore {
    * @param queue 
    * @return
    */
-  public void removeObject(Mutator mutator, OpenJPAStateManager stateManager,
+  public void removeObject(Mutator<byte[]> mutator, OpenJPAStateManager stateManager,
       long clock, IndexQueue queue) {
 
     if (log.isDebugEnabled()) {
@@ -222,27 +168,10 @@ public class CassandraStore {
     EntityFacade entityFacade = conf.getMetaCache().getFacade(metaData,
         conf.getSerializer());
 
-    entityFacade.delete(stateManager, mutator, clock);
+    entityFacade.delete(stateManager, mutator, clock, queue);
 
   }
 
-  /**
-   * Inner class that delegates to the JPAConsistency value for consistency
-   * 
-   * @author Todd Nine
-   * 
-   */
-  private class JPAConsistencyPolicy implements ConsistencyLevelPolicy {
-
-    @Override
-    public HConsistencyLevel get(OperationType op) {
-      return JPAConsistency.get();
-    }
-
-    @Override
-    public HConsistencyLevel get(OperationType op, String cfName) {
-      return JPAConsistency.get();
-    }
-  }
+ 
 
 }

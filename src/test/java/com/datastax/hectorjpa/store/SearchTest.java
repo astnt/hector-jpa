@@ -51,518 +51,604 @@ import com.datastax.hectorjpa.bean.tree.Techie_;
  */
 public class SearchTest extends ManagedEntityTestBase {
 
-	/**
-	 * Test simple instance with no collections to ensure we persist properly
-	 * without indexing
-	 */
-	@Test
-	public void basicSearch() {
+  /**
+   * Test simple instance with no collections to ensure we persist properly
+   * without indexing
+   */
+  @Test
+  public void basicSearch() {
 
-		EntityManager em = entityManagerFactory.createEntityManager();
-		em.getTransaction().begin();
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
 
-		Store store = new Store();
-		store.setName("Manhattan");
+    Store store = new Store();
+    store.setName("Manhattan");
 
-		Customer james = new Customer();
-		james.setEmail("james@test.com");
-		james.setName("James");
-		james.setPhoneNumber(new Phone("+641112223333", PhoneType.MOBILE));
+    Customer james = new Customer();
+    james.setEmail("james@test.com");
+    james.setName("James");
+    james.setPhoneNumber(new Phone("+641112223333", PhoneType.MOBILE));
 
-		store.addCustomer(james);
+    store.addCustomer(james);
 
-		Sale jeansSale1 = new Sale();
-		jeansSale1.setItemName("jeans");
-		jeansSale1.setSellDate(new DateTime(2011, 1, 1, 0, 0, 0, 0).toDate());
+    Sale jeansSale1 = new Sale();
+    jeansSale1.setItemName("jeans");
+    jeansSale1.setSellDate(new DateTime(2011, 1, 1, 0, 0, 0, 0).toDate());
 
-		james.addSale(jeansSale1);
-		jeansSale1.setCustomer(james);
+    james.addSale(jeansSale1);
+    jeansSale1.setCustomer(james);
 
-		Sale jeansSale2 = new Sale();
-		jeansSale2.setItemName("jeans");
-		jeansSale2.setSellDate(new DateTime(2011, 1, 4, 0, 0, 0, 0).toDate());
+    Sale jeansSale2 = new Sale();
+    jeansSale2.setItemName("jeans");
+    jeansSale2.setSellDate(new DateTime(2011, 1, 4, 0, 0, 0, 0).toDate());
 
-		james.addSale(jeansSale2);
-		jeansSale2.setCustomer(james);
+    james.addSale(jeansSale2);
+    jeansSale2.setCustomer(james);
 
-		Sale shirtSale = new Sale();
-		shirtSale.setItemName("shirt");
-		shirtSale.setSellDate(new DateTime(2011, 1, 2, 0, 0, 0, 0).toDate());
+    Sale shirtSale = new Sale();
+    shirtSale.setItemName("shirt");
+    shirtSale.setSellDate(new DateTime(2011, 1, 2, 0, 0, 0, 0).toDate());
 
-		james.addSale(shirtSale);
-		shirtSale.setCustomer(james);
+    james.addSale(shirtSale);
+    shirtSale.setCustomer(james);
 
-		em.persist(store);
-		em.getTransaction().commit();
-		em.close();
+    em.persist(store);
+    em.getTransaction().commit();
+    em.close();
 
-		EntityManager em2 = entityManagerFactory.createEntityManager();
+    EntityManager em2 = entityManagerFactory.createEntityManager();
 
-		Store returnedStore = em2.find(Store.class, store.getId());
+    Store returnedStore = em2.find(Store.class, store.getId());
 
-		/**
-		 * Make sure the stores are equal and everything is in sorted order
-		 */
-		assertEquals(store, returnedStore);
+    /**
+     * Make sure the stores are equal and everything is in sorted order
+     */
+    assertEquals(store, returnedStore);
 
-		Customer returnedCustomer = returnedStore.getCustomers().get(0);
+    Customer returnedCustomer = returnedStore.getCustomers().get(0);
 
-		assertEquals(james, returnedCustomer);
+    assertEquals(james, returnedCustomer);
 
-		assertTrue(returnedCustomer.getSales().contains(jeansSale1));
+    assertTrue(returnedCustomer.getSales().contains(jeansSale1));
 
-		assertTrue(returnedCustomer.getSales().contains(jeansSale2));
+    assertTrue(returnedCustomer.getSales().contains(jeansSale2));
 
-		assertTrue(returnedCustomer.getSales().contains(shirtSale));
+    assertTrue(returnedCustomer.getSales().contains(shirtSale));
 
-		em2.close();
-		// we've asserted everything saved, now time to query the sales
+    em2.close();
+    // we've asserted everything saved, now time to query the sales
 
-		EntityManager em3 = entityManagerFactory.createEntityManager();
+    EntityManager em3 = entityManagerFactory.createEntityManager();
 
-		// See comment in header to get this to build
-		CriteriaBuilder queryBuilder = em3.getCriteriaBuilder();
+    // See comment in header to get this to build
+    CriteriaBuilder queryBuilder = em3.getCriteriaBuilder();
 
-		CriteriaQuery<Sale> query = queryBuilder.createQuery(Sale.class);
+    CriteriaQuery<Sale> query = queryBuilder.createQuery(Sale.class);
 
-		Root<Sale> sale = query.from(Sale.class);
+    Root<Sale> sale = query.from(Sale.class);
 
-		Predicate predicate = queryBuilder.equal(sale.get(Sale_.itemName),
-				jeansSale2.getItemName());
+    Predicate predicate = queryBuilder.equal(sale.get(Sale_.itemName),
+        jeansSale2.getItemName());
 
-		query.where(predicate);
+    query.where(predicate);
 
-		Order order = queryBuilder.desc(sale.get(Sale_.sellDate));
+    Order order = queryBuilder.desc(sale.get(Sale_.sellDate));
 
-		query.orderBy(order);
+    query.orderBy(order);
 
-		TypedQuery<Sale> saleQuery = em3.createQuery(query);
+    TypedQuery<Sale> saleQuery = em3.createQuery(query);
 
-		List<Sale> results = saleQuery.getResultList();
+    List<Sale> results = saleQuery.getResultList();
 
-		assertEquals(jeansSale2, results.get(0));
+    assertEquals(jeansSale2, results.get(0));
 
-		assertEquals(jeansSale1, results.get(1));
+    assertEquals(jeansSale1, results.get(1));
 
-	}
+  }
 
-	/**
-	 * This is an example. In an RPP we can't read the identity to load. There
-	 * must be an index to perform iteration over
-	 */
-	@Test
-	public void iterateAll() {
+  /**
+   * This is an example. In we can't read the identity to load. There must be an
+   * index to perform iteration over
+   */
+  @Test
+  public void iterateAll() {
 
-		EntityManager em = entityManagerFactory.createEntityManager();
-		em.getTransaction().begin();
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
 
-		Store fifth = new Store();
-		fifth.setName("5");
+    Store fifth = new Store();
+    fifth.setName("5");
 
-		em.persist(fifth);
+    em.persist(fifth);
 
-		Store fourth = new Store();
-		fourth.setName("4");
+    Store fourth = new Store();
+    fourth.setName("4");
 
-		em.persist(fourth);
+    em.persist(fourth);
 
-		Store third = new Store();
-		third.setName("3");
+    Store third = new Store();
+    third.setName("3");
 
-		em.persist(third);
+    em.persist(third);
 
-		Store second = new Store();
-		second.setName("2");
+    Store second = new Store();
+    second.setName("2");
 
-		em.persist(second);
+    em.persist(second);
 
-		Store first = new Store();
-		first.setName("1");
+    Store first = new Store();
+    first.setName("1");
 
-		em.persist(first);
+    em.persist(first);
 
-		em.getTransaction().commit();
+    em.getTransaction().commit();
 
-		EntityManager em2 = entityManagerFactory.createEntityManager();
-		em2.getTransaction().begin();
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+    em2.getTransaction().begin();
 
-		// See comment in header to get this to build
-		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+    // See comment in header to get this to build
+    CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
 
-		CriteriaQuery<Store> query = queryBuilder.createQuery(Store.class);
+    CriteriaQuery<Store> query = queryBuilder.createQuery(Store.class);
 
-		Root<Store> store = query.from(Store.class);
+    Root<Store> store = query.from(Store.class);
 
-		Predicate start = queryBuilder.greaterThanOrEqualTo(
-				store.get(Store_.name), "");
-		Predicate end = queryBuilder.lessThan(store.get(Store_.name), "\uffff");
+    Predicate start = queryBuilder.greaterThanOrEqualTo(store.get(Store_.name),
+        "");
+    Predicate end = queryBuilder.lessThan(store.get(Store_.name), "\uffff");
 
-		query.where(start, end);
+    query.where(start, end);
 
-		TypedQuery<Store> saleQuery = em2.createQuery(query);
+    TypedQuery<Store> saleQuery = em2.createQuery(query);
 
-		List<Store> results = saleQuery.getResultList();
+    List<Store> results = saleQuery.getResultList();
 
-		assertEquals(first, results.get(0));
-		assertEquals(second, results.get(1));
-		assertEquals(third, results.get(2));
-		assertEquals(fourth, results.get(3));
-		assertEquals(fifth, results.get(4));
+    assertEquals(first, results.get(0));
+    assertEquals(second, results.get(1));
+    assertEquals(third, results.get(2));
+    assertEquals(fourth, results.get(3));
+    assertEquals(fifth, results.get(4));
 
-		queryBuilder = em2.getCriteriaBuilder();
+    queryBuilder = em2.getCriteriaBuilder();
 
-		query = queryBuilder.createQuery(Store.class);
+    query = queryBuilder.createQuery(Store.class);
 
-		store = query.from(Store.class);
+    store = query.from(Store.class);
 
-		start = queryBuilder.greaterThanOrEqualTo(store.get(Store_.name), "");
-		end = queryBuilder.lessThan(store.get(Store_.name), "\uffff");
+    start = queryBuilder.greaterThanOrEqualTo(store.get(Store_.name), "");
+    end = queryBuilder.lessThan(store.get(Store_.name), "\uffff");
 
-		query.where(start, end);
+    query.where(start, end);
 
-		saleQuery = em2.createQuery(query);
+    saleQuery = em2.createQuery(query);
 
-		saleQuery.setFirstResult(2);
-		saleQuery.setMaxResults(2);
+    saleQuery.setFirstResult(2);
+    saleQuery.setMaxResults(2);
 
-		results = saleQuery.getResultList();
+    results = saleQuery.getResultList();
 
-		assertEquals(third, results.get(0));
-		assertEquals(fourth, results.get(1));
+    assertEquals(third, results.get(0));
+    assertEquals(fourth, results.get(1));
 
-	}
+  }
 
-	
+  /**
+   * Test simple instance with no collections to ensure we persist properly
+   * without indexing
+   */
+  @Test
+  public void subclassSearch() {
 
-	/**
-	 * Test simple instance with no collections to ensure we persist properly
-	 * without indexing
-	 */
-	@Test
-	public void subclassSearch() {
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
 
-		EntityManager em = entityManagerFactory.createEntityManager();
-		em.getTransaction().begin();
+    Person p1 = new Person();
+    p1.setEmail("p1@test.com");
+    p1.setFirstName("p1");
+    p1.setLastName("Person");
 
-		Person p1 = new Person();
-		p1.setEmail("p1@test.com");
-		p1.setFirstName("p1");
-		p1.setLastName("Person");
+    em.persist(p1);
 
-		em.persist(p1);
+    Person p2 = new Person();
 
-		Person p2 = new Person();
+    p2.setEmail(p1.getEmail());
+    p2.setFirstName("p2");
+    p2.setLastName("Person");
 
-		p2.setEmail(p1.getEmail());
-		p2.setFirstName("p2");
-		p2.setLastName("Person");
+    em.persist(p2);
 
-		em.persist(p2);
+    User u1 = new User();
+    u1.setEmail(p1.getEmail());
+    u1.setFirstName("u1");
+    u1.setLastName("User");
+    u1.setLastLogin(new DateTime(2011, 3, 20, 1, 1, 1, 0).toDate());
 
-		User u1 = new User();
-		u1.setEmail(p1.getEmail());
-		u1.setFirstName("u1");
-		u1.setLastName("User");
-		u1.setLastLogin(new DateTime(2011, 3, 20, 1, 1, 1, 0).toDate());
+    em.persist(u1);
 
-		em.persist(u1);
+    User u2 = new User();
+    u2.setEmail(p1.getEmail());
+    u2.setFirstName("u2");
+    u2.setLastName("User");
+    u2.setLastLogin(new DateTime(2011, 3, 21, 1, 1, 1, 0).toDate());
 
-		User u2 = new User();
-		u2.setEmail(p1.getEmail());
-		u2.setFirstName("u2");
-		u2.setLastName("User");
-		u2.setLastLogin(new DateTime(2011, 3, 21, 1, 1, 1, 0).toDate());
+    em.persist(u2);
 
-		em.persist(u2);
+    Client c1 = new Client();
+    c1.setEmail(p1.getEmail());
+    c1.setFirstName("c1");
+    c1.setLastName("Client");
+    c1.setLastLogin(new DateTime(2011, 3, 22, 1, 1, 1, 0).toDate());
 
-		Client c1 = new Client();
-		c1.setEmail(p1.getEmail());
-		c1.setFirstName("c1");
-		c1.setLastName("Client");
-		c1.setLastLogin(new DateTime(2011, 3, 22, 1, 1, 1, 0).toDate());
+    em.persist(c1);
 
-		em.persist(c1);
+    Client c2 = new Client();
+    c2.setEmail(p1.getEmail());
+    c2.setFirstName("c2");
+    c2.setLastName("Client");
+    c2.setLastLogin(new DateTime(2011, 3, 23, 1, 1, 1, 0).toDate());
 
-		Client c2 = new Client();
-		c2.setEmail(p1.getEmail());
-		c2.setFirstName("c2");
-		c2.setLastName("Client");
-		c2.setLastLogin(new DateTime(2011, 3, 23, 1, 1, 1, 0).toDate());
+    em.persist(c2);
 
-		em.persist(c2);
+    Manager m1 = new Manager();
+    m1.setEmail(p1.getEmail());
+    m1.setFirstName("m1");
+    m1.setLastName("Manager");
+    m1.setLastLogin(new DateTime(2011, 3, 24, 1, 1, 1, 0).toDate());
 
-		Manager m1 = new Manager();
-		m1.setEmail(p1.getEmail());
-		m1.setFirstName("m1");
-		m1.setLastName("Manager");
-		m1.setLastLogin(new DateTime(2011, 3, 24, 1, 1, 1, 0).toDate());
+    em.persist(m1);
 
-		em.persist(m1);
+    Manager m2 = new Manager();
+    m2.setEmail(p1.getEmail());
+    m2.setFirstName("m2");
+    m2.setLastName("Manager");
+    m2.setLastLogin(new DateTime(2011, 3, 25, 1, 1, 1, 0).toDate());
 
-		Manager m2 = new Manager();
-		m2.setEmail(p1.getEmail());
-		m2.setFirstName("m2");
-		m2.setLastName("Manager");
-		m2.setLastLogin(new DateTime(2011, 3, 25, 1, 1, 1, 0).toDate());
+    em.persist(m2);
 
-		em.persist(m2);
+    em.getTransaction().commit();
+    em.close();
 
-		em.getTransaction().commit();
-		em.close();
+    //
+    EntityManager em2 = entityManagerFactory.createEntityManager();
 
-		//
-		EntityManager em2 = entityManagerFactory.createEntityManager();
+    CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
 
-		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+    CriteriaQuery<Person> query = queryBuilder.createQuery(Person.class);
 
-		CriteriaQuery<Person> query = queryBuilder.createQuery(Person.class);
+    Root<Person> person = query.from(Person.class);
 
-		Root<Person> person = query.from(Person.class);
+    Predicate predicate = queryBuilder.equal(person.get(Person_.email),
+        p1.getEmail());
 
-		Predicate predicate = queryBuilder.equal(person.get(Person_.email),
-				p1.getEmail());
+    query.where(predicate);
 
-		query.where(predicate);
+    Order fn = queryBuilder.asc(person.get(Person_.firstName));
+    Order ln = queryBuilder.asc(person.get(Person_.lastName));
 
-		Order fn = queryBuilder.asc(person.get(Person_.firstName));
-		Order ln = queryBuilder.asc(person.get(Person_.lastName));
+    query.orderBy(fn, ln);
 
-		query.orderBy(fn, ln);
+    TypedQuery<Person> personQuery = em2.createQuery(query);
 
-		TypedQuery<Person> personQuery = em2.createQuery(query);
+    List<Person> results = personQuery.getResultList();
 
-		List<Person> results = personQuery.getResultList();
+    assertEquals(8, results.size());
 
-		assertEquals(8, results.size());
+    // client 1 and 2
+    assertEquals(c1, results.get(0));
+    assertEquals(c2, results.get(1));
 
-		// client 1 and 2
-		assertEquals(c1, results.get(0));
-		assertEquals(c2, results.get(1));
+    // manager 1 and 2
+    assertEquals(m1, results.get(2));
+    assertEquals(m2, results.get(3));
 
-		// manager 1 and 2
-		assertEquals(m1, results.get(2));
-		assertEquals(m2, results.get(3));
+    // person 1 and 2
+    assertEquals(p1, results.get(4));
+    assertEquals(p2, results.get(5));
 
-		// person 1 and 2
-		assertEquals(p1, results.get(4));
-		assertEquals(p2, results.get(5));
+    // user 1 and 2
+    assertEquals(u1, results.get(6));
+    assertEquals(u2, results.get(7));
 
-		// user 1 and 2
-		assertEquals(u1, results.get(6));
-		assertEquals(u2, results.get(7));
+  }
 
-	}
+  /**
+   * Test simple instance with no collections to ensure we persist properly
+   * without indexing
+   */
+  @Test
+  public void subclassSearchParentIndex() {
 
-	/**
-	 * Test simple instance with no collections to ensure we persist properly
-	 * without indexing
-	 */
-	@Test
-	public void subclassSearchParentIndex() {
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
 
-		EntityManager em = entityManagerFactory.createEntityManager();
-		em.getTransaction().begin();
+    User u1 = new User();
+    u1.setEmail("user1@foo.com");
+    u1.setFirstName("u1");
+    u1.setLastName("User");
+    u1.setLastLogin(new DateTime(2011, 3, 20, 1, 1, 1, 0).toDate());
 
-		User u1 = new User();
-		u1.setEmail("user1@foo.com");
-		u1.setFirstName("u1");
-		u1.setLastName("User");
-		u1.setLastLogin(new DateTime(2011, 3, 20, 1, 1, 1, 0).toDate());
+    em.persist(u1);
 
-		em.persist(u1);
+    em.getTransaction().commit();
+    em.close();
 
-		em.getTransaction().commit();
-		em.close();
+    //
+    EntityManager em2 = entityManagerFactory.createEntityManager();
 
-		//
-		EntityManager em2 = entityManagerFactory.createEntityManager();
+    CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
 
-		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+    CriteriaQuery<User> query = queryBuilder.createQuery(User.class);
 
-		CriteriaQuery<User> query = queryBuilder.createQuery(User.class);
+    Root<User> person = query.from(User.class);
 
-		Root<User> person = query.from(User.class);
+    Predicate predicate = queryBuilder.equal(person.get(User_.email),
+        u1.getEmail());
 
-		Predicate predicate = queryBuilder.equal(person.get(User_.email),
-				u1.getEmail());
+    query.where(predicate);
 
-		query.where(predicate);
+    Order fn = queryBuilder.asc(person.get(User_.firstName));
+    Order ln = queryBuilder.asc(person.get(User_.lastName));
 
-		Order fn = queryBuilder.asc(person.get(User_.firstName));
-		Order ln = queryBuilder.asc(person.get(User_.lastName));
+    query.orderBy(fn, ln);
 
-		query.orderBy(fn, ln);
+    TypedQuery<User> userQuery = em2.createQuery(query);
 
-		TypedQuery<User> userQuery = em2.createQuery(query);
+    List<User> results = userQuery.getResultList();
 
-		List<User> results = userQuery.getResultList();
+    assertEquals(1, results.size());
 
-		assertEquals(1, results.size());
+    // client 1 and 2
+    assertEquals(u1, results.get(0));
 
-		// client 1 and 2
-		assertEquals(u1, results.get(0));
+  }
 
-	}
+  /**
+   * Tests that we can save an index with one of the fields nulled and still
+   * query for null
+   * 
+   * without indexing
+   */
+  @Test
+  public void nullIndexedField() {
 
-	/**
-	 * Tests that we can save an index with one of the fields nulled and still
-	 * query for null
-	 * 
-	 * without indexing
-	 */
-	@Test
-	public void nullIndexedField() {
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
 
-		EntityManager em = entityManagerFactory.createEntityManager();
-		em.getTransaction().begin();
+    Person p1 = new Person();
+    p1.setEmail("p1@test.com");
+    p1.setFirstName("p1");
+    p1.setLastName("Person");
 
-		Person p1 = new Person();
-		p1.setEmail("p1@test.com");
-		p1.setFirstName("p1");
-		p1.setLastName("Person");
+    em.persist(p1);
 
-		em.persist(p1);
+    Client c1 = new Client();
+    c1.setEmail(p1.getEmail());
+    c1.setFirstName("c1");
+    c1.setLastName("Client");
 
-		Client c1 = new Client();
-		c1.setEmail(p1.getEmail());
-		c1.setFirstName("c1");
-		c1.setLastName("Client");
+    em.persist(c1);
 
-		em.persist(c1);
+    em.getTransaction().commit();
+    em.close();
 
-		em.getTransaction().commit();
-		em.close();
+    //
+    EntityManager em2 = entityManagerFactory.createEntityManager();
 
-		//
-		EntityManager em2 = entityManagerFactory.createEntityManager();
+    CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
 
-		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+    CriteriaQuery<User> query = queryBuilder.createQuery(User.class);
 
-		CriteriaQuery<User> query = queryBuilder.createQuery(User.class);
+    Root<User> person = query.from(User.class);
 
-		Root<User> person = query.from(User.class);
+    Predicate predicate = queryBuilder.equal(person.get(User_.lastLogin), null);
 
-		Predicate predicate = queryBuilder.equal(person.get(User_.lastLogin),
-				null);
+    query.where(predicate);
 
-		query.where(predicate);
+    Order fn = queryBuilder.asc(person.get(Person_.firstName));
+    Order ln = queryBuilder.asc(person.get(Person_.lastName));
 
-		Order fn = queryBuilder.asc(person.get(Person_.firstName));
-		Order ln = queryBuilder.asc(person.get(Person_.lastName));
+    query.orderBy(fn, ln);
 
-		query.orderBy(fn, ln);
+    TypedQuery<User> saleQuery = em2.createQuery(query);
 
-		TypedQuery<User> saleQuery = em2.createQuery(query);
+    List<User> results = saleQuery.getResultList();
 
-		List<User> results = saleQuery.getResultList();
+    assertEquals(1, results.size());
 
-		assertEquals(1, results.size());
+    assertEquals(c1, results.get(0));
 
-		assertEquals(c1, results.get(0));
+  }
 
-	}
-	
-	
-	/**
-	 * Tests that we can save an index with one of the fields nulled and still
-	 * query for null
-	 * 
-	 * without indexing
-	 */
-	@Test
-	public void treeTest() {
+  /**
+   * Tests that we can save an index with one of the fields nulled and still
+   * query for null
+   * 
+   * without indexing
+   */
+  @Test
+  public void treeTest() {
 
-		EntityManager em = entityManagerFactory.createEntityManager();
-		em.getTransaction().begin();
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
 
-		Techie techie = new Techie();
-		techie.setName("test");
-		
-		Geek g = new Geek();
-		g.setName("test");
-		
-		Nerd nerd = new Nerd();
-		nerd.setName("test");
+    Techie techie = new Techie();
+    techie.setName("test");
 
-		em.persist(techie);
-		em.persist(g);
-		em.persist(nerd);
-		
-		em.getTransaction().commit();
-		em.close();
+    Geek g = new Geek();
+    g.setName("test");
 
-		//
-		EntityManager em2 = entityManagerFactory.createEntityManager();
+    Nerd nerd = new Nerd();
+    nerd.setName("test");
 
-		
-		//should only return geek
-		CriteriaBuilder geekBuilder = em2.getCriteriaBuilder();
+    em.persist(techie);
+    em.persist(g);
+    em.persist(nerd);
 
-		CriteriaQuery<Geek> geekQuery = geekBuilder.createQuery(Geek.class);
+    em.getTransaction().commit();
+    em.close();
 
-		Root<Geek> geekRoot = geekQuery.from(Geek.class);
+    //
+    EntityManager em2 = entityManagerFactory.createEntityManager();
 
-		Predicate predicate = geekBuilder.equal(geekRoot.get(Geek_.name), g.getName());
+    // should only return geek
+    CriteriaBuilder geekBuilder = em2.getCriteriaBuilder();
 
-		geekQuery.where(predicate);
+    CriteriaQuery<Geek> geekQuery = geekBuilder.createQuery(Geek.class);
 
-		TypedQuery<Geek> gQuery = em2.createQuery(geekQuery);
+    Root<Geek> geekRoot = geekQuery.from(Geek.class);
 
-		List<Geek> results = gQuery.getResultList();
+    Predicate predicate = geekBuilder.equal(geekRoot.get(Geek_.name),
+        g.getName());
 
-		assertEquals(1, results.size());
-		
-		assertTrue(results.contains(g));
-		
-		//should only return nerd
-		CriteriaBuilder nerdBuilder = em2.getCriteriaBuilder();
+    geekQuery.where(predicate);
 
-		CriteriaQuery<Nerd> nerdQuery = nerdBuilder.createQuery(Nerd.class);
+    TypedQuery<Geek> gQuery = em2.createQuery(geekQuery);
 
-		Root<Nerd> nerdRoot = nerdQuery.from(Nerd.class);
+    List<Geek> results = gQuery.getResultList();
 
-		predicate = nerdBuilder.equal(nerdRoot.get(Nerd_.name), g.getName());
+    assertEquals(1, results.size());
 
-		nerdQuery.where(predicate);
+    assertTrue(results.contains(g));
 
-		TypedQuery<Nerd> nQuery = em2.createQuery(nerdQuery);
+    // should only return nerd
+    CriteriaBuilder nerdBuilder = em2.getCriteriaBuilder();
 
-		List<Nerd> nResults = nQuery.getResultList();
+    CriteriaQuery<Nerd> nerdQuery = nerdBuilder.createQuery(Nerd.class);
 
-		assertEquals(1, nResults.size());
-		
-		assertTrue(nResults.contains(nerd));
-		
-		
-		//should only return all three
-		CriteriaBuilder techieBuilder = em2.getCriteriaBuilder();
+    Root<Nerd> nerdRoot = nerdQuery.from(Nerd.class);
 
-		CriteriaQuery<Techie> techieQuery = techieBuilder.createQuery(Techie.class);
+    predicate = nerdBuilder.equal(nerdRoot.get(Nerd_.name), g.getName());
 
-		Root<Techie> techiRoot = techieQuery.from(Techie.class);
+    nerdQuery.where(predicate);
 
-		predicate = techieBuilder.equal(techiRoot.get(Techie_.name), g.getName());
+    TypedQuery<Nerd> nQuery = em2.createQuery(nerdQuery);
 
-		techieQuery.where(predicate);
+    List<Nerd> nResults = nQuery.getResultList();
 
-		TypedQuery<Techie> tQuery = em2.createQuery(techieQuery);
+    assertEquals(1, nResults.size());
 
-		List<Techie> tResults = tQuery.getResultList();
+    assertTrue(nResults.contains(nerd));
 
-		assertEquals(3, tResults.size());
-		
-		assertTrue(tResults.contains(nerd));
-		assertTrue(tResults.contains(g));
-		assertTrue(tResults.contains(techie));
-		
-		
-		
-		
-		
-		
+    // should only return all three
+    CriteriaBuilder techieBuilder = em2.getCriteriaBuilder();
 
+    CriteriaQuery<Techie> techieQuery = techieBuilder.createQuery(Techie.class);
 
-	}
+    Root<Techie> techiRoot = techieQuery.from(Techie.class);
 
+    predicate = techieBuilder.equal(techiRoot.get(Techie_.name), g.getName());
+
+    techieQuery.where(predicate);
+
+    TypedQuery<Techie> tQuery = em2.createQuery(techieQuery);
+
+    List<Techie> tResults = tQuery.getResultList();
+
+    assertEquals(3, tResults.size());
+
+    assertTrue(tResults.contains(nerd));
+    assertTrue(tResults.contains(g));
+    assertTrue(tResults.contains(techie));
+
+  }
+
+  /**
+   * Make sure when we delete an entity it's removed from the index
+   */
+  @Test
+  public void deleteCleansIndex() {
+
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+
+    Store fifth = new Store();
+    fifth.setName("deleteCleansIndex-5");
+
+    em.persist(fifth);
+
+    Store fourth = new Store();
+    fourth.setName("deleteCleansIndex-4");
+
+    em.persist(fourth);
+
+    Store third = new Store();
+    third.setName("deleteCleansIndex-3");
+
+    em.persist(third);
+
+    Store second = new Store();
+    second.setName("deleteCleansIndex-2");
+
+    em.persist(second);
+
+    Store first = new Store();
+    first.setName("deleteCleansIndex-1");
+
+    em.persist(first);
+
+    em.getTransaction().commit();
+    em.close();
+
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+    em2.getTransaction().begin();
+
+    // See comment in header to get this to build
+    CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+    CriteriaQuery<Store> query = queryBuilder.createQuery(Store.class);
+
+    Root<Store> store = query.from(Store.class);
+
+    Predicate start = queryBuilder.greaterThanOrEqualTo(store.get(Store_.name),
+        "deleteCleansIndex");
+    Predicate end = queryBuilder.lessThan(store.get(Store_.name), "deleteCleansIndex\uffff");
+
+    query.where(start, end);
+
+    TypedQuery<Store> saleQuery = em2.createQuery(query);
+
+    List<Store> results = saleQuery.getResultList();
+
+    assertEquals(first, results.get(0));
+    assertEquals(second, results.get(1));
+    assertEquals(third, results.get(2));
+    assertEquals(fourth, results.get(3));
+    assertEquals(fifth, results.get(4));
+
+    // now delete 1 and 2 and ensure the index is updated.
+    em2.remove(results.get(0));
+    em2.remove(results.get(1));
+
+    em2.getTransaction().commit();
+    em2.close();
+
+    EntityManager em3 = entityManagerFactory.createEntityManager();
+    em3.getTransaction().begin();
+
+    // See comment in header to get this to build
+    queryBuilder = em3.getCriteriaBuilder();
+
+    query = queryBuilder.createQuery(Store.class);
+
+    store = query.from(Store.class);
+
+    start = queryBuilder.greaterThanOrEqualTo(store.get(Store_.name), "deleteCleansIndex");
+    end = queryBuilder.lessThan(store.get(Store_.name), "deleteCleansIndex\uffff");
+
+    query.where(start, end);
+
+    saleQuery = em3.createQuery(query);
+
+    results = saleQuery.getResultList();
+
+    assertEquals(third, results.get(0));
+    assertEquals(fourth, results.get(1));
+    assertEquals(fifth, results.get(2));
+    
+    em3.getTransaction().commit();
+    em3.close();
+    
+
+  }
 
 }

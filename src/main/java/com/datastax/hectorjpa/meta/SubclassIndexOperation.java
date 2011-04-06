@@ -104,7 +104,7 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
                   clock, compositeSerializer, bytesSerializer));
       
       
-      queue.addAudit(new IndexAudit(indexName, reverseIndexName, idAudit, clock, CF_NAME));
+      queue.addAudit(new IndexAudit(indexName, reverseIndexName, idAudit, clock, CF_NAME, true));
 
 
       // value has changed since we loaded. Remove the old value
@@ -157,13 +157,13 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
   }
   
 
-
-
   /**
    * @return the indexDefinition
    */
   public IndexDefinition getIndexDefinition() {
     return indexDefinition;
   }
+
+
 
 }

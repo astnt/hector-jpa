@@ -3,7 +3,7 @@
  */
 package com.datastax.hectorjpa.meta.collection;
 
-import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
+import static com.datastax.hectorjpa.serializer.CompositeUtils.*;
 
 import java.util.Collection;
 
@@ -100,10 +100,6 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     // could have been removed, blitz everything from the index
     if (field == null) {
       mutator.addDeletion(idKey, CF_NAME, null, null);
-    }
-
-    // nothing to do
-    if (field == null) {
       return;
     }
 
@@ -112,6 +108,24 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
     writeAdds(stateManager, (Collection<?>) field, mutator, clock, idKey, queue);
     writeDeletes(stateManager, (Collection<?>) field, mutator, clock, idKey,
         queue);
+
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * com.datastax.hectorjpa.meta.collection.AbstractCollectionField#removeCollection
+   * (org.apache.openjpa.kernel.OpenJPAStateManager,
+   * me.prettyprint.hector.api.mutation.Mutator, long)
+   */
+  @Override
+  public void removeCollection(OpenJPAStateManager stateManager,
+      Mutator<byte[]> mutator, long clock, byte[] key) {
+
+    byte[] idKey = constructKey(key, unorderedMarker);
+
+    mutator.addDeletion(idKey, CF_NAME, null, null);
 
   }
 
@@ -160,7 +174,7 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       idAudit.addComponent(currentId, idSerializer);
 
       // add the check to the audit queue
-      queue.addDelete(new IndexAudit(idKey, idKey, idAudit, clock, CF_NAME));
+      queue.addDelete(new IndexAudit(idKey, idKey, idAudit, clock, CF_NAME, false));
 
     }
 
@@ -188,7 +202,6 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
 
     DynamicComposite idComposite = null;
     Object currentId = null;
-    Object field = null;
 
     StoreContext context = stateManager.getContext();
 
@@ -201,16 +214,16 @@ public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
       idComposite = newComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.addComponent(currentId, idSerializer);
+      idComposite.addComponent(currentId, idSerializer, getCassType(idSerializer));
 
       mutator.addInsertion(idKey, CF_NAME,
           new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
               compositeSerializer, BytesArraySerializer.get()));
 
       DynamicComposite idAudit = new DynamicComposite();
-      idAudit.addComponent(currentId, idSerializer);
+      idAudit.addComponent(currentId, idSerializer, getCassType(idSerializer));
 
-      queue.addAudit(new IndexAudit(idKey, idKey, idAudit, clock, CF_NAME));
+      queue.addAudit(new IndexAudit(idKey, idKey, idAudit, clock, CF_NAME, false));
     }
   }
 

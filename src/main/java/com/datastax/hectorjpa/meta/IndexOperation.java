@@ -20,7 +20,6 @@ import com.datastax.hectorjpa.query.IndexQuery;
 import com.datastax.hectorjpa.service.IndexAudit;
 import com.datastax.hectorjpa.service.IndexQueue;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
-import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
  * Class to perform all operations for secondary indexing on an instance in the
@@ -70,7 +69,7 @@ public class IndexOperation extends AbstractIndexOperation {
             clock, compositeSerializer, bytesSerializer));
 
     queue.addAudit(new IndexAudit(indexName, reverseIndexName, idAudit, clock,
-        CF_NAME));
+        CF_NAME, true));
 
     // value has changed since we loaded. Remove the old value
     if (changed) {

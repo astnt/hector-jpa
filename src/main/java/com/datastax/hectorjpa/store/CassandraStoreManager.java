@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import me.prettyprint.cassandra.model.MutatorImpl;
+import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.hector.api.mutation.Mutator;
 
 import org.apache.openjpa.abstractstore.AbstractStoreManager;
@@ -30,8 +32,20 @@ public class CassandraStoreManager extends AbstractStoreManager {
 			.getLogger(CassandraStoreManager.class);
 
 	private CassandraStore cassandraStore;
+	
+	private CassandraStoreConfiguration config;
 
-	@Override
+	
+	
+	public CassandraStoreManager() {
+    super();
+    
+  
+    
+//    log.debug("in CSM.open()");
+  }
+
+  @Override
 	public ResultObjectProvider executeExtent(ClassMetaData cMetaData,
 			boolean useSubClasses, FetchConfiguration fetchConfiguration) {
 		// cMetaData is essentially the query construct
@@ -81,7 +95,7 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		CassandraStoreConfiguration conf = ((CassandraStoreConfiguration) getContext()
 				.getConfiguration());
 
-		return new CassandraStoreQuery(ep, conf.getMetaCache(), conf.getSerializer(), cassandraStore);
+		return new CassandraStoreQuery(ep, conf);
 	}
 
 //	@Override
@@ -109,9 +123,9 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		 */
 		// _updates = new ArrayList(pNew.size() + pDirty.size());
 		// _deletes = new ArrayList(pDeleted.size());
-		long clock = cassandraStore.getClock();
+		long clock = config.getKeyspace().createClock();
 
-		Mutator<?> mutator = cassandraStore.createMutator();
+		Mutator<?> mutator = createMutator();
 		
 		IndexQueue queue = new IndexQueue();
 
@@ -125,7 +139,7 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		mutator.execute();
 		//now that the mutator has returned.  Execute index cleanup
 		
-		queue.writeAudits(cassandraStore.getIndexingService());
+		queue.writeAudits(config.getIndexingService());
 		
 
 		return null;
@@ -236,20 +250,9 @@ public class CassandraStoreManager extends AbstractStoreManager {
 
 	@Override
 	protected void open() {
-		OpenJPAConfiguration conf = ctx.getConfiguration();
-		// TODO
-		// encapsulate into CassandraStore or similar (should take
-		// CassandraStoreConfig as an argg
-		// cluster =
-		// HFactory.getCluster(conf.getValue("me.prettyprint.hom.clusterName").getOriginalValue());
-		// keyspace =
-		// HFactory.createKeyspace(conf.getValue("me.prettyprint.hom.keyspace").getOriginalValue(),
-		// cluster);
-
-		cassandraStore = new CassandraStore((CassandraStoreConfiguration) conf);
-		cassandraStore.open();
-		
-		((CassandraStoreConfiguration)conf).initializeIndexingService(cassandraStore);
+		this.config = (CassandraStoreConfiguration) ctx.getConfiguration();
+	
+		cassandraStore = new CassandraStore(config);
 		
 		log.debug("in CSM.open()");
 	}
@@ -263,9 +266,9 @@ public class CassandraStoreManager extends AbstractStoreManager {
 
 		// and add some that we don't support but the abstract store does
 		// TODO take these out one by one
-		// c.add(OpenJPAConfiguration.OPTION_EMBEDDED_RELATION);
-		// c.add(OpenJPAConfiguration.OPTION_EMBEDDED_COLLECTION_RELATION);
-		// c.add(OpenJPAConfiguration.OPTION_EMBEDDED_MAP_RELATION);
+		 c.add(OpenJPAConfiguration.OPTION_EMBEDDED_RELATION);
+		 c.add(OpenJPAConfiguration.OPTION_EMBEDDED_COLLECTION_RELATION);
+		 c.add(OpenJPAConfiguration.OPTION_EMBEDDED_MAP_RELATION);
 		return c;
 	}
 
@@ -280,6 +283,14 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		}
 
 		return conf;
+	}
+	
+	/**
+	 * Create a new mutator
+	 * @return
+	 */
+	private Mutator<byte[]> createMutator(){
+	  return new MutatorImpl<byte[]>(this.config.getKeyspace(), BytesArraySerializer.get());
 	}
 
 }
