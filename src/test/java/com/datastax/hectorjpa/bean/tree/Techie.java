@@ -3,7 +3,13 @@
  */
 package com.datastax.hectorjpa.bean.tree;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import javax.persistence.DiscriminatorValue;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 
 import org.apache.openjpa.persistence.Persistent;
@@ -24,6 +30,9 @@ public class Techie extends AbstractEntity {
 
 	@Persistent
 	public String name;
+	
+	@ElementCollection
+	public Set<Role> roles;
 
 	public String getName() {
 		return name;
@@ -32,6 +41,20 @@ public class Techie extends AbstractEntity {
 	public void setName(String name) {
 		this.name = name;
 	}
+	
+	public void addRole(Role role){
+	  if(roles == null){
+	    roles = new HashSet<Role>();
+	  }
+	  
+	  roles.add(role);
+	}
+	
+	public Set<Role> getRoles(){
+	  return roles;
+	}
+	
+	
 	
 	
 	

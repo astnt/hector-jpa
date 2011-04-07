@@ -1,44 +1,46 @@
-package com.datastax.hectorjpa.meta;
+package com.datastax.hectorjpa.meta.embed;
 
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Map;
-
+import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 import me.prettyprint.cassandra.model.HColumnImpl;
-import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
+import me.prettyprint.cassandra.serializers.DynamicCompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
+import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
+import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 
-import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
+import com.datastax.hectorjpa.meta.StringColumnField;
 import com.datastax.hectorjpa.service.IndexQueue;
 
 /**
- * Class for serializing columns
+ * Class for serializing a single Embedded entity to a column value
  * 
  * @author Todd Nine
  * 
  * @param <V>
  */
-public class EmbeddedColumnField<V> extends StringColumnField<V> {
+public class EmbeddedColumnField extends StringColumnField {
 
-  protected static final Serializer<?> serializer = ByteBufferSerializer.get();
-
-  protected final EmbeddedSerializer embeddedSerializer;
+  protected static final DynamicCompositeSerializer serializer = new DynamicCompositeSerializer();
 
   protected final FieldMetaData embeddedField;
 
-  public EmbeddedColumnField(FieldMetaData fmd,
-      EmbeddedSerializer embeddedSerializer) {
+  private final EmbeddedEntityValue entityValue;
+
+  public EmbeddedColumnField(FieldMetaData fmd) {
     super(fmd.getIndex(), fmd.getName());
-    this.embeddedSerializer = embeddedSerializer;
-    this.embeddedField = fmd;
+
+    embeddedField = fmd;
+
+    ClassMetaData declaredClass = fmd.getDeclaredTypeMetaData();
+
+    entityValue = new EmbeddedEntityValue(declaredClass);
+
   }
 
   /**
@@ -57,25 +59,20 @@ public class EmbeddedColumnField<V> extends StringColumnField<V> {
       Mutator<byte[]> mutator, long clock, byte[] key, String cfName,
       IndexQueue queue) {
 
-   
     Object value = stateManager.fetch(fieldId);
-    
-    
-    //its a collection, load up the collection elements
-    if(!embeddedField.isElementCollection()){
-      OpenJPAStateManager em = stateManager.getContext().getStateManager(value);
-      em.serializing();
-      value = em.getManagedInstance();
-    }
 
     if (value == null) {
       mutator.addDeletion(key, cfName, name, StringSerializer.get(), clock);
       return;
     }
 
-    ByteBuffer bytes = embeddedSerializer.getBytes(value);
+    OpenJPAStateManager em = stateManager.getContext().getStateManager(value);
 
-    mutator.addInsertion(key, cfName, new HColumnImpl(name, bytes, clock,
+    DynamicComposite c = newComposite();
+
+    entityValue.writeToComposite(em, c);
+
+    mutator.addInsertion(key, cfName, new HColumnImpl(name, c, clock,
         StringSerializer.get(), serializer));
 
   }
@@ -97,22 +94,17 @@ public class EmbeddedColumnField<V> extends StringColumnField<V> {
       return false;
     }
 
-    ByteBuffer bytes = (ByteBuffer) serializer.fromBytes(column.getValue());
+    DynamicComposite composite = serializer.fromBytes(column.getValue());
 
-    Object value = embeddedSerializer.getObject(bytes);
-  
-    // An embedded collection, currently just directly de-serialized and set
-    if (embeddedField.isElementCollection()) {
-      stateManager.store(fieldId, value);
-    } else {
-      
-      //The entity itself is embedded read the de-serialized object and set it's state manager
-      OpenJPAStateManager em = stateManager.getContext().embed(value, null,
-          stateManager, embeddedField);
-      
-      stateManager.store(fieldId, em.getManagedInstance());
-      
-    }
+    // The entity itself is embedded read the de-serialized object and set
+    // it's state manager
+    OpenJPAStateManager embeddedSm = stateManager.getContext().embed(null,
+        null, stateManager, embeddedField);
+
+    // now load from the composite
+    entityValue.getFromComposite(embeddedSm, composite, 0);
+
+    stateManager.store(fieldId, embeddedSm.getManagedInstance());
 
     return true;
   }

@@ -6,6 +6,7 @@ package com.datastax.hectorjpa.store;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -133,7 +134,7 @@ public class CassandraAnnotationParser extends
         break;
 
       case EMBEDDEDCOLLECTION:
-        handleEmbedded(cassField);
+        handleEmbeddedCollection(cassField);
         break;
       }
 
@@ -256,15 +257,22 @@ public class CassandraAnnotationParser extends
    * @param index
    */
   private void handleEmbedded(CassandraFieldMetaData fmd) {
-    fmd.setSerializedEmbedded(true);
-    // TODO TN do we actually need this check?
-    // if (!Serializable.class.isAssignableFrom(fmd.getDeclaredType())) {
-    // throw new MetaDataException(
-    // String.format(
-    // "Field '%s' was declared as embedded, but it is not serializable on class '%s'",
-    // fmd.getName(), fmd.getDeclaringType()));
-    // }
-
+    fmd.setEmbeddedEntity(true);
+  }
+  
+  /**
+   * Parse the cassandra index expression
+   * 
+   * @param fmd
+   * @param index
+   */
+  private void handleEmbeddedCollection(CassandraFieldMetaData fmd) {
+    
+    if(!Collection.class.isAssignableFrom(fmd.getDeclaredType())){
+      throw new MetaDataException(String.format("Only collections are supported for embedding at this time.  Field %s is not an instance of %s", fmd, Collection.class.getName()));
+    }
+    
+    fmd.setEmbeddedCollectionEntity(true);
   }
 
   private enum ClassMapping {

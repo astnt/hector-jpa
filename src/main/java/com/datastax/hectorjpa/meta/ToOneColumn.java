@@ -26,7 +26,7 @@ import com.datastax.hectorjpa.store.MappingUtils;
  * 
  * @param <V>
  */
-public class ToOneColumn<V> extends SimpleColumnField<V> {
+public class ToOneColumn extends SimpleColumnField {
 
   private static final Logger log = LoggerFactory
       .getLogger(ToOneColumn.class);

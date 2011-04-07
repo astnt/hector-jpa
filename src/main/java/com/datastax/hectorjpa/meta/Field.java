@@ -3,11 +3,7 @@
  */
 package com.datastax.hectorjpa.meta;
 
-import java.util.Set;
-
-import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.mutation.Mutator;
-import me.prettyprint.hector.api.query.QueryResult;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 
@@ -20,7 +16,7 @@ import com.datastax.hectorjpa.service.IndexQueue;
  * @author Todd Nine
  *
  */
-public abstract class Field<V> {
+public abstract class Field {
   
   protected int fieldId;
   protected String name;

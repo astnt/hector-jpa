@@ -30,7 +30,6 @@ import com.datastax.hectorjpa.index.IndexDefinition;
 import com.datastax.hectorjpa.index.IndexOrder;
 import com.datastax.hectorjpa.meta.AbstractIndexOperation;
 import com.datastax.hectorjpa.meta.DiscriminatorColumn;
-import com.datastax.hectorjpa.meta.EmbeddedColumnField;
 import com.datastax.hectorjpa.meta.IndexOperation;
 import com.datastax.hectorjpa.meta.MetaCache;
 import com.datastax.hectorjpa.meta.ObjectTypeColumnStrategy;
@@ -42,6 +41,8 @@ import com.datastax.hectorjpa.meta.ToOneColumn;
 import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 import com.datastax.hectorjpa.meta.collection.OrderedCollectionField;
 import com.datastax.hectorjpa.meta.collection.UnorderedCollectionField;
+import com.datastax.hectorjpa.meta.embed.EmbeddedCollectionColumnField;
+import com.datastax.hectorjpa.meta.embed.EmbeddedColumnField;
 import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
 import com.datastax.hectorjpa.service.IndexQueue;
 
@@ -58,8 +59,8 @@ public class EntityFacade implements Serializable {
   /**
    * Fields indexed by id
    */
-  private final Map<Integer, StringColumnField<?>> columnFieldIds;
-  private final Map<Integer, AbstractCollectionField<?>> collectionFieldIds;
+  private final Map<Integer, StringColumnField> columnFieldIds;
+  private final Map<Integer, AbstractCollectionField> collectionFieldIds;
 
   /**
    * Default constructor
@@ -78,11 +79,11 @@ public class EntityFacade implements Serializable {
 
     clazz = cassMeta.getDescribedType();
 
-    columnFieldIds = new HashMap<Integer, StringColumnField<?>>();
-    collectionFieldIds = new HashMap<Integer, AbstractCollectionField<?>>();
+    columnFieldIds = new HashMap<Integer, StringColumnField>();
+    collectionFieldIds = new HashMap<Integer, AbstractCollectionField>();
 
     FieldMetaData[] fmds = cassMeta.getFields();
-    SimpleColumnField<?> columnField = null;
+    SimpleColumnField columnField = null;
 
     CassandraFieldMetaData field = null;
 
@@ -102,7 +103,7 @@ public class EntityFacade implements Serializable {
       if (field.getAssociationType() == FieldMetaData.ONE_TO_MANY
           || field.getAssociationType() == FieldMetaData.MANY_TO_MANY) {
 
-        AbstractCollectionField<?> collection = null;
+        AbstractCollectionField collection = null;
 
         if (field.getOrders().length > 0) {
           collection = new OrderedCollectionField(field);
@@ -125,17 +126,22 @@ public class EntityFacade implements Serializable {
       if (field.getAssociationType() == FieldMetaData.MANY_TO_ONE
           || field.getAssociationType() == FieldMetaData.ONE_TO_ONE) {
 
-        ToOneColumn<?> toOne = new ToOneColumn(field);
+        ToOneColumn toOne = new ToOneColumn(field);
 
         columnFieldIds.put(i, toOne);
 
         continue;
       }
 
-      if (field.isSerializedEmbedded()) {
-        EmbeddedColumnField embeddedColumn = new EmbeddedColumnField(field,
-            serializer);
-        columnFieldIds.put(embeddedColumn.getFieldId(), embeddedColumn);
+      if (field.isEmbeddedEntity()) {
+        EmbeddedColumnField embedded = new EmbeddedColumnField(field);
+        columnFieldIds.put(embedded.getFieldId(), embedded);
+        continue;
+      }
+      
+      if(field.isEmbeddedCollectionEntity()){
+        EmbeddedCollectionColumnField embedded = new EmbeddedCollectionColumnField(field);
+        columnFieldIds.put(embedded.getFieldId(), embedded);
         continue;
       }
 
@@ -206,7 +212,7 @@ public class EntityFacade implements Serializable {
     byte[] keyBytes = MappingUtils.getKeyBytes(stateManager.getObjectId());
 
     // queue up direct column deletes
-    for (AbstractCollectionField<?> field : collectionFieldIds.values()) {
+    for (AbstractCollectionField field : collectionFieldIds.values()) {
       field.removeCollection(stateManager, mutator, clock, keyBytes);
     }
 
@@ -233,8 +239,8 @@ public class EntityFacade implements Serializable {
 
     List<String> fields = new ArrayList<String>();
 
-    StringColumnField<?> field = null;
-    AbstractCollectionField<?> collectionField = null;
+    StringColumnField field = null;
+    AbstractCollectionField collectionField = null;
     Object entityId = stateManager.getObjectId();
 
     // This entity has never been persisted, we can't possibly load it
@@ -362,7 +368,7 @@ public class EntityFacade implements Serializable {
 
       if (field == null) {
 
-        AbstractCollectionField<?> collection = collectionFieldIds.get(i);
+        AbstractCollectionField collection = collectionFieldIds.get(i);
 
         // nothing to do
         if (collection == null) {

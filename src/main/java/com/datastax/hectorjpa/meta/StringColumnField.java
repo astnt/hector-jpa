@@ -14,7 +14,7 @@ import org.apache.openjpa.kernel.OpenJPAStateManager;
  * @author Todd Nine
  *
  */
-public abstract class StringColumnField<V> extends Field<V> {
+public abstract class StringColumnField extends Field {
 
   public StringColumnField(int fieldId, String name) {
     super(fieldId, name);

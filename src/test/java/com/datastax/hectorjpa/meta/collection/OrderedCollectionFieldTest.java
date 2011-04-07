@@ -13,7 +13,7 @@ public class OrderedCollectionFieldTest extends ManagedEntityTestBase {
 
   @Test
   public void testCollecitonFieldId() {
-    OrderedCollectionField<String> orderedCollectionField = new OrderedCollectionField<String>(
+    OrderedCollectionField orderedCollectionField = new OrderedCollectionField(
         JPAFacadeHelper.getMetaData(entityManagerFactory, Store.class)
             .getDeclaredField("customers"));
     assertEquals(1, orderedCollectionField.getFieldId());

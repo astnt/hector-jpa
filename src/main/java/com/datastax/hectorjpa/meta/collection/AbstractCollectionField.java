@@ -32,7 +32,7 @@ import com.datastax.hectorjpa.store.MappingUtils;
  * @author Todd Nine
  * 
  */
-public abstract class AbstractCollectionField<V> extends Field<V> {
+public abstract class AbstractCollectionField extends Field {
 
   public static final String CF_NAME = "Collection_Container";
 

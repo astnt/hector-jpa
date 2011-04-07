@@ -31,7 +31,7 @@ import com.datastax.hectorjpa.store.MappingUtils;
  * @author Todd Nine
  * 
  */
-public class UnorderedCollectionField<V> extends AbstractCollectionField<V> {
+public class UnorderedCollectionField extends AbstractCollectionField {
 
   // represents the end "id" in the key
   private static final byte[] unorderedMarker = StringSerializer.get().toBytes(

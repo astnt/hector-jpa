@@ -19,7 +19,9 @@ public class CassandraFieldMetaData extends FieldMetaData {
 
 
   
-  private boolean serializedEmbedded;
+  private boolean embeddedEntity;
+  
+  private boolean embeddedCollectionEntity;
   
 
 	protected CassandraFieldMetaData(String name, Class<?> type,
@@ -27,19 +29,38 @@ public class CassandraFieldMetaData extends FieldMetaData {
 		super(name, type, owner);
 	}
 
-	
-  /**
-   * @return the serializedEmbedded
-   */
-  public boolean isSerializedEmbedded() {
-    return serializedEmbedded;
-  }
 
   /**
-   * @param serializedEmbedded the serializedEmbedded to set
+   * @return the embeddedEntity
    */
-  public void setSerializedEmbedded(boolean serializedEmbedded) {
-    this.serializedEmbedded = serializedEmbedded;
+  public boolean isEmbeddedEntity() {
+    return embeddedEntity;
   }
+
+
+  /**
+   * @param embeddedEntity the embeddedEntity to set
+   */
+  public void setEmbeddedEntity(boolean embeddedEntity) {
+    this.embeddedEntity = embeddedEntity;
+  }
+
+
+  /**
+   * @return the embeddedCollectionEntity
+   */
+  public boolean isEmbeddedCollectionEntity() {
+    return embeddedCollectionEntity;
+  }
+
+
+  /**
+   * @param embeddedCollectionEntity the embeddedCollectionEntity to set
+   */
+  public void setEmbeddedCollectionEntity(boolean embeddedCollectionEntity) {
+    this.embeddedCollectionEntity = embeddedCollectionEntity;
+  }
+
 	
+  
 }

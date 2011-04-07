@@ -41,7 +41,7 @@ import com.datastax.hectorjpa.store.MappingUtils;
  * @author Todd Nine
  * 
  */
-public class OrderedCollectionField<V> extends AbstractCollectionField<V> {
+public class OrderedCollectionField extends AbstractCollectionField {
   private static Logger log = LoggerFactory
       .getLogger(OrderedCollectionField.class);
 

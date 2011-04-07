@@ -21,7 +21,7 @@ import com.datastax.hectorjpa.store.MappingUtils;
  * 
  * @param <V>
  */
-public class SimpleColumnField<V> extends StringColumnField<V> {
+public class SimpleColumnField extends StringColumnField {
 
   protected Serializer<?> serializer;
   protected boolean indexed;
