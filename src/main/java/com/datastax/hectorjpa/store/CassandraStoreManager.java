@@ -39,48 +39,19 @@ public class CassandraStoreManager extends AbstractStoreManager {
 	
 	public CassandraStoreManager() {
     super();
-    
-  
-    
-//    log.debug("in CSM.open()");
+ 
   }
 
   @Override
 	public ResultObjectProvider executeExtent(ClassMetaData cMetaData,
 			boolean useSubClasses, FetchConfiguration fetchConfiguration) {
-		// cMetaData is essentially the query construct
-		// the ResultObjectProvider runs the query
 		if (log.isDebugEnabled()) {
 			log.debug(
 					"in executeExtent with ClassMetaData {}: useSubClasses: {} and fetchConfiguration: {}",
 					new Object[] { cMetaData, useSubClasses, fetchConfiguration });
 		}
 
-		// ask the store for all ObjectDatas for the given type; this
-		// actually gives us all instances of the base class of the type
-		// CFMetaData
-		// ObjectData[] datas = _store.getData(meta);
-		// get the Class
-		// Class candidate = meta.getDescribedType();
-
-		// create a list of the corresponding persistent objects that
-		// match the type and subclasses criteria
-		/*
-		 * List pcs = new ArrayList(datas.length); for (int i = 0; i <
-		 * datas.length; i++) { // does this instance belong in the extent?
-		 * Class c = datas[i].getMetaData().getDescribedType(); if (c !=
-		 * candidate && (!subclasses || !candidate.isAssignableFrom(c)))
-		 * continue;
-		 * 
-		 * // look up the pc instance for the data, passing in the data // as
-		 * well so that we can take advantage of the fact that we've // already
-		 * looked it up. note that in the store manager's // initialize(),
-		 * load(), etc methods we check for this data // being passed through
-		 * and save ourselves a trip to the store // if it is present; this is
-		 * particularly important in systems // where a trip to the store can be
-		 * expensive. pcs.add(ctx.find(datas[i].getId(), fetch, null, datas[i],
-		 * 0)); } return new ListResultObjectProvider(pcs);
-		 */
+	
 		return null;
 	}
 
@@ -98,31 +69,15 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		return new CassandraStoreQuery(ep, conf);
 	}
 
-//	@Override
-//	public Class<?> getManagedType(Object oid) {
-//		return cassandraStore.getDataStoreId(oid, this.getContext());
-//	}
+	
 
 	@SuppressWarnings("unchecked")
 	@Override
 	protected Collection flush(Collection pNew, Collection pNewUpdated,
 			Collection pNewFlushedDeleted, Collection pDirty,
 			Collection pDeleted) {
-		/*
-		 * defn. of above arguments --------------------------- pNew - Objects
-		 * that should be added to the store, and that have not previously been
-		 * flushed. pNewUpdated - New objects that have been modified since they
-		 * were initially flushed. These were in persistentNew in an earlier
-		 * flush invocation. pNewFlushedDeleted - New objects that have been
-		 * deleted since they were initially flushed. These were in
-		 * persistentNew in an earlier flush invocation. pDirty - Objects that
-		 * were loaded from the data store and have since been modified.
-		 * pDeleted - Objects that were loaded from the data store and have
-		 * since been deleted. These may have been in a previous flush
-		 * invocation's persistentDirty list.
-		 */
-		// _updates = new ArrayList(pNew.size() + pDirty.size());
-		// _deletes = new ArrayList(pDeleted.size());
+	
+	  
 		long clock = config.getKeyspace().createClock();
 
 		Mutator<?> mutator = createMutator();
@@ -190,12 +145,7 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		// and the framework set the class type to the type the user queried.
 		// Just return false because it doesn't exist
 		Class<?> type = cassandraStore.getDataStoreId(stateManager.getId(), this.getContext());
-//
-//		if (Modifier.isAbstract(type.getModifiers())) {
-//			return false;
-//		}
-//		
-//		
+
 		if(type == null){
 			return false;
 		}
@@ -205,8 +155,6 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		stateManager.load(fetchConfiguration);
 		
 		return true;
-//		return cassandraStore.getObject(stateManager,
-//				stateManager.getUnloaded(fetchConfiguration));
 
 	}
 
@@ -295,16 +243,3 @@ public class CassandraStoreManager extends AbstractStoreManager {
 
 }
 
-/*
- * NOTES - OpenJPAStateManager holds the 'state' of an Entity instance -
- * ClassMetaData holds the details of the persistable Class
- * 
- * Consider using ClassCacheMgr as a MetaDataFactory
- * http://openjpa.apache.org/builds
- * /2.0.1/apache-openjpa-2.0.1/docs/manual/ref_guide_meta.html
- * 
- * Consider rolling a custom FetchPlan (or FetchConfiguration?) for CL
- * 
- * Returns the OpenJPAId.getType() returns Entity class:
- * log.debug("OID class name: {}",((OpenJPAId)idObj).getType().getName());
- */

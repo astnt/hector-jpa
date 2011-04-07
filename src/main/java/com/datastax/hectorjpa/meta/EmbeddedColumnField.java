@@ -1,6 +1,8 @@
 package com.datastax.hectorjpa.meta;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Map;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
@@ -27,15 +29,17 @@ import com.datastax.hectorjpa.service.IndexQueue;
 public class EmbeddedColumnField<V> extends StringColumnField<V> {
 
   protected static final Serializer<?> serializer = ByteBufferSerializer.get();
-  
+
   protected final EmbeddedSerializer embeddedSerializer;
 
-  public EmbeddedColumnField(FieldMetaData fmd, EmbeddedSerializer embeddedSerializer) {
+  protected final FieldMetaData embeddedField;
+
+  public EmbeddedColumnField(FieldMetaData fmd,
+      EmbeddedSerializer embeddedSerializer) {
     super(fmd.getIndex(), fmd.getName());
     this.embeddedSerializer = embeddedSerializer;
+    this.embeddedField = fmd;
   }
-
- 
 
   /**
    * Adds this field to the mutation with the given clock
@@ -48,16 +52,27 @@ public class EmbeddedColumnField<V> extends StringColumnField<V> {
    * @param cfName
    *          the column family name
    */
+  @SuppressWarnings("unchecked")
   public void addField(OpenJPAStateManager stateManager,
-      Mutator<byte[]> mutator, long clock, byte[] key, String cfName,  IndexQueue queue) {
+      Mutator<byte[]> mutator, long clock, byte[] key, String cfName,
+      IndexQueue queue) {
 
+   
     Object value = stateManager.fetch(fieldId);
     
-    if(value == null){
+    
+    //its a collection, load up the collection elements
+    if(!embeddedField.isElementCollection()){
+      OpenJPAStateManager em = stateManager.getContext().getStateManager(value);
+      em.serializing();
+      value = em.getManagedInstance();
+    }
+
+    if (value == null) {
       mutator.addDeletion(key, cfName, name, StringSerializer.get(), clock);
       return;
     }
-    
+
     ByteBuffer bytes = embeddedSerializer.getBytes(value);
 
     mutator.addInsertion(key, cfName, new HColumnImpl(name, bytes, clock,
@@ -83,10 +98,21 @@ public class EmbeddedColumnField<V> extends StringColumnField<V> {
     }
 
     ByteBuffer bytes = (ByteBuffer) serializer.fromBytes(column.getValue());
-    
-    Object value = embeddedSerializer.getObject(bytes);
 
-    stateManager.store(fieldId, value);
+    Object value = embeddedSerializer.getObject(bytes);
+  
+    // An embedded collection, currently just directly de-serialized and set
+    if (embeddedField.isElementCollection()) {
+      stateManager.store(fieldId, value);
+    } else {
+      
+      //The entity itself is embedded read the de-serialized object and set it's state manager
+      OpenJPAStateManager em = stateManager.getContext().embed(value, null,
+          stateManager, embeddedField);
+      
+      stateManager.store(fieldId, em.getManagedInstance());
+      
+    }
 
     return true;
   }

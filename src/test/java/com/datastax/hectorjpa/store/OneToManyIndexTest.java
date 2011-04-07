@@ -1,7 +1,7 @@
 package com.datastax.hectorjpa.store;
 
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import javax.persistence.EntityManager;
 
@@ -10,8 +10,8 @@ import org.junit.Test;
 import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.Customer;
 import com.datastax.hectorjpa.bean.Phone;
-import com.datastax.hectorjpa.bean.Store;
 import com.datastax.hectorjpa.bean.Phone.PhoneType;
+import com.datastax.hectorjpa.bean.Store;
 
 /**
  * Test many to many indexing through an object graph. While many-to-many in
@@ -70,6 +70,70 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
     assertEquals(luke, returnedStore.getCustomers().get(1));
     
     assertEquals(luke.getPhoneNumber(), returnedStore.getCustomers().get(1).getPhoneNumber());
+
+  }
+  
+  /**
+   * Test that after saving an entity with embedded object flush is correctly called if only
+   * the embedded entity is updated.  Causing bugs in non transactional read then a transactional write.
+   */
+  @Test
+  public void embeddedFieldOnlyDirty() {
+
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+
+    Customer james = new Customer();
+    james.setEmail("james@test.com");
+    james.setName("James");
+    james.setPhoneNumber(new Phone("+641112223333", PhoneType.MOBILE));
+
+  
+    em.persist(james);
+    em.getTransaction().commit();
+    em.close();
+
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+
+    Customer returned = em2.find(Customer.class, james.getId());
+
+    /**
+     * Make sure the stores are equal and everything is in sorted order
+     */
+    assertEquals(james, returned);
+
+    
+    //test embedded objects
+    assertEquals(james.getPhoneNumber(), returned.getPhoneNumber());
+    assertEquals(james.getPhoneNumber().getPhoneNumber(), returned.getPhoneNumber().getPhoneNumber());
+    assertEquals(james.getPhoneNumber().getType(), returned.getPhoneNumber().getType());
+    
+    
+    //now update the values
+    returned.getPhoneNumber().setPhoneNumber("+6411122255555");
+    
+    //now start a transaction and flush, this value should be retained and persisted
+    em2.getTransaction().begin();
+    
+    em2.persist(returned);
+    
+    em2.getTransaction().commit();
+    
+    em2.close();
+    
+    
+    EntityManager em3 = entityManagerFactory.createEntityManager();
+
+    Customer returned2 = em3.find(Customer.class, james.getId());
+    
+    assertEquals(returned, returned2);
+    
+    assertEquals(returned.getPhoneNumber(), returned2.getPhoneNumber());
+    assertEquals(returned.getPhoneNumber().getPhoneNumber(), returned2.getPhoneNumber().getPhoneNumber());
+    assertEquals(returned.getPhoneNumber().getType(), returned2.getPhoneNumber().getType());
+    
+    
+    
 
   }
   
