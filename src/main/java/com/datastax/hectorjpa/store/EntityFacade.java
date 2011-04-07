@@ -140,7 +140,7 @@ public class EntityFacade implements Serializable {
       }
       
       if(field.isEmbeddedCollectionEntity()){
-        EmbeddedCollectionColumnField embedded = new EmbeddedCollectionColumnField(field);
+        EmbeddedCollectionColumnField embedded = new EmbeddedCollectionColumnField(field, serializer);
         columnFieldIds.put(embedded.getFieldId(), embedded);
         continue;
       }

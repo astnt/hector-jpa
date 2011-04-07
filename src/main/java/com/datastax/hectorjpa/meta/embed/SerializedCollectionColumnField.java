@@ -19,6 +19,7 @@ import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.meta.ValueMetaData;
 
 import com.datastax.hectorjpa.meta.StringColumnField;
+import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
 import com.datastax.hectorjpa.service.IndexQueue;
 
 /**
@@ -36,16 +37,14 @@ public class SerializedCollectionColumnField extends StringColumnField {
 
   protected final FieldMetaData embeddedField;
 
-//  private final EmbeddedEntityValue entityValue;
+  protected final EmbeddedSerializer embeddedSerializer;
 
-  public SerializedCollectionColumnField(FieldMetaData fmd) {
+  public SerializedCollectionColumnField(FieldMetaData fmd, EmbeddedSerializer serializer) {
     super(fmd.getIndex(), fmd.getName());
 
     embeddedField = fmd;
-    
-    ValueMetaData declaredClass = fmd.getElement();
-
-//    entityValue = new EmbeddedEntityValue(declaredClass);
+        
+    embeddedSerializer = serializer;
 
   }
 
@@ -80,7 +79,7 @@ public class SerializedCollectionColumnField extends StringColumnField {
     
     //Write all values to the composite
     for(Object element: (Collection<?>) value){
-      c.add(element);
+      c.add(embeddedSerializer.getBytes(element));
     }
 
     mutator.addInsertion(key, cfName, new HColumnImpl<String, DynamicComposite>(name, c, clock,
@@ -113,7 +112,7 @@ public class SerializedCollectionColumnField extends StringColumnField {
     int size = composite.get(0, intSerializer);
     
     for(int i = 1; i <= size; i ++){
-      Object value = composite.get(i);
+      Object value = embeddedSerializer.getObject(composite.getComponent(i).getBytes());
       
       collection.add(value);
       

@@ -9,6 +9,7 @@ import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 
 import com.datastax.hectorjpa.meta.StringColumnField;
+import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
 import com.datastax.hectorjpa.service.IndexQueue;
 
 /**
@@ -22,16 +23,15 @@ public class EmbeddedCollectionColumnField extends StringColumnField {
 
   private final StringColumnField embeddedDelegate;
 
-  public EmbeddedCollectionColumnField(FieldMetaData fmd) {
+  public EmbeddedCollectionColumnField(FieldMetaData fmd, EmbeddedSerializer serializer) {
     super(fmd.getIndex(), fmd.getName());
 
     ClassMetaData declaredClass = fmd.getElement().getDeclaredTypeMetaData();
 
     if (declaredClass == null) {
-      embeddedDelegate = new SerializedCollectionColumnField(fmd);
+      embeddedDelegate = new SerializedCollectionColumnField(fmd, serializer);
     } else {
-      embeddedDelegate = new EmbeddedableCollectionColumnField(fmd,
-          declaredClass);
+      embeddedDelegate = new EmbeddedableCollectionColumnField(fmd,  declaredClass);
     }
 
   }
