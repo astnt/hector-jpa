@@ -104,8 +104,11 @@ public class SimpleTest extends ManagedEntityTestBase {
     em.close();
 
     EntityManager em2 = entityManagerFactory.createEntityManager();
-
+  
+    em2.getTransaction().begin();
+    
     Customer returned = em2.find(Customer.class, james.getId());
+ 
 
     /**
      * Make sure the stores are equal and everything is in sorted order
@@ -118,6 +121,7 @@ public class SimpleTest extends ManagedEntityTestBase {
     assertEquals(james.getPhoneNumber().getPhoneNumber(), returned.getPhoneNumber().getPhoneNumber());
     assertEquals(james.getPhoneNumber().getType(), returned.getPhoneNumber().getType());
     
+    em2.getTransaction().commit();
     
     //now update the values
     returned.getPhoneNumber().setPhoneNumber("+6411122255555");

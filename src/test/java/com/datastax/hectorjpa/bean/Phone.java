@@ -9,6 +9,8 @@ import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Id;
 
+import org.apache.openjpa.persistence.Persistent;
+
 /**
  * Phone to test embedded saving.  All annotations in this object are functionally useless.  However
  * the JPA spec requires an @Embeddable annotation and an @Id annotation.  These are ignored and only 
@@ -25,9 +27,10 @@ public class Phone implements Serializable{
   private static final long serialVersionUID = -6553906640946010478L;
 
 
+  @Persistent
   private String phoneNumber;
   
-  
+  @Persistent
   private PhoneType type;
   
   

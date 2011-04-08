@@ -101,10 +101,12 @@ public class EmbeddedColumnField extends StringColumnField {
     OpenJPAStateManager embeddedSm = stateManager.getContext().embed(null,
         null, stateManager, embeddedField);
 
+    stateManager.store(fieldId, embeddedSm.getManagedInstance());
+    
     // now load from the composite
     entityValue.getFromComposite(embeddedSm, composite, 0);
 
-    stateManager.store(fieldId, embeddedSm.getManagedInstance());
+    
 
     return true;
   }
