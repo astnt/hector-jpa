@@ -22,7 +22,6 @@ public class CassandraResultObjectProvider implements ResultObjectProvider {
 
 	private Set<DynamicComposite> results;
 	private StoreContext ctx;
-	private int currentIndex;
 	private CassandraClassMetaData classMeta;
 	private Serializer<Object> idSerializer;
 	private FetchConfiguration fetchConfig;
@@ -33,7 +32,6 @@ public class CassandraResultObjectProvider implements ResultObjectProvider {
 			CassandraClassMetaData classMeta) {
 		this.results = results;
 		this.ctx = ctx;
-		this.currentIndex = -1;
 		this.classMeta = classMeta;
 		this.fetchConfig = fetchConfig;
 

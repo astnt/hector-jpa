@@ -20,7 +20,6 @@ import org.apache.openjpa.meta.FieldMetaData;
 
 import com.datastax.hectorjpa.meta.StringColumnField;
 import com.datastax.hectorjpa.service.IndexQueue;
-import com.datastax.hectorjpa.store.CassandraClassMetaData;
 
 /**
  * Class for serialising a single Embedded entity to a column value
@@ -59,7 +58,6 @@ public class EmbeddedableCollectionColumnField extends StringColumnField {
    * @param cfName
    *          the column family name
    */
-  @SuppressWarnings("unchecked")
   public void addField(OpenJPAStateManager stateManager,
       Mutator<byte[]> mutator, long clock, byte[] key, String cfName,
       IndexQueue queue) {

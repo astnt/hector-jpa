@@ -56,14 +56,7 @@ public class CassandraExpressionFactory extends InMemoryExpressionFactory {
 
   @Override
   public Expression and(Expression exp1, Expression exp2) {
-    
-//    //we can always compress && expressions as the tree is created if both side are && operands
-//    if(exp1 instanceof IndexExpression && exp2 instanceof IndexExpression){
-//      return new CompressedExpression((IndexExpression)exp1, (IndexExpression)exp2);
-//    } 
-//    
-    
-    return new AndExpression(exp1, exp2);
+     return new AndExpression(exp1, exp2);
   }
 
   @Override

@@ -47,7 +47,6 @@ public class EmbeddedCollectionColumnField extends StringColumnField {
    * @param cfName
    *          the column family name
    */
-  @SuppressWarnings("unchecked")
   public void addField(OpenJPAStateManager stateManager,
       Mutator<byte[]> mutator, long clock, byte[] key, String cfName,
       IndexQueue queue) {
@@ -64,7 +63,6 @@ public class EmbeddedCollectionColumnField extends StringColumnField {
    * @param result
    * @return True if the field was loaded. False otherwise
    */
-  @SuppressWarnings("unchecked")
   public boolean readField(OpenJPAStateManager stateManager,
       QueryResult<ColumnSlice<String, byte[]>> result) {
 

@@ -129,7 +129,9 @@ public class SimpleTest extends ManagedEntityTestBase {
     //now start a transaction and flush, this value should be retained and persisted
     em2.getTransaction().begin();
     
-    em2.persist(returned);
+    Customer merged = em2.merge(returned);
+    
+    em2.persist(merged);
     
     em2.getTransaction().commit();
     

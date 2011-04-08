@@ -16,7 +16,6 @@ import me.prettyprint.hector.api.query.QueryResult;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.FieldMetaData;
-import org.apache.openjpa.meta.ValueMetaData;
 
 import com.datastax.hectorjpa.meta.StringColumnField;
 import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
@@ -59,7 +58,6 @@ public class SerializedCollectionColumnField extends StringColumnField {
    * @param cfName
    *          the column family name
    */
-  @SuppressWarnings("unchecked")
   public void addField(OpenJPAStateManager stateManager,
       Mutator<byte[]> mutator, long clock, byte[] key, String cfName,
       IndexQueue queue) {

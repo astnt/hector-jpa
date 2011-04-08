@@ -54,7 +54,6 @@ public class EmbeddedColumnField extends StringColumnField {
    * @param cfName
    *          the column family name
    */
-  @SuppressWarnings("unchecked")
   public void addField(OpenJPAStateManager stateManager,
       Mutator<byte[]> mutator, long clock, byte[] key, String cfName,
       IndexQueue queue) {
@@ -72,7 +71,7 @@ public class EmbeddedColumnField extends StringColumnField {
 
     entityValue.writeToComposite(em, c);
 
-    mutator.addInsertion(key, cfName, new HColumnImpl(name, c, clock,
+    mutator.addInsertion(key, cfName, new HColumnImpl<String, DynamicComposite>(name, c, clock,
         StringSerializer.get(), serializer));
 
   }
