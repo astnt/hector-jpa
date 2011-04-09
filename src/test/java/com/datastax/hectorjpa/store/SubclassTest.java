@@ -10,6 +10,8 @@ import org.junit.Test;
 import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.inheritance.SmsMessage;
 import com.datastax.hectorjpa.bean.inheritance.VerificationSmsMessage;
+import com.datastax.hectorjpa.bean.tree.Nerd;
+import com.datastax.hectorjpa.bean.tree.Techie;
 import com.eaio.uuid.UUID;
 
 /**
@@ -56,6 +58,37 @@ public class SubclassTest extends ManagedEntityTestBase {
     assertEquals(verification, returned);
     assertEquals(verification.getMessageId(), returned.getMessageId());
     assertEquals(verification.getPhoneNumber(), returned.getPhoneNumber());
+
+    em2.close();
+
+  }
+  
+  
+
+  /**
+   * Test simple instance with no collections to ensure we persist properly
+   * without indexing
+   */
+  @Test
+  public void subclassDoesNotLoadSuper() {
+
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+
+    Techie techie = new Techie();
+    techie.setName("testname");
+   
+    em.persist(techie);
+
+    em.getTransaction().commit();
+    em.close();
+
+    // verify we get the subclass
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+
+    Object returned = em2.find(Nerd.class, techie.getId());
+
+    assertNull(returned);
 
     em2.close();
 

@@ -19,6 +19,7 @@ import org.apache.openjpa.kernel.StoreQuery;
 import org.apache.openjpa.kernel.exps.ExpressionParser;
 import org.apache.openjpa.lib.rop.ResultObjectProvider;
 import org.apache.openjpa.meta.ClassMetaData;
+import org.apache.openjpa.util.OpenJPAId;
 import org.apache.openjpa.util.UnsupportedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,6 +148,15 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		Class<?> type = cassandraStore.getDataStoreId(stateManager.getId(), this.getContext());
 
 		if(type == null){
+			return false;
+		}
+		
+		Class<?> requestedType = ((OpenJPAId)stateManager.getId()).getType();
+		
+		/**
+		 * Requested class is a superclass of the stored type.
+		 */
+		if(!requestedType.isAssignableFrom(type)){
 			return false;
 		}
 
