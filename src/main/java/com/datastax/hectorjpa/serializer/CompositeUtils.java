@@ -6,6 +6,7 @@ package com.datastax.hectorjpa.serializer;
 import java.util.HashMap;
 import java.util.Map;
 
+import me.prettyprint.cassandra.serializers.UUIDSerializer;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.ddl.ComparatorType;
@@ -27,6 +28,8 @@ public class CompositeUtils {
     mapping.putAll(dynamic.getSerializerToComparatorMapping()); 
     
     mapping.put(TimeUUIDSerializer.class, ComparatorType.TIMEUUIDTYPE.getTypeName());
+
+    mapping.put(UUIDSerializer.class,  ComparatorType.LEXICALUUIDTYPE.getTypeName());
     
   }
   
