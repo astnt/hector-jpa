@@ -57,7 +57,6 @@ public class EntityFacade implements Serializable {
   private final ObjectTypeColumnStrategy strategy;
   private final KeyStrategy keyStrategy;
   private final NavigableMap<IndexDefinition, AbstractIndexOperation> indexOps;
-  
 
   /**
    * Fields indexed by id
@@ -141,9 +140,10 @@ public class EntityFacade implements Serializable {
         columnFieldIds.put(embedded.getFieldId(), embedded);
         continue;
       }
-      
-      if(field.isEmbeddedCollectionEntity()){
-        EmbeddedCollectionColumnField embedded = new EmbeddedCollectionColumnField(field, serializer);
+
+      if (field.isEmbeddedCollectionEntity()) {
+        EmbeddedCollectionColumnField embedded = new EmbeddedCollectionColumnField(
+            field, serializer);
         columnFieldIds.put(embedded.getFieldId(), embedded);
         continue;
       }
@@ -197,7 +197,7 @@ public class EntityFacade implements Serializable {
     } else {
       this.indexOps = null;
     }
-    
+
     keyStrategy = MappingUtils.getKeyStrategy(cassMeta);
 
   }
@@ -246,15 +246,14 @@ public class EntityFacade implements Serializable {
 
     StringColumnField field = null;
     AbstractCollectionField collectionField = null;
-    
-    byte[] key = keyStrategy.toByteArray(stateManager.getObjectId());
-  
 
-//    // This entity has never been persisted, we can't possibly load it
-//    TODO TN is this still necessary?
-//    if (MappingUtils.getTargetObject(entityId) == null) {
-//      return false;
-//    }
+    byte[] key = keyStrategy.toByteArray(stateManager.getObjectId());
+
+    // // This entity has never been persisted, we can't possibly load it
+    // TODO TN is this still necessary?
+    // if (MappingUtils.getTargetObject(entityId) == null) {
+    // return false;
+    // }
 
     // load all collections as we encounter them since they're seperate row
     // reads and construct columns for sliceQuery in primary CF
@@ -287,7 +286,6 @@ public class EntityFacade implements Serializable {
 
     fields.add(this.strategy.getColumnName());
 
-    
     // now load all the columns in the CF.
     SliceQuery<byte[], String, byte[]> query = MappingUtils.buildSliceQuery(
         key, fields, columnFamilyName, keyspace);
@@ -329,10 +327,9 @@ public class EntityFacade implements Serializable {
    * @param keyspace
    * @return
    */
-  public Class<?> getStoredEntityType(OpenJPAStateManager sm, Keyspace keyspace,
-      MetaCache metaCache) {
+  public Class<?> getStoredEntityType(OpenJPAStateManager sm,
+      Keyspace keyspace, MetaCache metaCache) {
 
-    
     Object oid = sm.getObjectId();
 
     Class<?> oidType = ((OpenJPAId) oid).getType();
@@ -342,8 +339,12 @@ public class EntityFacade implements Serializable {
       return null;
     }
 
-    byte[] rowKey = keyStrategy.toByteArray(sm.getObjectId());
-    
+    byte[] rowKey = keyStrategy.toByteArray(oid);
+
+    if (rowKey == null) {
+      return null;
+    }
+
     String descrim = strategy.getStoredType(rowKey, columnFamilyName, keyspace);
 
     if (descrim == null) {

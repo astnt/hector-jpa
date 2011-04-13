@@ -18,14 +18,14 @@ public interface KeyStrategy {
   /**
    * Get the bytes that represent this key.  Can either be a single field or a multi field
    * @param target
-   * @return
+   * @return The ByteBuffer.  Could be null if the oid is null
    */
   public ByteBuffer toByteBuffer(Object oid);
   
   /**
    * Get the value as a byte array
    * @param target
-   * @return
+   * @return The byte array.  Could be null if the oid is null
    */
   public byte[] toByteArray(Object oid);
   

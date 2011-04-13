@@ -40,7 +40,7 @@ public class CompositeKeyStrategy implements KeyStrategy {
       .get();
 
   private final String[] fieldNames;
-  
+
   @SuppressWarnings("rawtypes")
   private final Serializer[] serializers;
 
@@ -66,7 +66,7 @@ public class CompositeKeyStrategy implements KeyStrategy {
 
     fieldNames = new String[fields.length];
     serializers = new Serializer[fields.length];
-   
+
     for (int i = 0; i < fields.length; i++) {
       fieldNames[i] = fields[i].getName();
       serializers[i] = MappingUtils.getSerializer(fields[i]);
@@ -77,28 +77,33 @@ public class CompositeKeyStrategy implements KeyStrategy {
     keyClass = classMetaData.getObjectIdType();
   }
 
-
   @Override
   public ByteBuffer toByteBuffer(Object oid) {
-    return dynamicSerializer.toByteBuffer(createComposite(((OpenJPAId)oid).getIdObject()));
+    return dynamicSerializer.toByteBuffer(createComposite(((OpenJPAId) oid)
+        .getIdObject()));
   }
-  
 
   @Override
   public byte[] toByteArray(Object oid) {
-    return dynamicSerializer.toBytes(createComposite(((OpenJPAId)oid).getIdObject()));
+   Object id = ((OpenJPAId)oid).getIdObject();
+    
+    
+    if(id == null){
+      return null;
+    }
+    
+    
+    return dynamicSerializer.toBytes(createComposite(id));
   }
-
-  
-
 
   /**
    * Uses reflection to directly access the fields that are the composite
+   * 
    * @param obj
    * @return
    */
   @SuppressWarnings("unchecked")
-  private DynamicComposite createComposite(Object obj){
+  private DynamicComposite createComposite(Object obj) {
     DynamicComposite c = new DynamicComposite();
 
     // write the number of fields for this embedded object
@@ -111,14 +116,13 @@ public class CompositeKeyStrategy implements KeyStrategy {
       Field field = Reflection.findField(keyClass, fieldNames[i], true);
 
       Object value = Reflection.get(obj, field);
-      
+
       // write the value
       c.addComponent(value, serializers[i]);
     }
-    
+
     return c;
   }
-  
 
   @Override
   public Object getInstance(ByteBuffer buffer) {
@@ -129,14 +133,15 @@ public class CompositeKeyStrategy implements KeyStrategy {
   public Object getInstance(byte[] bytes) {
     return readDynamicComposite(dynamicSerializer.fromBytes(bytes));
   }
-  
+
   /**
    * Read the dynamic composite and return the object
+   * 
    * @param c
    * @return
    */
-  private Object readDynamicComposite(DynamicComposite c){
- // now have the number of fields
+  private Object readDynamicComposite(DynamicComposite c) {
+    // now have the number of fields
     int length = c.get(0, intSerializer);
 
     Object id;
