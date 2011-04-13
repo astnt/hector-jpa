@@ -4,11 +4,11 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
+import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.DynamicCompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.mutation.Mutator;
@@ -22,7 +22,7 @@ import org.apache.openjpa.util.MetaDataException;
 import org.apache.openjpa.util.Proxy;
 
 import com.datastax.hectorjpa.meta.Field;
-import com.datastax.hectorjpa.service.IndexQueue;
+import com.datastax.hectorjpa.meta.key.KeyStrategy;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.MappingUtils;
 
@@ -42,15 +42,20 @@ public abstract class AbstractCollectionField extends Field {
   protected int DEFAULT_FETCH_SIZE = 100;
 
   protected static final DynamicCompositeSerializer compositeSerializer = new DynamicCompositeSerializer();
+  
+  protected static final ByteBufferSerializer buffSerializer = ByteBufferSerializer.get();
 
-  protected Serializer<Object> idSerializer;
-  protected Class<?> targetClass;
+//  protected final KeyStrategy ownerKeyStrategy;
+  
+  protected final KeyStrategy elementKeyStrategy;
+  
+  protected final Class<?> targetClass;
 
   // The name of this entity serialzied as bytes
-  protected byte[] entityName;
+  protected final byte[] entityName;
 
   // the name of the field serialzied as bytes
-  protected byte[] fieldName;
+  protected final byte[] fieldName;
   
 
   protected int compositeFieldLength = 0;
@@ -75,7 +80,7 @@ public abstract class AbstractCollectionField extends Field {
       throw new MetaDataException(String.format("You defined type %s in a collection, but it is not a persistable entity", fmd.getElement().getDeclaredType()));
     }
     
-    this.idSerializer = MappingUtils.getSerializerForPk(elementClassMeta);
+    elementKeyStrategy = MappingUtils.getKeyStrategy(elementClassMeta);
 
     // set the class of the collection elements
     targetClass = elementClassMeta.getDescribedType();
@@ -121,15 +126,15 @@ public abstract class AbstractCollectionField extends Field {
    * @param count
    * @return
    */
-  public SliceQuery<byte[], DynamicComposite, byte[]> createQuery(Object objectId,
-      Keyspace keyspace, int count) {
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  public SliceQuery<byte[], DynamicComposite, byte[]> createQuery(byte[] ownerKey,  Keyspace keyspace, int count) {
     
     //undefined value set it to something realistic
     if(count < 0){
       count = DEFAULT_FETCH_SIZE;
     }
     
-    byte[] rowKey = constructKey(MappingUtils.getKeyBytes(objectId), getDefaultSearchmarker());
+    byte[] rowKey = constructKey(ownerKey, getDefaultSearchmarker());
     
     SliceQuery<byte[], DynamicComposite, byte[]> query = new ThriftSliceQuery(
         keyspace, BytesArraySerializer.get(), compositeSerializer,

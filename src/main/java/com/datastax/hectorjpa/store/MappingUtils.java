@@ -31,6 +31,9 @@ import org.apache.openjpa.util.OpenJPAId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.hectorjpa.meta.key.CompositeKeyStrategy;
+import com.datastax.hectorjpa.meta.key.KeyStrategy;
+import com.datastax.hectorjpa.meta.key.SingleKeyStrategy;
 import com.datastax.hectorjpa.serializer.CharSerializer;
 import com.datastax.hectorjpa.serializer.FloatSerializer;
 import com.datastax.hectorjpa.serializer.TimeUUIDSerializer;
@@ -120,7 +123,7 @@ public class MappingUtils {
     return MappingUtils.getSerializer(keys[0]);
   }
 
-  public static SliceQuery<byte[], String, byte[]> buildSliceQuery(Object idObj,
+  public static SliceQuery<byte[], String, byte[]> buildSliceQuery(byte[] key,
       List<String> columns, String cfName, Keyspace keyspace) {
     SliceQuery<byte[], String, byte[]> query = new ThriftSliceQuery(keyspace,
         BytesArraySerializer.get(), StringSerializer.get(),
@@ -131,7 +134,7 @@ public class MappingUtils {
     columns.toArray(colArray);
 
     query.setColumnNames(colArray);
-    query.setKey(getKeyBytes(idObj));
+    query.setKey(key);
     query.setColumnFamily(cfName);
     return query;
   }
@@ -160,18 +163,26 @@ public class MappingUtils {
     
   }
 
-  /**
-   * Get the byte[] representing this Id object
-   * 
-   * @param idObj
-   * @return
-   */
-  public static byte[] getKeyBytes(Object idObj) {
-    Object target = getTargetObject(idObj);
-
-    Serializer serializer = getSerializer(target);
-
-    return serializer.toBytes(target);
+//  /**
+//   * Get the byte[] representing this Id object
+//   * 
+//   * @param idObj
+//   * @return
+//   */
+//  public static byte[] getKeyBytes(Object idObj) {
+//    Object target = getTargetObject(idObj);
+//
+//    Serializer serializer = getSerializer(target);
+//
+//    return serializer.toBytes(target);
+//  }
+  
+  public static KeyStrategy getKeyStrategy(CassandraClassMetaData metaData){
+    if(metaData.getPrimaryKeyFields().length > 1){
+      return new CompositeKeyStrategy(metaData);
+    }
+    
+    return new SingleKeyStrategy(metaData);
   }
 
   /**
@@ -180,9 +191,9 @@ public class MappingUtils {
    * @see {@link SerializerTypeInferer} for specifics.
    * @param idObj
    */
-  public static Serializer getSerializer(Object idObj) {
+  public static Serializer getSerializer(Object target) {
 
-    Object target = getTargetObject(idObj);
+//    Object target = getTargetObject(idObj);
 
     Serializer serializer = classSerializerMap.get(target.getClass());
 
@@ -193,19 +204,19 @@ public class MappingUtils {
     return SerializerTypeInferer.getSerializer(target);
   }
 
-  /**
-   * If the object is an OpenJPAId, it will return the underlying identity
-   * object, if not, the passed value is returned
-   * 
-   * @param idObj
-   * @return
-   */
-  public static Object getTargetObject(Object idObj) {
-    if (idObj instanceof OpenJPAId) {
-      return ((OpenJPAId) idObj).getIdObject();
-    }
-
-    return idObj;
-  }
+//  /**
+//   * If the object is an OpenJPAId, it will return the underlying identity
+//   * object, if not, the passed value is returned
+//   * 
+//   * @param idObj
+//   * @return
+//   */
+//  public static Object getTargetObject(Object idObj) {
+//    if (idObj instanceof OpenJPAId) {
+//      return ((OpenJPAId) idObj).getIdObject();
+//    }
+//
+//    return idObj;
+//  }
 
 }

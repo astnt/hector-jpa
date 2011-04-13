@@ -3,8 +3,10 @@
  */
 package com.datastax.hectorjpa.meta.collection;
 
-import static com.datastax.hectorjpa.serializer.CompositeUtils.*;
+import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
+import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
@@ -23,7 +25,6 @@ import org.apache.openjpa.util.Proxy;
 
 import com.datastax.hectorjpa.service.IndexAudit;
 import com.datastax.hectorjpa.service.IndexQueue;
-import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
  * Represents an unordered collection
@@ -52,11 +53,11 @@ public class UnorderedCollectionField extends AbstractCollectionField {
     return unorderedMarker;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public boolean readField(OpenJPAStateManager stateManager,
       QueryResult<ColumnSlice<DynamicComposite, byte[]>> result) {
 
-    Object[] fields = null;
 
     StoreContext context = stateManager.getContext();
 
@@ -64,14 +65,15 @@ public class UnorderedCollectionField extends AbstractCollectionField {
     Collection<Object> collection = (Collection<Object>) stateManager
         .newProxy(fieldId);
 
-    DynamicComposite dynamicCol = null;
 
     for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
 
       // the id will always be the first value in a DynamicComposite type, we
       // only care
       // about that value.
-      Object nativeId = col.getName().get(0, this.idSerializer);
+      ByteBuffer buff = col.getName().get(0, buffSerializer);
+      
+      Object nativeId = elementKeyStrategy.getInstance(buff);
 
       Object saved = context.find(context.newObjectId(targetClass, nativeId),
           true, null);
@@ -140,6 +142,7 @@ public class UnorderedCollectionField extends AbstractCollectionField {
    * @param idKey
    * @param cfName
    */
+  @SuppressWarnings("rawtypes")
   private void writeDeletes(OpenJPAStateManager stateManager, Collection value,
       Mutator<byte[]> mutator, long clock, byte[] idKey, IndexQueue queue) {
 
@@ -152,26 +155,26 @@ public class UnorderedCollectionField extends AbstractCollectionField {
     // TODO TN remove from opposite index
 
     DynamicComposite idComposite = null;
-    Object currentId = null;
+    ByteBuffer currentId = null;
 
     StoreContext context = stateManager.getContext();
 
     // loop through all deleted object and create the deletes for them.
     for (Object current : objects) {
 
-      currentId = MappingUtils.getTargetObject(context.getObjectId(current));
+      currentId = elementKeyStrategy.toByteBuffer(context.getObjectId(current));
 
       // create our composite of the format of id+order*
       idComposite = newComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.addComponent(currentId, idSerializer);
+      idComposite.addComponent(currentId, buffSerializer);
 
       mutator.addDeletion(idKey, CF_NAME, idComposite, compositeSerializer,
           clock);
 
       DynamicComposite idAudit = new DynamicComposite();
-      idAudit.addComponent(currentId, idSerializer);
+      idAudit.addComponent(currentId, buffSerializer);
 
       // add the check to the audit queue
       queue.addDelete(new IndexAudit(idKey, idKey, idAudit, clock, CF_NAME, false));
@@ -191,6 +194,7 @@ public class UnorderedCollectionField extends AbstractCollectionField {
    * @param idKey
    * @param cfName
    */
+  @SuppressWarnings("rawtypes")
   private void writeAdds(OpenJPAStateManager stateManager, Collection value,
       Mutator<byte[]> mutator, long clock, byte[] idKey, IndexQueue queue) {
 
@@ -201,27 +205,28 @@ public class UnorderedCollectionField extends AbstractCollectionField {
     }
 
     DynamicComposite idComposite = null;
-    Object currentId = null;
+    ByteBuffer currentId = null;
 
     StoreContext context = stateManager.getContext();
 
     // loop through all added objects and create the writes for them.
     for (Object current : objects) {
 
-      currentId = MappingUtils.getTargetObject(context.getObjectId(current));
+      currentId = elementKeyStrategy.toByteBuffer(context.getObjectId(current));
 
+      
       // create our composite of the format of id+order*
       idComposite = newComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.addComponent(currentId, idSerializer, getCassType(idSerializer));
+      idComposite.addComponent(currentId, buffSerializer, getCassType(buffSerializer));
 
       mutator.addInsertion(idKey, CF_NAME,
           new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
               compositeSerializer, BytesArraySerializer.get()));
 
       DynamicComposite idAudit = new DynamicComposite();
-      idAudit.addComponent(currentId, idSerializer, getCassType(idSerializer));
+      idAudit.addComponent(currentId, buffSerializer, getCassType(buffSerializer));
 
       queue.addAudit(new IndexAudit(idKey, idKey, idAudit, clock, CF_NAME, false));
     }
@@ -234,6 +239,7 @@ public class UnorderedCollectionField extends AbstractCollectionField {
    * @param field
    * @return
    */
+  @SuppressWarnings("rawtypes")
   private Collection getRemoved(Collection field) {
     if (field instanceof Proxy) {
       return ((Proxy) field).getChangeTracker().getRemoved();
@@ -249,6 +255,7 @@ public class UnorderedCollectionField extends AbstractCollectionField {
    * @param field
    * @return
    */
+  @SuppressWarnings("rawtypes")
   private Collection getAdded(Collection field) {
     if (field instanceof Proxy) {
       return ((Proxy) field).getChangeTracker().getAdded();

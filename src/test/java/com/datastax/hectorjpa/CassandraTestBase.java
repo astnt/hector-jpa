@@ -160,6 +160,13 @@ public class CassandraTestBase {
     
     
     
+    cfDefList.add(new CfDef("TestKeyspace", "MagazineColumnFamily")
+    .setComparator_type(BytesType.class.getSimpleName())
+    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+    
+    
+
+    
 
 
     // collection indexing

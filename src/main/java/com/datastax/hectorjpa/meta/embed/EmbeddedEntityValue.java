@@ -113,7 +113,7 @@ public class EmbeddedEntityValue {
     int offset = startIndex+1;
     
     //every field is in a pair, so increment read by 2
-    for(int i = 0; i <  length*2; i+=2){
+    for(int i = 0; i <  length * 2; i+=2){
       String name = c.get(i+offset, stringSerializer);
       
       Object fieldValue = c.get(i+offset+1, serializerMapping.get(name));

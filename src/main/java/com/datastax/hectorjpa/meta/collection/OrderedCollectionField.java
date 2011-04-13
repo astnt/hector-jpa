@@ -6,19 +6,17 @@ package com.datastax.hectorjpa.meta.collection;
 import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
 import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
-import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
-import me.prettyprint.hector.api.query.SliceQuery;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
@@ -32,7 +30,6 @@ import com.datastax.hectorjpa.meta.CollectionOrderField;
 import com.datastax.hectorjpa.proxy.ProxyUtils;
 import com.datastax.hectorjpa.service.IndexAudit;
 import com.datastax.hectorjpa.service.IndexQueue;
-import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
  * A class that performs all operations related to collections for saving and
@@ -117,6 +114,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
    * @param stateManager
    * @param result
    */
+  @SuppressWarnings("unchecked")
   public boolean readField(OpenJPAStateManager stateManager,
       QueryResult<ColumnSlice<DynamicComposite, byte[]>> result) {
 
@@ -133,9 +131,9 @@ public class OrderedCollectionField extends AbstractCollectionField {
 
     for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
 
-      // TODO TN set the serializers in the columns before deserailizing
-      Object nativeId = col.getName().get(compositeFieldLength - 1,
-          this.idSerializer);
+      ByteBuffer idBuff = col.getName().get(compositeFieldLength - 1, buffSerializer); 
+      
+      Object nativeId = elementKeyStrategy.getInstance(idBuff);
 
       Object oid = context.newObjectId(targetClass, nativeId);
 
@@ -165,26 +163,27 @@ public class OrderedCollectionField extends AbstractCollectionField {
    * @param count
    * @return
    */
-  public SliceQuery<byte[], DynamicComposite, byte[]> createQuery(
-      Object objectId, Keyspace keyspace, String columnFamilyName, int count) {
-
-    // undefined value set it to something realistic
-    if (count < 0) {
-      count = DEFAULT_FETCH_SIZE;
-    }
-
-    byte[] key = constructKey(MappingUtils.getKeyBytes(objectId), orderedMarker);
-
-    SliceQuery<byte[], DynamicComposite, byte[]> query = new ThriftSliceQuery(
-        keyspace, BytesArraySerializer.get(), compositeSerializer,
-        BytesArraySerializer.get());
-
-    query.setRange(null, null, false, count);
-    query.setKey(key);
-    query.setColumnFamily(columnFamilyName);
-    return query;
-
-  }
+//  @Override
+//  public SliceQuery<byte[], DynamicComposite, byte[]> createQuery(
+//      Object objectId, Keyspace keyspace, String columnFamilyName, int count) {
+//
+//    // undefined value set it to something realistic
+//    if (count < 0) {
+//      count = DEFAULT_FETCH_SIZE;
+//    }
+//
+//    byte[] key = constructKey(MappingUtils.toByteBuffer(objectId), orderedMarker);
+//
+//    SliceQuery<byte[], DynamicComposite, byte[]> query = new ThriftSliceQuery(
+//        keyspace, BytesArraySerializer.get(), compositeSerializer,
+//        BytesArraySerializer.get());
+//
+//    query.setRange(null, null, false, count);
+//    query.setKey(key);
+//    query.setColumnFamily(columnFamilyName);
+//    return query;
+//
+//  }
 
   /*
    * (non-Javadoc)
@@ -218,6 +217,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
    * @param idKey
    * @param cfName
    */
+  @SuppressWarnings("rawtypes")
   private void writeDeletes(OpenJPAStateManager stateManager, Collection value,
       Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey,
       IndexQueue queue) {
@@ -236,8 +236,9 @@ public class OrderedCollectionField extends AbstractCollectionField {
 
     DynamicComposite orderComposite = null;
     DynamicComposite idComposite = null;
-    Object currentId = null;
+//    Object currentId = null;
     Object field = null;
+    ByteBuffer currentId;
 
     StoreContext context = stateManager.getContext();
 
@@ -246,7 +247,10 @@ public class OrderedCollectionField extends AbstractCollectionField {
     // loop through all deleted object and create the deletes for them.
     for (Object current : objects) {
 
-      currentId = MappingUtils.getTargetObject(context.getObjectId(current));
+      
+     currentId = elementKeyStrategy.toByteBuffer(context.getObjectId(current));
+      
+      
       if (log.isDebugEnabled()) {
         log.debug("deleting object with id {}", currentId);
       }
@@ -258,7 +262,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
       orderComposite = newComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.addComponent(currentId, idSerializer);
+      idComposite.addComponent(currentId, buffSerializer);
 
       // now construct the composite with order by the ids at the end.
       for (AbstractIndexField order : orderBy) {
@@ -275,7 +279,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
       }
 
       // add our id to the end of our order based composite
-      orderComposite.addComponent(currentId, idSerializer);
+      orderComposite.addComponent(currentId, buffSerializer);
 
       mutator.addDeletion(orderKey, CF_NAME, orderComposite,
           compositeSerializer, clock);
@@ -283,7 +287,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
           clock);
 
       DynamicComposite idAudit = newComposite();
-      idAudit.addComponent(currentId, idSerializer);
+      idAudit.addComponent(currentId, buffSerializer);
 
       // add the check to the audit queue
       queue.addDelete(new IndexAudit(orderKey, idKey, idAudit, clock, CF_NAME, true));
@@ -303,6 +307,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
    * @param idKey
    * @param cfName
    */
+  @SuppressWarnings("rawtypes")
   private void writeAdds(OpenJPAStateManager stateManager, Collection value,
       Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey,
       IndexQueue queue) {
@@ -315,7 +320,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
 
     DynamicComposite orderComposite = null;
     DynamicComposite idComposite = null;
-    Object currentId = null;
+    ByteBuffer currentId = null;
     Object field = null;
 
     StoreContext context = stateManager.getContext();
@@ -323,7 +328,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
     // loop through all added objects and create the writes for them.
     for (Object current : objects) {
 
-      currentId = MappingUtils.getTargetObject(context.getObjectId(current));
+      currentId = elementKeyStrategy.toByteBuffer(context.getObjectId(current));
 
       // create our composite of the format of id+order*
       idComposite = newComposite();
@@ -332,7 +337,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
       orderComposite = newComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.addComponent(currentId, idSerializer, getCassType(idSerializer));
+      idComposite.addComponent(currentId, buffSerializer, getCassType(buffSerializer));
 
       // now construct the composite with order by the ids at the end.
       for (AbstractIndexField order : orderBy) {
@@ -347,7 +352,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
       }
 
       // add our id to the end of our order based composite
-      orderComposite.addComponent(currentId, idSerializer, getCassType(idSerializer));
+      orderComposite.addComponent(currentId, buffSerializer, getCassType(buffSerializer));
 
       mutator.addInsertion(orderKey, CF_NAME,
           new HColumnImpl<DynamicComposite, byte[]>(orderComposite, HOLDER,
@@ -358,7 +363,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
               compositeSerializer, BytesArraySerializer.get()));
 
       DynamicComposite idAudit = newComposite();
-      idAudit.addComponent(currentId, idSerializer);
+      idAudit.addComponent(currentId, buffSerializer);
 
       // add the check to the audit queue
       queue.addAudit(new IndexAudit(orderKey, idKey, idAudit, clock, CF_NAME, true));
@@ -378,6 +383,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
    * @param idKey
    * @param cfName
    */
+  @SuppressWarnings("rawtypes")
   private void writeChanged(OpenJPAStateManager stateManager, Collection value,
       Mutator<byte[]> mutator, long clock, byte[] orderKey, byte[] idKey,
       IndexQueue queue) {
@@ -392,7 +398,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
     }
     DynamicComposite orderComposite = null;
     DynamicComposite idComposite = null;
-    Object currentId = null;
+    ByteBuffer currentId = null;
 
     boolean changed;
 
@@ -410,7 +416,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
       // can delete the oiginal columns later
       changed = false;
 
-      currentId = MappingUtils.getTargetObject(context.getObjectId(current));
+      currentId = elementKeyStrategy.toByteBuffer(context.getObjectId(current));
 
       // create our composite of the format of id+order*
       idComposite = newComposite();
@@ -421,7 +427,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
       deleteOrderComposite = newComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.addComponent(currentId, idSerializer);
+      idComposite.addComponent(currentId, buffSerializer);
 
       // now construct the composite with order by the ids at the end.
       for (AbstractIndexField order : orderBy) {
@@ -438,7 +444,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
       }
 
       // add our id to the end of our order based composite
-      orderComposite.addComponent(currentId, idSerializer);
+      orderComposite.addComponent(currentId, buffSerializer);
 
       // add our order based column to the columns
 
@@ -451,7 +457,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
               compositeSerializer, BytesArraySerializer.get()));
 
       DynamicComposite idAudit = newComposite();
-      idAudit.addComponent(currentId, idSerializer);
+      idAudit.addComponent(currentId, buffSerializer);
 
       // add the check to the audit queue
       queue.addAudit(new IndexAudit(orderKey, idKey, idAudit, clock, CF_NAME, true));

@@ -43,6 +43,7 @@ import com.datastax.hectorjpa.meta.collection.OrderedCollectionField;
 import com.datastax.hectorjpa.meta.collection.UnorderedCollectionField;
 import com.datastax.hectorjpa.meta.embed.EmbeddedCollectionColumnField;
 import com.datastax.hectorjpa.meta.embed.EmbeddedColumnField;
+import com.datastax.hectorjpa.meta.key.KeyStrategy;
 import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
 import com.datastax.hectorjpa.service.IndexQueue;
 
@@ -54,7 +55,9 @@ public class EntityFacade implements Serializable {
   private final String columnFamilyName;
   private final Class<?> clazz;
   private final ObjectTypeColumnStrategy strategy;
+  private final KeyStrategy keyStrategy;
   private final NavigableMap<IndexDefinition, AbstractIndexOperation> indexOps;
+  
 
   /**
    * Fields indexed by id
@@ -194,6 +197,8 @@ public class EntityFacade implements Serializable {
     } else {
       this.indexOps = null;
     }
+    
+    keyStrategy = MappingUtils.getKeyStrategy(cassMeta);
 
   }
 
@@ -209,7 +214,7 @@ public class EntityFacade implements Serializable {
   public void delete(OpenJPAStateManager stateManager, Mutator mutator,
       long clock, IndexQueue queue) {
 
-    byte[] keyBytes = MappingUtils.getKeyBytes(stateManager.getObjectId());
+    byte[] keyBytes = keyStrategy.toByteArray(stateManager.getObjectId());
 
     // queue up direct column deletes
     for (AbstractCollectionField field : collectionFieldIds.values()) {
@@ -241,12 +246,15 @@ public class EntityFacade implements Serializable {
 
     StringColumnField field = null;
     AbstractCollectionField collectionField = null;
-    Object entityId = stateManager.getObjectId();
+    
+    byte[] key = keyStrategy.toByteArray(stateManager.getObjectId());
+  
 
-    // This entity has never been persisted, we can't possibly load it
-    if (MappingUtils.getTargetObject(entityId) == null) {
-      return false;
-    }
+//    // This entity has never been persisted, we can't possibly load it
+//    TODO TN is this still necessary?
+//    if (MappingUtils.getTargetObject(entityId) == null) {
+//      return false;
+//    }
 
     // load all collections as we encounter them since they're seperate row
     // reads and construct columns for sliceQuery in primary CF
@@ -267,7 +275,7 @@ public class EntityFacade implements Serializable {
 
         // now query and load this field
         SliceQuery<byte[], DynamicComposite, byte[]> query = collectionField
-            .createQuery(entityId, keyspace, size);
+            .createQuery(key, keyspace, size);
 
         collectionField.readField(stateManager, query.execute());
 
@@ -279,9 +287,10 @@ public class EntityFacade implements Serializable {
 
     fields.add(this.strategy.getColumnName());
 
+    
     // now load all the columns in the CF.
     SliceQuery<byte[], String, byte[]> query = MappingUtils.buildSliceQuery(
-        entityId, fields, columnFamilyName, keyspace);
+        key, fields, columnFamilyName, keyspace);
 
     QueryResult<ColumnSlice<String, byte[]>> result = query.execute();
 
@@ -310,7 +319,7 @@ public class EntityFacade implements Serializable {
    */
   public boolean exists(OpenJPAStateManager stateManager, Keyspace keyspace,
       MetaCache metaCache) {
-    return getStoredEntityType(stateManager.getObjectId(), keyspace, metaCache) != null;
+    return getStoredEntityType(stateManager, keyspace, metaCache) != null;
   }
 
   /**
@@ -320,13 +329,11 @@ public class EntityFacade implements Serializable {
    * @param keyspace
    * @return
    */
-  public Class<?> getStoredEntityType(Object oid, Keyspace keyspace,
+  public Class<?> getStoredEntityType(OpenJPAStateManager sm, Keyspace keyspace,
       MetaCache metaCache) {
 
-    // nothing to do
-    if (oid == null) {
-      return null;
-    }
+    
+    Object oid = sm.getObjectId();
 
     Class<?> oidType = ((OpenJPAId) oid).getType();
 
@@ -335,7 +342,9 @@ public class EntityFacade implements Serializable {
       return null;
     }
 
-    String descrim = strategy.getStoredType(oid, columnFamilyName, keyspace);
+    byte[] rowKey = keyStrategy.toByteArray(sm.getObjectId());
+    
+    String descrim = strategy.getStoredType(rowKey, columnFamilyName, keyspace);
 
     if (descrim == null) {
       return null;
@@ -361,7 +370,7 @@ public class EntityFacade implements Serializable {
   public void addColumns(OpenJPAStateManager stateManager, BitSet fieldSet,
       Mutator<byte[]> m, long clockTime, IndexQueue queue) {
 
-    byte[] keyBytes = MappingUtils.getKeyBytes(stateManager.getObjectId());
+    byte[] keyBytes = keyStrategy.toByteArray(stateManager.getObjectId());
 
     for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet.nextSetBit(i + 1)) {
       StringColumnField field = columnFieldIds.get(i);

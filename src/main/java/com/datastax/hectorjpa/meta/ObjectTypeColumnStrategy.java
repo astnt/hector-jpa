@@ -30,7 +30,7 @@ public interface ObjectTypeColumnStrategy {
 	 * 
 	 * @return
 	 */
-	public String getStoredType(Object rowKey, String cfName, Keyspace keyspace);
+	public String getStoredType(byte[] rowKey, String cfName, Keyspace keyspace);
 	
 	/**
 	 * Get the class for the persisted value.

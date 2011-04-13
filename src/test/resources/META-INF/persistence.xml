@@ -15,6 +15,7 @@
     <class>com.datastax.hectorjpa.bean.Customer</class>
     <class>com.datastax.hectorjpa.bean.Phone</class>
     <class>com.datastax.hectorjpa.bean.Sale</class>
+    <class>com.datastax.hectorjpa.bean.Magazine</class>
     <class>com.datastax.hectorjpa.bean.inheritance.SmsMessage</class>
     <class>com.datastax.hectorjpa.bean.inheritance.VerificationSmsMessage</class>
     <class>com.datastax.hectorjpa.bean.inheritance.WarningSmsMessage</class>
@@ -23,11 +24,12 @@
     <class>com.datastax.hectorjpa.bean.inheritance.User</class>
     <class>com.datastax.hectorjpa.bean.inheritance.Client</class>
     <class>com.datastax.hectorjpa.bean.inheritance.Manager</class>
-    
-     <class>com.datastax.hectorjpa.bean.tree.Geek</class>
-     <class>com.datastax.hectorjpa.bean.tree.Nerd</class>
-     <class>com.datastax.hectorjpa.bean.tree.Techie</class>
-    
+
+    <class>com.datastax.hectorjpa.bean.tree.Geek</class>
+    <class>com.datastax.hectorjpa.bean.tree.Nerd</class>
+    <class>com.datastax.hectorjpa.bean.tree.Techie</class>
+
+
 
 
 
@@ -48,17 +50,21 @@
         value="com.datastax.hectorjpa.store.CassandraMetaDataRepository" />
 
       <property name="openjpa.Optimistic" value="false" />
-      <property name="openjpa.LockManager" value="none" /><!--
-      <property name="openjpa.ConnectionURL" value="localhost:9161" />
-      --><!--  explicitly disable runtime enhancement support.  It breaks a lot of proxy functionality needed for indexing -->
+      <property name="openjpa.LockManager" value="none" /><!-- <property 
+        name="openjpa.ConnectionURL" value="localhost:9161" /> --><!-- explicitly 
+        disable runtime enhancement support. It breaks a lot of proxy functionality 
+        needed for indexing -->
       <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported" />
-      <property name="openjpa.DynamicEnhancementAgent" value="false"/>
+      <property name="openjpa.DynamicEnhancementAgent" value="false" />
 
       <property name="openjpa.Log" value="log4j" />
-      
-      <!--  Used to test the serialization property.  If not set will default to java default serialization -->
-      <property name="com.datastax.jpa.embeddedserializer" value="com.datastax.hectorjpa.serialize.XStreamSerializer"/>
-      <property name="com.datastax.jpa.indexservice" value="com.datastax.hectorjpa.service.SyncInMemoryIndexingService"/>
+
+      <!-- Used to test the serialization property. If not set will default 
+        to java default serialization -->
+      <property name="com.datastax.jpa.embeddedserializer"
+        value="com.datastax.hectorjpa.serialize.XStreamSerializer" />
+      <property name="com.datastax.jpa.indexservice"
+        value="com.datastax.hectorjpa.service.SyncInMemoryIndexingService" />
       <!-- <property name="openjpa.EntityManagerFactory" value="me.prettyprint.hom.EntityManagerFactoryImpl"/> -->
 
     </properties>

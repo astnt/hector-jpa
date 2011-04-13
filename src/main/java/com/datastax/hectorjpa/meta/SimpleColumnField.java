@@ -23,7 +23,8 @@ import com.datastax.hectorjpa.store.MappingUtils;
  */
 public class SimpleColumnField extends StringColumnField {
 
-  protected Serializer<?> serializer;
+  @SuppressWarnings("rawtypes")
+  protected Serializer serializer;
   protected boolean indexed;
   protected boolean ordered;
 

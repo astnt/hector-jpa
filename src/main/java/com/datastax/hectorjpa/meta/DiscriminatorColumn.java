@@ -52,7 +52,7 @@ public class DiscriminatorColumn implements ObjectTypeColumnStrategy {
 	}
 
 	@Override
-	public String getStoredType(Object rowKey, String cfName, Keyspace keyspace) {
+	public String getStoredType(byte[] rowKey, String cfName, Keyspace keyspace) {
 
 		SliceQuery<byte[], String, byte[]> query = MappingUtils
 				.buildSliceQuery(rowKey, columns, cfName, keyspace);

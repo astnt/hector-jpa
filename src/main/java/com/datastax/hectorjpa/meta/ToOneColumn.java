@@ -1,6 +1,9 @@
 package com.datastax.hectorjpa.meta;
 
+import java.nio.ByteBuffer;
+
 import me.prettyprint.cassandra.model.HColumnImpl;
+import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -9,13 +12,14 @@ import me.prettyprint.hector.api.query.QueryResult;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.kernel.StoreContext;
-import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.util.UserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.hectorjpa.meta.key.KeyStrategy;
 import com.datastax.hectorjpa.service.IndexQueue;
+import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
@@ -31,17 +35,21 @@ public class ToOneColumn extends SimpleColumnField {
   private static final Logger log = LoggerFactory
       .getLogger(ToOneColumn.class);
 
-  protected Class<?> targetClass;
+  protected final Class<?> targetClass;
+  
+  protected final KeyStrategy keyStrategy;
 
   public ToOneColumn(FieldMetaData fmd) {
     super(fmd.getIndex(), fmd.getName());
 
     targetClass = fmd.getDeclaredType();
 
-    ClassMetaData targetClass = fmd.getDeclaredTypeMetaData();
-
-    serializer = MappingUtils
-        .getSerializerForPk(targetClass);
+    serializer = ByteBufferSerializer.get();
+    
+    CassandraClassMetaData targetClass = (CassandraClassMetaData) fmd.getDeclaredTypeMetaData();
+    
+    
+    keyStrategy = MappingUtils.getKeyStrategy(targetClass);
 
 
   }
@@ -57,6 +65,7 @@ public class ToOneColumn extends SimpleColumnField {
    * @param cfName
    *          the column family name
    */
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   @Override
   public void addField(OpenJPAStateManager stateManager,
       Mutator<byte[]> mutator, long clock, byte[] key, String cfName, IndexQueue queue) {
@@ -94,10 +103,10 @@ public class ToOneColumn extends SimpleColumnField {
     }
     
     
-    Object targetId = MappingUtils.getTargetObject(targetStateManager
-        .getObjectId());
-
-    mutator.addInsertion(key, cfName, new HColumnImpl(name, targetId, clock,
+    ByteBuffer targetBuff = keyStrategy.toByteBuffer(targetStateManager.getObjectId());
+    
+    
+    mutator.addInsertion(key, cfName, new HColumnImpl(name, targetBuff, clock,
         StringSerializer.get(), serializer));
   }
 
@@ -121,7 +130,9 @@ public class ToOneColumn extends SimpleColumnField {
       return false;
     }
 
-    Object id = serializer.fromBytes(column.getValue());
+    ByteBuffer idBuff = (ByteBuffer) serializer.fromBytes(column.getValue());
+    
+    Object id = keyStrategy.getInstance(idBuff);
 
     StoreContext context = stateManager.getContext();
 

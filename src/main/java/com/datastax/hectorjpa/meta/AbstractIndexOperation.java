@@ -4,22 +4,23 @@
 package com.datastax.hectorjpa.meta;
 
 import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
+import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
+
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Set;
 
-import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
+import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.DynamicCompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.utils.ByteBufferOutputStream;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.Serializer;
+import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.beans.HColumn;
-import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
@@ -31,6 +32,7 @@ import org.apache.openjpa.util.MetaDataException;
 import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexDefinition;
 import com.datastax.hectorjpa.index.IndexOrder;
+import com.datastax.hectorjpa.meta.key.KeyStrategy;
 import com.datastax.hectorjpa.query.IndexQuery;
 import com.datastax.hectorjpa.service.IndexAudit;
 import com.datastax.hectorjpa.service.IndexQueue;
@@ -57,6 +59,8 @@ public abstract class AbstractIndexOperation {
 
   protected static final BytesArraySerializer bytesSerializer = BytesArraySerializer
       .get();
+  
+  protected static final ByteBufferSerializer buffSerializer = ByteBufferSerializer.get();
 
   protected static int MAX_SIZE = 500;
 
@@ -76,7 +80,7 @@ public abstract class AbstractIndexOperation {
 
   protected IndexDefinition indexDefinition;
 
-  protected Serializer<Object> idSerializer;
+  protected KeyStrategy keyStrategy;
 
   public AbstractIndexOperation(CassandraClassMetaData metaData,
       IndexDefinition indexDef) {
@@ -106,10 +110,10 @@ public abstract class AbstractIndexOperation {
 
       fields[i] = new QueryIndexField(fmd);
 
-      searchIndexNameBuff.write(stringSerializer.toByteBuffer(fieldDirections[i]
-          .getName()));
-      reverseIndexNameBuff.write(stringSerializer.toByteBuffer(fieldDirections[i]
-          .getName()));
+      searchIndexNameBuff.write(stringSerializer
+          .toByteBuffer(fieldDirections[i].getName()));
+      reverseIndexNameBuff.write(stringSerializer
+          .toByteBuffer(fieldDirections[i].getName()));
 
     }
 
@@ -132,17 +136,15 @@ public abstract class AbstractIndexOperation {
           .getName()));
     }
 
-    
     searchIndexNameBuff.write(stringSerializer.toByteBuffer("search"));
     reverseIndexNameBuff.write(stringSerializer.toByteBuffer("reverse"));
-    
+
     ByteBuffer result = searchIndexNameBuff.getByteBuffer();
 
     indexName = new byte[result.limit() - result.position()];
 
     result.get(indexName);
-    
-    
+
     result = reverseIndexNameBuff.getByteBuffer();
 
     this.reverseIndexName = new byte[result.limit() - result.position()];
@@ -150,7 +152,7 @@ public abstract class AbstractIndexOperation {
     result.get(this.reverseIndexName);
 
     // now get our is serializer
-    this.idSerializer = MappingUtils.getSerializerForPk(metaData);
+    keyStrategy = MappingUtils.getKeyStrategy(metaData);
 
     // if the ID doesn't implement comparable, we can't compare our results
     if (!Comparable.class.isAssignableFrom(metaData.getPrimaryKeyFields()[0]
@@ -172,7 +174,8 @@ public abstract class AbstractIndexOperation {
    * @param mutator
    * @param clock
    */
-  public abstract void writeIndex(OpenJPAStateManager stateManager, Mutator<byte[]> mutator, long clock, IndexQueue queue);
+  public abstract void writeIndex(OpenJPAStateManager stateManager,
+      Mutator<byte[]> mutator, long clock, IndexQueue queue);
 
   /**
    * Scan the given index query and add the results to the provided set. The set
@@ -180,26 +183,29 @@ public abstract class AbstractIndexOperation {
    * 
    * @param query
    */
-  public abstract void scanIndex(IndexQuery query, Set<DynamicComposite> results, Keyspace keyspace);
-  
+  public abstract void scanIndex(IndexQuery query,
+      Set<DynamicComposite> results, Keyspace keyspace);
+
   /**
    * Remove all values from the index that were for the given statemanager
+   * 
    * @param stateManager
    * @param queue
    */
-  public void removeIndexes(OpenJPAStateManager stateManager, IndexQueue queue, long clock){
-   
-    Object key = MappingUtils.getTargetObject(stateManager.getObjectId());
-    
+  public void removeIndexes(OpenJPAStateManager stateManager, IndexQueue queue,
+      long clock) {
+
+    ByteBuffer key = keyStrategy.toByteBuffer(stateManager.getObjectId());
+
     DynamicComposite composite = newComposite();
-    
-    composite.addComponent(key, idSerializer);
-    
-    //queue the index values to be deleted
-    queue.addDelete(new IndexAudit(indexName, reverseIndexName, composite, clock, CF_NAME, true));
-    
+
+    composite.addComponent(key, buffSerializer);
+
+    // queue the index values to be deleted
+    queue.addDelete(new IndexAudit(indexName, reverseIndexName, composite,
+        clock, CF_NAME, true));
+
   }
-  
 
   /**
    * Construct the 2 composites from the fields in this index. Returns true if
@@ -210,19 +216,22 @@ public abstract class AbstractIndexOperation {
    * @return
    */
   protected boolean constructComposites(DynamicComposite newComposite,
-      DynamicComposite oldComposite, DynamicComposite tombstoneComposite, DynamicComposite auditComposite, OpenJPAStateManager stateManager) {
+      DynamicComposite oldComposite, DynamicComposite tombstoneComposite,
+      DynamicComposite auditComposite, OpenJPAStateManager stateManager) {
 
-    //TODO TN add reverse index writes
-	 
+    // TODO TN add reverse index writes
+
     boolean changed = false;
 
-    Object key = MappingUtils.getTargetObject(stateManager.getObjectId());
+    ByteBuffer key = keyStrategy.toByteBuffer(stateManager.getObjectId());
 
     Object field;
-    
-    tombstoneComposite.setComponent(0, key, idSerializer, getCassType(idSerializer), ComponentEquality.EQUAL);
-    
-    auditComposite.setComponent(0, key, idSerializer, getCassType(idSerializer), ComponentEquality.EQUAL);
+
+    tombstoneComposite.setComponent(0, key, buffSerializer,
+        getCassType(buffSerializer), ComponentEquality.EQUAL);
+
+    auditComposite.setComponent(0, key, buffSerializer,
+        getCassType(buffSerializer), ComponentEquality.EQUAL);
 
     // now construct the composite with order by the ids at the end.
     for (QueryIndexField indexField : fields) {
@@ -253,12 +262,10 @@ public abstract class AbstractIndexOperation {
     }
 
     // add it to our new value
-    
-    
 
-    newComposite.addComponent(key, idSerializer, getCassType(idSerializer));
+    newComposite.addComponent(key, buffSerializer, getCassType(buffSerializer));
 
-    oldComposite.addComponent(key, idSerializer, getCassType(idSerializer));
+    oldComposite.addComponent(key, buffSerializer, getCassType(buffSerializer));
 
     return changed;
   }
@@ -276,6 +283,7 @@ public abstract class AbstractIndexOperation {
    * @param keyspace
    *          The kesypace
    */
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   protected void executeQuery(DynamicComposite start, DynamicComposite end,
       Set<DynamicComposite> results, Keyspace keyspace) {
 
@@ -335,6 +343,7 @@ public abstract class AbstractIndexOperation {
 
   public class ResultComparator implements Comparator<DynamicComposite> {
 
+    @SuppressWarnings("unchecked")
     @Override
     public int compare(DynamicComposite c1, DynamicComposite c2) {
 
@@ -373,10 +382,14 @@ public abstract class AbstractIndexOperation {
             return compare;
           }
         }
+        
+        ByteBuffer id1 = c1.get(c1.size() -1, buffSerializer);
 
-        c1Id = (Comparable<Object>) c1.get(c1.size() - 1, idSerializer);
+        c1Id = (Comparable<Object>) keyStrategy.getInstance(id1);
+        
+        ByteBuffer id2 = c2.get(c2.size() -1, buffSerializer);
 
-        c2Id = (Comparable<Object>) c2.get(c2.size() - 1, idSerializer);
+        c2Id = (Comparable<Object>) keyStrategy.getInstance(id2);
 
         return c1Id.compareTo(c2Id);
 
@@ -401,9 +414,14 @@ public abstract class AbstractIndexOperation {
       }
 
       // if we get here the compare fields are equal. Compare ids
-      c1Id = (Comparable<Object>) c1.get(size - 1, idSerializer);
+      ByteBuffer id1 = c1.get(c1.size() -1, buffSerializer);
 
-      c2Id = (Comparable<Object>) c2.get(size - 1, idSerializer);
+      c1Id = (Comparable<Object>) keyStrategy.getInstance(id1);
+      
+      ByteBuffer id2 = c2.get(c2.size() -1, buffSerializer);
+
+      c2Id = (Comparable<Object>) keyStrategy.getInstance(id2);
+      
 
       return c1Id.compareTo(c2Id);
 

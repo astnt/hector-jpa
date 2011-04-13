@@ -145,7 +145,7 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		// because getManagedType returned null
 		// and the framework set the class type to the type the user queried.
 		// Just return false because it doesn't exist
-		Class<?> type = cassandraStore.getDataStoreId(stateManager.getId(), this.getContext());
+		Class<?> type = cassandraStore.getDataStoreId(stateManager, this.getContext());
 
 		if(type == null){
 			return false;

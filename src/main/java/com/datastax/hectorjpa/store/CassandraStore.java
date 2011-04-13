@@ -98,14 +98,10 @@ public class CassandraStore {
    * @param oid
    * @return
    */
-  public Class<?> getDataStoreId(Object oid, StoreContext ctx) {
+  public Class<?> getDataStoreId(OpenJPAStateManager sm, StoreContext ctx) {
 
     //If there's no id there's nothing to do, return null
-    if(((OpenJPAId)oid).getIdObject() == null){
-      return null;
-    }
-    
-    Class<?> requested = ((OpenJPAId) oid).getType();
+    Class<?> requested = ((OpenJPAId) sm.getObjectId()).getType();
 
     ClassMetaData metaData = ctx.getConfiguration()
         .getMetaDataRepositoryInstance()
@@ -118,7 +114,7 @@ public class CassandraStore {
       throw new MetaDataException(String.format("You attempted to load an object that has no mapping.  Please check that class %s is mapped with a %s annotation, not a %s annoation", metaData.getDescribedType(), Entity.class.getName(), MappedSuperclass.class.getName()));
     }
 
-    return entityFacade.getStoredEntityType(oid, conf.getKeyspace(), conf.getMetaCache());
+    return entityFacade.getStoredEntityType(sm, conf.getKeyspace(), conf.getMetaCache());
   }
 
   /**
