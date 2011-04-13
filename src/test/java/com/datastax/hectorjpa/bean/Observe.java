@@ -3,15 +3,20 @@
  */
 package com.datastax.hectorjpa.bean;
 
+import java.io.Serializable;
+
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.IdClass;
 import javax.persistence.ManyToOne;
 
 import org.apache.openjpa.persistence.Persistent;
 
 import com.datastax.hectorjpa.annotation.ColumnFamily;
+import com.eaio.uuid.UUID;
 
 /**
  * Represents the relationship between two users. Essentially a link on the one
@@ -29,17 +34,19 @@ import com.datastax.hectorjpa.annotation.ColumnFamily;
 // @IdClass(Follow.FollowId.class)
 @ColumnFamily("ObserveColumnFamily")
 @Entity
-public class Observe extends AbstractEntity{
-
+@IdClass(Observe.ObserveId.class)
+public class Observe {
 
   /**
    * the user observing the target
    */
-  @ManyToOne(fetch=FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @Id
   private User owner;
 
   // don't cascade delete
-  @ManyToOne(fetch=FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @Id
   private User target;
 
   /**
@@ -61,8 +68,6 @@ public class Observe extends AbstractEntity{
   @Persistent
   @Enumerated(EnumType.STRING)
   private FollowState state;
-
- 
 
   /**
    * @return the follower
@@ -156,60 +161,54 @@ public class Observe extends AbstractEntity{
     return ownerLastName;
   }
 
+  public static class ObserveId implements Serializable {
 
-  // public static class FollowId implements Serializable{
-  //
-  // /**
-  // *
-  // */
-  // private static final long serialVersionUID = 1L;
-  //
-  //
-  // private UUID follower;
-  //
-  // private UUID following;
-  //
-  //
-  // /* (non-Javadoc)
-  // * @see java.lang.Object#hashCode()
-  // */
-  // @Override
-  // public int hashCode() {
-  // final int prime = 31;
-  // int result = 1;
-  // result = prime * result + ((follower == null) ? 0 : follower.hashCode());
-  // result = prime * result
-  // + ((following == null) ? 0 : following.hashCode());
-  // return result;
-  // }
-  //
-  // /* (non-Javadoc)
-  // * @see java.lang.Object#equals(java.lang.Object)
-  // */
-  // @Override
-  // public boolean equals(Object obj) {
-  // if (this == obj)
-  // return true;
-  // if (obj == null)
-  // return false;
-  // if (getClass() != obj.getClass())
-  // return false;
-  // FollowId other = (FollowId) obj;
-  // if (follower == null) {
-  // if (other.follower != null)
-  // return false;
-  // } else if (!follower.equals(other.follower))
-  // return false;
-  // if (following == null) {
-  // if (other.following != null)
-  // return false;
-  // } else if (!following.equals(other.following))
-  // return false;
-  // return true;
-  // }
-  //
-  //
-  //
-  // }
+    /**
+   *
+   */
+    private static final long serialVersionUID = 1L;
+
+    private UUID owner;
+
+    private UUID target;
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((owner == null) ? 0 : owner.hashCode());
+      result = prime * result + ((target == null) ? 0 : target.hashCode());
+      return result;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj)
+        return true;
+      if (obj == null)
+        return false;
+      if (!(obj instanceof ObserveId))
+        return false;
+      ObserveId other = (ObserveId) obj;
+      if (owner == null) {
+        if (other.owner != null)
+          return false;
+      } else if (!owner.equals(other.owner))
+        return false;
+      if (target == null) {
+        if (other.target != null)
+          return false;
+      } else if (!target.equals(other.target))
+        return false;
+      return true;
+    }
+
+  }
 
 }
