@@ -10,6 +10,7 @@ import org.apache.openjpa.kernel.FetchConfiguration;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.lib.rop.ResultObjectProvider;
 
+import com.datastax.hectorjpa.meta.key.KeyStrategy;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.MappingUtils;
 
@@ -20,13 +21,16 @@ import com.datastax.hectorjpa.store.MappingUtils;
  */
 public class CassandraResultObjectProvider implements ResultObjectProvider {
 
-	private Set<DynamicComposite> results;
-	private StoreContext ctx;
-	private CassandraClassMetaData classMeta;
-	private Serializer<Object> idSerializer;
-	private FetchConfiguration fetchConfig;
+	
+	private final StoreContext ctx;
+	private final CassandraClassMetaData classMeta;
+	private final FetchConfiguration fetchConfig;
+  private final KeyStrategy keyStrategy;
+  
+  
 	private Iterator<DynamicComposite> iterator;
-
+	private Set<DynamicComposite> results;
+	
 	public CassandraResultObjectProvider(Set<DynamicComposite> results,
 			StoreContext ctx, FetchConfiguration fetchConfig,
 			CassandraClassMetaData classMeta) {
@@ -35,7 +39,7 @@ public class CassandraResultObjectProvider implements ResultObjectProvider {
 		this.classMeta = classMeta;
 		this.fetchConfig = fetchConfig;
 
-		idSerializer = MappingUtils.getSerializerForPk(classMeta);
+		keyStrategy = MappingUtils.getKeyStrategy(classMeta);
 	}
 
 	@Override
@@ -56,7 +60,7 @@ public class CassandraResultObjectProvider implements ResultObjectProvider {
 
 		int length = current.getComponents().size();
 
-		Object id = current.get(length - 1, idSerializer);
+		Object id = keyStrategy.getInstance(current.getComponent(length -1).getBytes());
 
 		Object jpaId = ctx.newObjectId(classMeta.getDescribedType(), id);
 

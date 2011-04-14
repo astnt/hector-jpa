@@ -10,6 +10,7 @@ import javax.persistence.IdClass;
 import org.apache.openjpa.persistence.Persistent;
 
 import com.datastax.hectorjpa.annotation.ColumnFamily;
+import com.datastax.hectorjpa.annotation.Index;
 
 /**
  * Simple class that tests composite keys
@@ -20,6 +21,7 @@ import com.datastax.hectorjpa.annotation.ColumnFamily;
 @ColumnFamily("MagazineColumnFamily")
 @Entity
 @IdClass(Magazine.MagazineId.class)
+@Index(fields="title")
 public class Magazine{
 
   @Id

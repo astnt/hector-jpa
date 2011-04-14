@@ -72,9 +72,11 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
   public int compareTo(IndexDefinition def2) {
 
     int compare = 0;
-
+    
+    
     IndexOrder[] def2Order = def2.getOrderFields();
 
+    if(def2Order.length > 0)
     if (orderFields.length > def2Order.length) {
       return 1;
     } else if (orderFields.length < def2Order.length) {

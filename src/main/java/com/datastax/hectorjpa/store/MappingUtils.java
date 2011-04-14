@@ -103,25 +103,6 @@ public class MappingUtils {
     return serializer;
   }
   
-  /**
-   * Get serializers for the primary key
-   * @param cmd
-   * @return
-   */
-  public static Serializer<Object> getSerializerForPk(ClassMetaData cmd){
-    
-    FieldMetaData[] keys = cmd.getPrimaryKeyFields();
-    
-    if(keys.length == 0){
-      throw new MetaDataException(String.format("You declared a class %s without a primary key field", cmd.getDescribedType()));
-    }
-    
-    if(keys.length > 1){
-      throw new MetaDataException(String.format("You declared a class %s with more than one primary key field.  This is currently unsupported", cmd.getDescribedType()));
-    }
-                              
-    return MappingUtils.getSerializer(keys[0]);
-  }
 
   public static SliceQuery<byte[], String, byte[]> buildSliceQuery(byte[] key,
       List<String> columns, String cfName, Keyspace keyspace) {
