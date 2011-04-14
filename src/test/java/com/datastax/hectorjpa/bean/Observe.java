@@ -5,6 +5,7 @@ package com.datastax.hectorjpa.bean;
 
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -12,6 +13,7 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapsId;
 
 import org.apache.openjpa.persistence.Persistent;
 
@@ -31,7 +33,6 @@ import com.eaio.uuid.UUID;
  * @author Todd Nine
  * 
  */
-// @IdClass(Follow.FollowId.class)
 @ColumnFamily("ObserveColumnFamily")
 @Entity
 @IdClass(Observe.ObserveId.class)
@@ -40,13 +41,13 @@ public class Observe {
   /**
    * the user observing the target
    */
-  @ManyToOne(fetch = FetchType.LAZY)
   @Id
+  @ManyToOne(fetch = FetchType.LAZY, cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
   private User owner;
 
   // don't cascade delete
-  @ManyToOne(fetch = FetchType.LAZY)
   @Id
+  @ManyToOne(fetch = FetchType.LAZY, cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
   private User target;
 
   /**
@@ -172,7 +173,9 @@ public class Observe {
 
     private UUID target;
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.lang.Object#hashCode()
      */
     @Override
@@ -184,7 +187,9 @@ public class Observe {
       return result;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override

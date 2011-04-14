@@ -103,7 +103,7 @@ public class ToOneColumn extends SimpleColumnField {
     }
     
     
-    ByteBuffer targetBuff = keyStrategy.toByteBuffer(targetStateManager.getObjectId());
+    ByteBuffer targetBuff = keyStrategy.toByteBuffer(targetStateManager.fetchObjectId());
     
     
     mutator.addInsertion(key, cfName, new HColumnImpl(name, targetBuff, clock,

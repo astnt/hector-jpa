@@ -101,7 +101,7 @@ public class CassandraStore {
   public Class<?> getDataStoreId(OpenJPAStateManager sm, StoreContext ctx) {
 
     //If there's no id there's nothing to do, return null
-    Class<?> requested = ((OpenJPAId) sm.getObjectId()).getType();
+    Class<?> requested = ((OpenJPAId) sm.fetchObjectId()).getType();
 
     ClassMetaData metaData = ctx.getConfiguration()
         .getMetaDataRepositoryInstance()

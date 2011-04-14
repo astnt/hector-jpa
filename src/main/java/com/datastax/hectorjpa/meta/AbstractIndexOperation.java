@@ -195,7 +195,7 @@ public abstract class AbstractIndexOperation {
   public void removeIndexes(OpenJPAStateManager stateManager, IndexQueue queue,
       long clock) {
 
-    ByteBuffer key = keyStrategy.toByteBuffer(stateManager.getObjectId());
+    ByteBuffer key = keyStrategy.toByteBuffer(stateManager.fetchObjectId());
 
     DynamicComposite composite = newComposite();
 
@@ -223,7 +223,7 @@ public abstract class AbstractIndexOperation {
 
     boolean changed = false;
 
-    ByteBuffer key = keyStrategy.toByteBuffer(stateManager.getObjectId());
+    ByteBuffer key = keyStrategy.toByteBuffer(stateManager.fetchObjectId());
 
     Object field;
 

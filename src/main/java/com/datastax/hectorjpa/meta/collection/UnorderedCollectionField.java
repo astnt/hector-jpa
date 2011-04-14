@@ -158,11 +158,20 @@ public class UnorderedCollectionField extends AbstractCollectionField {
     ByteBuffer currentId = null;
 
     StoreContext context = stateManager.getContext();
+    
+
+    OpenJPAStateManager currentSm = null;
+    Object oid = null;
+
 
     // loop through all deleted object and create the deletes for them.
     for (Object current : objects) {
 
-      currentId = elementKeyStrategy.toByteBuffer(context.getObjectId(current));
+
+      currentSm = context.getStateManager(current);
+      oid = currentSm.fetchObjectId();
+      currentId = elementKeyStrategy.toByteBuffer(oid);
+
 
       // create our composite of the format of id+order*
       idComposite = newComposite();
@@ -208,11 +217,19 @@ public class UnorderedCollectionField extends AbstractCollectionField {
     ByteBuffer currentId = null;
 
     StoreContext context = stateManager.getContext();
+    
+    OpenJPAStateManager currentSm = null;
+    Object oid = null;
+
 
     // loop through all added objects and create the writes for them.
     for (Object current : objects) {
 
-      currentId = elementKeyStrategy.toByteBuffer(context.getObjectId(current));
+
+      currentSm = context.getStateManager(current);
+      oid = currentSm.fetchObjectId();
+      currentId = elementKeyStrategy.toByteBuffer(oid);
+
 
       
       // create our composite of the format of id+order*

@@ -214,7 +214,7 @@ public class EntityFacade implements Serializable {
   public void delete(OpenJPAStateManager stateManager, Mutator mutator,
       long clock, IndexQueue queue) {
 
-    byte[] keyBytes = keyStrategy.toByteArray(stateManager.getObjectId());
+    byte[] keyBytes = keyStrategy.toByteArray(stateManager.fetchObjectId());
 
     // queue up direct column deletes
     for (AbstractCollectionField field : collectionFieldIds.values()) {
@@ -247,7 +247,7 @@ public class EntityFacade implements Serializable {
     StringColumnField field = null;
     AbstractCollectionField collectionField = null;
 
-    byte[] key = keyStrategy.toByteArray(stateManager.getObjectId());
+    byte[] key = keyStrategy.toByteArray(stateManager.fetchObjectId());
 
     // // This entity has never been persisted, we can't possibly load it
     // TODO TN is this still necessary?
@@ -330,7 +330,7 @@ public class EntityFacade implements Serializable {
   public Class<?> getStoredEntityType(OpenJPAStateManager sm,
       Keyspace keyspace, MetaCache metaCache) {
 
-    Object oid = sm.getObjectId();
+    Object oid = sm.fetchObjectId();
 
     Class<?> oidType = ((OpenJPAId) oid).getType();
 
@@ -371,7 +371,7 @@ public class EntityFacade implements Serializable {
   public void addColumns(OpenJPAStateManager stateManager, BitSet fieldSet,
       Mutator<byte[]> m, long clockTime, IndexQueue queue) {
 
-    byte[] keyBytes = keyStrategy.toByteArray(stateManager.getObjectId());
+    byte[] keyBytes = keyStrategy.toByteArray(stateManager.fetchObjectId());
 
     for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet.nextSetBit(i + 1)) {
       StringColumnField field = columnFieldIds.get(i);
