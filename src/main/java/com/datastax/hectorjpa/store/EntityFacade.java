@@ -367,7 +367,6 @@ public class EntityFacade implements Serializable {
    *          A set to add all audit operations to for collection and index
    *          verification
    */
-  @SuppressWarnings({ "rawtypes", "unchecked" })
   public void addColumns(OpenJPAStateManager stateManager, BitSet fieldSet,
       Mutator<byte[]> m, long clockTime, IndexQueue queue) {
 
