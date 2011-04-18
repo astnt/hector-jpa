@@ -14,6 +14,7 @@ import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.DynamicCompositeSerializer;
+import me.prettyprint.cassandra.serializers.IntegerSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.utils.ByteBufferOutputStream;
 import me.prettyprint.hector.api.Keyspace;
@@ -49,6 +50,11 @@ import com.datastax.hectorjpa.store.MappingUtils;
 public abstract class AbstractIndexOperation {
 
   public static final String CF_NAME = "Index_Container";
+  
+  /**
+   * The version to prepend to every row key for indexing
+   */
+  public static final int INDEXING_VERSION = 1;
 
   protected static byte[] HOLDER = new byte[] { 0 };
 
@@ -95,6 +101,10 @@ public abstract class AbstractIndexOperation {
     ByteBufferOutputStream searchIndexNameBuff = new ByteBufferOutputStream();
     ByteBufferOutputStream reverseIndexNameBuff = new ByteBufferOutputStream();
 
+    
+    searchIndexNameBuff.write(IntegerSerializer.get().toByteBuffer(INDEXING_VERSION));
+    reverseIndexNameBuff.write(IntegerSerializer.get().toByteBuffer(INDEXING_VERSION));
+    
     FieldMetaData fmd = null;
 
     for (int i = 0; i < fieldDirections.length; i++) {

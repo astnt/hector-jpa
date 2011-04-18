@@ -35,6 +35,11 @@ import com.datastax.hectorjpa.store.MappingUtils;
 public abstract class AbstractCollectionField extends Field {
 
   public static final String CF_NAME = "Collection_Container";
+  
+  /**
+   * The version to prepend to every row key for indexing
+   */
+  public static final int COLLECTION_VERSION = 1;
 
   protected static byte[] HOLDER = new byte[] { 0 };
 
@@ -103,11 +108,12 @@ public abstract class AbstractCollectionField extends Field {
    */
   protected byte[] constructKey(byte[] entityIdBytes, byte[] marker) {
 
-    byte[] key = new byte[entityName.length + fieldName.length
+    byte[] key = new byte[4 + entityName.length + fieldName.length
         + entityIdBytes.length + marker.length];
 
     ByteBuffer buff = ByteBuffer.wrap(key);
 
+    buff.putInt(COLLECTION_VERSION);
     buff.put(entityName);
     buff.put(entityIdBytes);
     buff.put(fieldName);
