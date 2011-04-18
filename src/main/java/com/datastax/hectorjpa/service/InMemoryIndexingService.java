@@ -207,6 +207,8 @@ public abstract class InMemoryIndexingService implements IndexingService {
 
     ColumnSlice<DynamicComposite, byte[]> slice = null;
 
+    HColumn<DynamicComposite, byte[]> maxColumn = null;
+
     Mutator<byte[]> mutator = createMutator();
 
     do {
@@ -218,6 +220,8 @@ public abstract class InMemoryIndexingService implements IndexingService {
       slice = query.execute().get();
 
       for (HColumn<DynamicComposite, byte[]> col : slice.getColumns()) {
+
+        // our previous max is too old.
         deleteColumn(audit, col.getName(), mutator);
 
         // reset the start point for the next page

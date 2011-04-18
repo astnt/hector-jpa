@@ -93,7 +93,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
     byte[] idKey = constructKey(key, idMarker);
 
     // could have been removed, blitz everything from the index
-    if (field == null) {
+    if (field == null || ((Collection<?>)field).isEmpty()) {
       mutator.addDeletion(orderKey, CF_NAME, null, null);
       mutator.addDeletion(idKey, CF_NAME, null, null);
       return;

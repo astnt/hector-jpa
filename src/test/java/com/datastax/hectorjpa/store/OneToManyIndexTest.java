@@ -3,6 +3,8 @@ package com.datastax.hectorjpa.store;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import java.util.List;
+
 import javax.persistence.EntityManager;
 
 import org.junit.Test;
@@ -70,6 +72,64 @@ public class OneToManyIndexTest extends ManagedEntityTestBase {
     assertEquals(luke, returnedStore.getCustomers().get(1));
     
     assertEquals(luke.getPhoneNumber(), returnedStore.getCustomers().get(1).getPhoneNumber());
+
+  }
+  
+
+  /**
+   * It appears that changetrackers do not work with only a single element in the set.  In this case we have to detect set size of 0 and remove the reference in the collections.
+   * without indexing
+   */
+  @Test
+  public void lastElementRemoved() {
+
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+
+    Store store = new Store();
+    store.setName("Manhattan");
+
+    Customer james = new Customer();
+    james.setEmail("james@test.com");
+    james.setName("James");
+    james.setPhoneNumber(new Phone("+641112223333", PhoneType.MOBILE));
+
+
+    store.addCustomer(james);
+
+    em.persist(store);
+    em.getTransaction().commit();
+    em.close();
+
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+
+    Store returnedStore = em2.find(Store.class, store.getId());
+
+    /**
+     * Make sure the stores are equal and everything is in sorted order
+     */
+    assertEquals(store, returnedStore);
+
+    assertEquals(james, returnedStore.getCustomers().get(0));
+    
+    //test embedded objects
+    assertEquals(james.getPhoneNumber(), returnedStore.getCustomers().get(0).getPhoneNumber());
+
+
+    em2.getTransaction().begin();
+    
+    returnedStore.getCustomers().remove(0);
+    
+    em2.getTransaction().commit();
+    
+    EntityManager em3 = entityManagerFactory.createEntityManager();
+    
+    returnedStore = em3.find(Store.class, store.getId());
+    
+    List<Customer> customers = returnedStore.getCustomers();
+    
+    
+    assertEquals(0, customers.size());
 
   }
  
