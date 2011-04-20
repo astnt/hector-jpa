@@ -90,7 +90,11 @@ public abstract class AbstractIndexField {
    */
   public void addFieldWrite(DynamicComposite composite, Object instance) {
     // write the current value from the proxy
-    Object current = ProxyUtils.getAdded(instance);
+    Object current = null;
+    
+    if(instance != null){
+      current = ProxyUtils.getAdded(instance);
+    }
 
     composite.addComponent(current, serializer, getCassType(serializer));
 

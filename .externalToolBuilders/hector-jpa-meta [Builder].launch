@@ -3,7 +3,7 @@
 <stringAttribute key="bad_container_name" value="/hector-jpa/.externalToolBuilders"/>
 <stringAttribute key="org.eclipse.debug.core.ATTR_REFRESH_SCOPE" value="${working_set:&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;resources&gt;&#10;&lt;item path=&quot;/hector-jpa/target/generated-sources&quot; type=&quot;2&quot;/&gt;&#10;&lt;item path=&quot;/model/target/generated-sources&quot; type=&quot;2&quot;/&gt;&#10;&lt;item path=&quot;/model/target/model-1.0.0-beta3-SNAPSHOT.jar&quot; type=&quot;1&quot;/&gt;&#10;&lt;item path=&quot;/model/target/model-1.0.0-beta3-SNAPSHOT.jar.md5&quot; type=&quot;1&quot;/&gt;&#10;&lt;item path=&quot;/model/target/model-1.0.0-beta3-SNAPSHOT.jar.sha1&quot; type=&quot;1&quot;/&gt;&#10;&lt;item path=&quot;/model/target/model-1.0.0-beta3-SNAPSHOT.jar.sha256&quot; type=&quot;1&quot;/&gt;&#10;&lt;/resources&gt;}"/>
 <booleanAttribute key="org.eclipse.debug.ui.ATTR_LAUNCH_IN_BACKGROUND" value="false"/>
-<booleanAttribute key="org.eclipse.ui.externaltools.ATTR_BUILDER_ENABLED" value="true"/>
+<booleanAttribute key="org.eclipse.ui.externaltools.ATTR_BUILDER_ENABLED" value="false"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="/usr/bin/env"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_RUN_BUILD_KINDS" value="full,incremental,auto,"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="mvn -o generate-test-sources"/>

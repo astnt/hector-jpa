@@ -6,12 +6,14 @@ package com.datastax.hectorjpa.proxy;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.apache.openjpa.util.ChangeTracker;
 import org.apache.openjpa.util.Proxy;
 
 /**
  * Utility class for dealing with changes and proxied objects
+ * 
  * @author Todd Nine
- *
+ * 
  */
 public class ProxyUtils {
 
@@ -37,23 +39,23 @@ public class ProxyUtils {
    * @param field
    * @return
    */
-  public static Collection<?>  getChanged(Collection<?>  field) {
+  public static Collection<?> getChanged(Collection<?> field) {
     if (field instanceof Proxy) {
       return ((Proxy) field).getChangeTracker().getChanged();
     }
-    
+
     return null;
 
   }
-  
 
   /**
-   * Get added values. If the item is not a proxy it is returned as a Collection<?> 
+   * Get added values. If the item is not a proxy it is returned as a
+   * Collection<?>
    * 
    * @param field
    * @return
    */
-  public static Collection<?>  getAdded(Collection<?>  field) {
+  public static Collection<?> getAdded(Collection<?> field) {
     if (field instanceof Proxy) {
       return ((Proxy) field).getChangeTracker().getAdded();
     }
@@ -61,7 +63,7 @@ public class ProxyUtils {
     return field;
 
   }
-  
+
   /**
    * Return the first object that was removed if the collection is a proxy
    * preset then null is returned
@@ -71,7 +73,14 @@ public class ProxyUtils {
    */
   public static Object getRemoved(Object field) {
     if (field instanceof Proxy) {
-      Iterator<?> resultItr = ((Proxy) field).getChangeTracker().getRemoved()
+      
+      ChangeTracker tracker = ((Proxy) field).getChangeTracker();
+
+      if (tracker == null) {
+        return null;
+      }
+
+      Iterator<?> resultItr = tracker.getRemoved()
           .iterator();
 
       if (resultItr.hasNext()) {
@@ -85,16 +94,21 @@ public class ProxyUtils {
   }
 
   /**
-   * Get added values. If the item is not a proxy it is returned as a
-   * collection
+   * Get added values. If the item is not a proxy it is returned as a collection
    * 
    * @param field
    * @return
    */
   public static Object getAdded(Object field) {
     if (field instanceof Proxy) {
-      Iterator<?> resultItr = ((Proxy) field).getChangeTracker().getAdded()
-          .iterator();
+
+      ChangeTracker tracker = ((Proxy) field).getChangeTracker();
+
+      if (tracker == null) {
+        return field;
+      }
+
+      Iterator<?> resultItr = tracker.getAdded().iterator();
 
       if (resultItr.hasNext()) {
         return resultItr.next();
@@ -104,18 +118,22 @@ public class ProxyUtils {
     return field;
 
   }
-  
+
   /**
-   * Get added values. If the item is not a proxy it is returned as a
-   * collection
+   * Get added values. If the item is not a proxy it is returned as a collection
    * 
    * @param field
    * @return
    */
   public static Object getChanged(Object field) {
     if (field instanceof Proxy) {
-      Iterator<?> resultItr = ((Proxy) field).getChangeTracker().getChanged()
-          .iterator();
+      ChangeTracker tracker = ((Proxy) field).getChangeTracker();
+
+      if (tracker == null) {
+        return field;
+      }
+
+      Iterator<?> resultItr = tracker.getChanged().iterator();
 
       if (resultItr.hasNext()) {
         return resultItr.next();
