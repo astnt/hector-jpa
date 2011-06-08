@@ -163,4 +163,17 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
     return matchCount == indexedFields.length;
   }
 
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("IndexDefinition[")
+    .append("indexedFields=")
+    .append(Arrays.asList(indexedFields))
+    .append(",orderedFields=")
+    .append(Arrays.asList(orderFields))
+    .append("]");
+    return sb.toString();
+  }
+
+  
 }

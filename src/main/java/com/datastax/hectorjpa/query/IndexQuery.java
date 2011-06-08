@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.openjpa.meta.FieldMetaData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 
@@ -15,7 +17,7 @@ import com.datastax.hectorjpa.store.CassandraClassMetaData;
  *
  */
 public class IndexQuery {
-
+  private static Logger log = LoggerFactory.getLogger(IndexQuery.class);
   private Map<FieldMetaData, FieldExpression> expressions = new HashMap<FieldMetaData, FieldExpression>();
   private CassandraClassMetaData metaData;
   
@@ -26,6 +28,7 @@ public class IndexQuery {
   
   
   public void addExpression(FieldExpression expression){
+    log.debug("adding fieldExpression: {}", expression);
     expressions.put(expression.getField(), expression);
   }
   
@@ -35,6 +38,7 @@ public class IndexQuery {
    * @return
    */
   public FieldExpression getExpression(FieldMetaData fieldName){
+    log.debug("FieldExpression for {} is {}", fieldName, expressions.get(fieldName));
     return expressions.get(fieldName);
   }
 

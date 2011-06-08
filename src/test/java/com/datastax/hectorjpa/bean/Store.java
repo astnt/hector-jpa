@@ -8,6 +8,8 @@ import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 
@@ -23,6 +25,7 @@ import com.datastax.hectorjpa.annotation.Index;
 @ColumnFamily("StoreColumnFamily")
 //create an index used only for iteration on querying
 @Index(fields="name")
+@NamedQueries({ @NamedQuery(name = "byname", query = "select s from Store as s where s.name = :n")})
 public class Store extends AbstractEntity {
 
   @Persistent

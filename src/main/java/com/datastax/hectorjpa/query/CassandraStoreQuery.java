@@ -62,7 +62,9 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
   protected ResultObjectProvider executeQuery(Executor ex, ClassMetaData base,
       ClassMetaData[] types, boolean subclasses, ExpressionFactory[] facts,
       QueryExpressions[] parsed, Object[] params, Range range) {
-
+    log.debug("In executeQuery");
+    // TODO zznate: need to pass through params[] for JQL support!
+    // IndexExpressionVisitor does not have a view into this with 'parameters'
     IndexExpressionVisitor visitor = new IndexExpressionVisitor(
         (CassandraClassMetaData) base);
 
@@ -78,11 +80,13 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
     // TODO TN, this is a mess, comparator operations for index ops aren't
     // properly setup in the class structure. Refactor to fix this
 
+    
     for (IndexQuery query : queries) {
-
+      
       indexOp = getIndexOp(query, parsed[0].ordering, parsed[0].ascending,
           (CassandraClassMetaData) base);
-
+      log.debug("indexOp: {} and base: {} with range: {}", new Object[]{indexOp, base,range});
+      
       if (columnResults == null) {
         columnResults = new TreeSet<DynamicComposite>(indexOp.getComprator());
       }
@@ -161,6 +165,7 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
       // the index
 
       fields[i] = new FieldOrder(current.getField().getName(), true);
+      log.debug("in getIndexOp with field: {}", fields[i]);
     }
 
     for (int i = 0; i < orders.length; i++) {

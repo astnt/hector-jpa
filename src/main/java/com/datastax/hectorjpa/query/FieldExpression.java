@@ -132,6 +132,22 @@ public class FieldExpression {
     
     throw new UnsupportedException(String.format("Sorry the type %s could not be incremement to generate a slice query", value.getClass()));
   }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("start=")
+    .append(start)
+    .append(",end=")
+    .append(end)
+    .append(",startEquality=")
+    .append(startEquality)
+    .append(",endEquality=")
+    .append(endEquality)
+    .append(",field=")
+    .append(field.getName());
+    return sb.toString(); 
+  }
   
   
   

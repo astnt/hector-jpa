@@ -9,8 +9,12 @@ import org.apache.openjpa.kernel.exps.CandidatePath;
 import org.apache.openjpa.kernel.exps.Expression;
 import org.apache.openjpa.kernel.exps.ExpressionVisitor;
 import org.apache.openjpa.kernel.exps.Literal;
+import org.apache.openjpa.kernel.exps.Parameter;
+import org.apache.openjpa.kernel.exps.Val;
 import org.apache.openjpa.kernel.exps.Value;
 import org.apache.openjpa.meta.FieldMetaData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.query.ast.EqualExpression;
 import com.datastax.hectorjpa.query.ast.GreaterThanEqualExpression;
@@ -27,7 +31,7 @@ import com.datastax.hectorjpa.store.CassandraClassMetaData;
  * 
  */
 public class IndexExpressionVisitor implements ExpressionVisitor {
-
+  private static Logger log = LoggerFactory.getLogger(IndexExpressionVisitor.class);
   private List<IndexQuery> queries = new ArrayList<IndexQuery>();
   private int currentIndex;
   private CassandraClassMetaData classMetaData;
@@ -70,6 +74,8 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
     
     
     if(exp instanceof EqualExpression){
+      log.debug("in EqualsExpression with {}", value);
+      
       FieldExpression field = getFieldExpression();
       field.setStart(value, ComponentEquality.EQUAL);
       //greater than equal is actually inclusive
@@ -94,6 +100,7 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
     }
     
     if(exp instanceof GreaterThanEqualExpression){
+      log.debug("in GreaterThanEqualsExpression with {}", value);
       FieldExpression field = getFieldExpression();
       field.setStart(value, ComponentEquality.GREATER_THAN_EQUAL);
       
@@ -112,22 +119,30 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 
   @Override
   public void enter(Value val) {
+    log.debug("in enter with value {}", val);
     // it's a variable add it to the field
     if (val instanceof CandidatePath) {
       field = ((CandidatePath) val).last();
-
+      log.debug("field name {} and {}", field.getName(), field);
       return;
 
     }
 
     if (val instanceof Literal) {
       value = ((Literal)val).getValue();
+    } else if (val instanceof Parameter) {
+      
+      
+      
+      
+      
+      log.debug("reset with value {}", val);
     }
-
   }
 
   @Override
   public void exit(Value val) {
+    log.debug("in exit with value {}", val);
     // TODO Auto-generated method stub
 
   }

@@ -7,6 +7,7 @@ import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
 import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Set;
 
@@ -29,6 +30,8 @@ import me.prettyprint.hector.api.query.SliceQuery;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.util.MetaDataException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexDefinition;
@@ -48,6 +51,8 @@ import com.datastax.hectorjpa.store.MappingUtils;
  * 
  */
 public abstract class AbstractIndexOperation {
+  
+  private static final Logger log = LoggerFactory.getLogger(AbstractIndexOperation.class);
 
   public static final String CF_NAME = "Index_Container";
   
@@ -309,9 +314,9 @@ public abstract class AbstractIndexOperation {
       sliceQuery.setRange(startScan, end, false, MAX_SIZE);
       sliceQuery.setKey(indexName);
       sliceQuery.setColumnFamily(CF_NAME);
-
+      log.debug("in executeQuery with sliceQuery {}", sliceQuery);
       result = sliceQuery.execute();
-
+      log.debug("found result {}", result.get());
       for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
         start = col.getName();
         results.add(start);
@@ -438,5 +443,25 @@ public abstract class AbstractIndexOperation {
     }
 
   }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("fields=")
+    .append(Arrays.asList(fields))
+    .append(",indexDefinition=")
+    .append(indexDefinition)
+    .append(",indexName=")
+    .append(indexName)
+    .append(",keyStrategy=")
+    .append(keyStrategy)
+    .append(",orders=")
+    .append(Arrays.asList(orders))
+    .append(",reverseIndexName=")
+    .append(reverseIndexName);
+    return sb.toString();
+  }
+  
+  
 
 }
