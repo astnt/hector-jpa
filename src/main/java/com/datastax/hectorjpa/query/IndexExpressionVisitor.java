@@ -5,6 +5,7 @@ import java.util.List;
 
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 
+import org.apache.openjpa.jdbc.kernel.exps.Param;
 import org.apache.openjpa.kernel.exps.CandidatePath;
 import org.apache.openjpa.kernel.exps.Expression;
 import org.apache.openjpa.kernel.exps.ExpressionVisitor;
@@ -38,19 +39,19 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
   
   private FieldMetaData field;
   private Object value;
-  
-  
+  private Object[] params;
+  private int paramIndex;
 
-  public IndexExpressionVisitor(CassandraClassMetaData classMetaData) {
+  public IndexExpressionVisitor(CassandraClassMetaData classMetaData, Object[] params) {
     this.classMetaData = classMetaData;
     
     this.queries.add(new IndexQuery(this.classMetaData));
     this.currentIndex = 0;
+    this.params = params;
   }
 
   @Override
   public void enter(Expression exp) {
-
     // we've encountered a Or Expression which will require a new query, create
     // one
     if (exp instanceof OrExpression) {
@@ -74,6 +75,10 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
     
     
     if(exp instanceof EqualExpression){
+      if (value == null) {
+          value = params[paramIndex];
+      }
+      
       log.debug("in EqualsExpression with {}", value);
       
       FieldExpression field = getFieldExpression();
@@ -130,13 +135,11 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 
     if (val instanceof Literal) {
       value = ((Literal)val).getValue();
-    } else if (val instanceof Parameter) {
-      
-      
-      
-      
-      
+    } else if (val instanceof Param) {      
       log.debug("reset with value {}", val);
+      Param param = (Param)val;
+      paramIndex = param.getIndex();
+      value = null;
     }
   }
 
