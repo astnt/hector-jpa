@@ -3,6 +3,7 @@ package com.datastax.hectorjpa.store;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -703,4 +704,55 @@ public class SearchTest extends ManagedEntityTestBase {
     em2.close();
   }
 
+  /**
+   * Search multiple items with the in operator
+   */
+  @Test
+  public void namedQueryWithIn() {
+
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+
+    Store fifth = new Store();
+    fifth.setName("namedQuery-5");
+
+    em.persist(fifth);
+
+    Store fourth = new Store();
+    fourth.setName("namedQuery-4");
+
+    em.persist(fourth);
+
+    Store third = new Store();
+    third.setName("namedQuery-3");
+
+    em.persist(third);
+    System.out.println(third.getName());
+    Store second = new Store();
+    second.setName("namedQuery-2");
+
+    em.persist(second);
+
+    Store first = new Store();
+    first.setName("namedQuery-1");
+
+    em.persist(first);    
+    em.getTransaction().commit();    
+    em.close();
+
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+    em2.getTransaction().begin();
+    
+    Query query = em2.createNamedQuery("inname");
+    ArrayList<String> names = new ArrayList<String>();
+    names.add("namedQuery-3");
+    names.add("namedQuery-1");
+    query.setParameter("n","namedQuery-1");
+    
+    Store found = (Store)query.getResultList().get(0);
+    assertEquals(third, found);
+    
+    em2.getTransaction().commit();
+    em2.close();
+  }
 }

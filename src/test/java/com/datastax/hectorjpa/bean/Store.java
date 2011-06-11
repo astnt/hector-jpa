@@ -25,7 +25,8 @@ import com.datastax.hectorjpa.annotation.Index;
 @ColumnFamily("StoreColumnFamily")
 //create an index used only for iteration on querying
 @Index(fields="name")
-@NamedQueries({ @NamedQuery(name = "byname", query = "select s from Store as s where s.name = :n")})
+@NamedQueries({ @NamedQuery(name = "byname", query = "select s from Store as s where s.name = :n"),
+    @NamedQuery(name = "inname", query = "select s from Store as s where s.name in (:n)")})
 public class Store extends AbstractEntity {
 
   @Persistent
