@@ -10,7 +10,6 @@ import org.apache.openjpa.kernel.exps.Expression;
 import org.apache.openjpa.kernel.exps.ExpressionVisitor;
 import org.apache.openjpa.kernel.exps.Literal;
 import org.apache.openjpa.kernel.exps.Parameter;
-import org.apache.openjpa.kernel.exps.Val;
 import org.apache.openjpa.kernel.exps.Value;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.slf4j.Logger;
@@ -35,15 +34,13 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
   private List<IndexQuery> queries = new ArrayList<IndexQuery>();
   private int currentIndex;
   private CassandraClassMetaData classMetaData;
-  
+  private Object[] params;
   private FieldMetaData field;
   private Object value;
   
-  
-
-  public IndexExpressionVisitor(CassandraClassMetaData classMetaData) {
+  public IndexExpressionVisitor(CassandraClassMetaData classMetaData, Object[] params) {
     this.classMetaData = classMetaData;
-    
+    this.params = params;
     this.queries.add(new IndexQuery(this.classMetaData));
     this.currentIndex = 0;
   }
@@ -131,12 +128,8 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
     if (val instanceof Literal) {
       value = ((Literal)val).getValue();
     } else if (val instanceof Parameter) {
-      
-      
-      
-      
-      
       log.debug("reset with value {}", val);
+      value = ((Parameter)val).getValue(params);
     }
   }
 
