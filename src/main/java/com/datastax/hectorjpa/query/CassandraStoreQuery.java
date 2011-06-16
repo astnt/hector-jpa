@@ -66,7 +66,7 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
     // TODO zznate: need to pass through params[] for JQL support!
     // IndexExpressionVisitor does not have a view into this with 'parameters'
     IndexExpressionVisitor visitor = new IndexExpressionVisitor(
-        (CassandraClassMetaData) base, params);
+        (CassandraClassMetaData) base);
 
     parsed[0].filter.acceptVisit(visitor);
 
