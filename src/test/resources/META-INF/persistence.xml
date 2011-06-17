@@ -16,6 +16,7 @@
     <class>com.datastax.hectorjpa.bean.Phone</class>
     <class>com.datastax.hectorjpa.bean.Sale</class>
     <class>com.datastax.hectorjpa.bean.Magazine</class>
+    <class>com.datastax.hectorjpa.bean.Foo1</class>
     <class>com.datastax.hectorjpa.bean.inheritance.SmsMessage</class>
     <class>com.datastax.hectorjpa.bean.inheritance.VerificationSmsMessage</class>
     <class>com.datastax.hectorjpa.bean.inheritance.WarningSmsMessage</class>

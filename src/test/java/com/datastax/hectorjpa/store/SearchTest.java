@@ -2,9 +2,11 @@ package com.datastax.hectorjpa.store;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -23,6 +25,7 @@ import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.Customer;
 import com.datastax.hectorjpa.bean.Phone;
 import com.datastax.hectorjpa.bean.Phone.PhoneType;
+import com.datastax.hectorjpa.bean.Foo1;
 import com.datastax.hectorjpa.bean.Sale;
 import com.datastax.hectorjpa.bean.Sale_;
 import com.datastax.hectorjpa.bean.Store;
@@ -39,6 +42,7 @@ import com.datastax.hectorjpa.bean.tree.Nerd;
 import com.datastax.hectorjpa.bean.tree.Nerd_;
 import com.datastax.hectorjpa.bean.tree.Techie;
 import com.datastax.hectorjpa.bean.tree.Techie_;
+import com.google.common.collect.Sets;
 
 /**
  * 
@@ -751,6 +755,45 @@ public class SearchTest extends ManagedEntityTestBase {
     
     Store found = (Store)query.getResultList().get(0);
     assertEquals(third, found);
+    
+    em2.getTransaction().commit();
+    em2.close();
+  }
+  
+  /**
+   * Make sure when we delete an entity it's removed from the index
+   */
+  @Test
+  public void searchRange() {
+
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+    final Set<Integer> others = Sets.newHashSet();
+
+    for (int i = 0; i < 5; i++) {
+        Foo1 fooa = new Foo1();
+        fooa.setOther(i);
+        em.persist(fooa);
+        others.add(i);
+    }
+
+    em.getTransaction().commit();    
+    em.close();
+
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+    em2.getTransaction().begin();
+    
+    TypedQuery<Foo1> query = em2.createNamedQuery("byother", Foo1.class);
+    query.setParameter("otherLow", 0);
+    query.setParameter("otherHigh", 10);
+
+    for (final Foo1 foo : query.getResultList()) {
+        others.remove(foo.getOther());
+    }
+    
+    if (!others.isEmpty()) {
+        fail("Set still contains elements: " + others);
+    }
     
     em2.getTransaction().commit();
     em2.close();
