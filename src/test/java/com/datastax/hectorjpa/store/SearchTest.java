@@ -747,14 +747,17 @@ public class SearchTest extends ManagedEntityTestBase {
     EntityManager em2 = entityManagerFactory.createEntityManager();
     em2.getTransaction().begin();
     
-    Query query = em2.createNamedQuery("inname");
-    ArrayList<String> names = new ArrayList<String>();
+    final TypedQuery<Store> query = em2.createNamedQuery("inname", Store.class);
+    final ArrayList<String> names = new ArrayList<String>();
     names.add("namedQuery-3");
     names.add("namedQuery-1");
-    query.setParameter("n","namedQuery-1");
+    query.setParameter("n",names);
     
-    Store found = (Store)query.getResultList().get(0);
-    assertEquals(third, found);
+    for (final Store found : query.getResultList()) {
+        names.remove(found.getName());
+    }
+    
+    assertTrue(names.isEmpty());
     
     em2.getTransaction().commit();
     em2.close();
