@@ -84,14 +84,14 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
     
     if(exp instanceof LessThanEqualExpression){
       FieldExpression field = getFieldExpression();
-      field.setEnd(value, ComponentEquality.LESS_THAN_EQUAL);
+      field.setEnd(value, ComponentEquality.GREATER_THAN_EQUAL);
       
       return;
     }
     
     if(exp instanceof LessThanExpression){
       FieldExpression field = getFieldExpression();
-      field.setEnd(value, ComponentEquality.EQUAL);
+      field.setEnd(value, ComponentEquality.LESS_THAN_EQUAL);
       
       return;
     }
@@ -99,14 +99,14 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
     if(exp instanceof GreaterThanEqualExpression){
       log.debug("in GreaterThanEqualsExpression with {}", value);
       FieldExpression field = getFieldExpression();
-      field.setStart(value, ComponentEquality.GREATER_THAN_EQUAL);
+      field.setStart(value, ComponentEquality.EQUAL);
       
       return;
     }
     
     if(exp instanceof GreaterThanExpression){
       FieldExpression field = getFieldExpression();
-      field.setStart(value, ComponentEquality.EQUAL);
+      field.setStart(value, ComponentEquality.GREATER_THAN_EQUAL);
       
       return;
     }

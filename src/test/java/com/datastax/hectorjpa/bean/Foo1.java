@@ -12,7 +12,14 @@ import javax.persistence.NamedQuery;
 @Entity
 @ColumnFamily("Foo1ColumnFamily")
 @Index(fields = "other")
-@NamedQueries({ @NamedQuery(name = "byother", query = "select t from Foo1 as t where t.other >= :otherLow and t.other < :otherHigh") })
+@NamedQueries({ @NamedQuery(name = "searchRangeIncludeMinExcludeMax",
+        query = "select t from Foo1 as t where t.other >= :otherLow and t.other < :otherHigh"),
+        @NamedQuery(name = "searchRangeIncludeMinIncludeMax",
+                query = "select t from Foo1 as t where t.other >= :otherLow and t.other <= :otherHigh"),
+        @NamedQuery(name = "searchRangeExcludeMinExcludeMax",
+                query = "select t from Foo1 as t where t.other > :otherLow and t.other < :otherHigh"),
+        @NamedQuery(name = "searchRangeExcludeMinIncludeMax",
+                query = "select t from Foo1 as t where t.other > :otherLow and t.other <= :otherHigh") })
 public class Foo1 {
     @Id
     @GeneratedValue
