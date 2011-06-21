@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.datastax.hectorjpa.meta;
+package com.datastax.hectorjpa.index;
 
 import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 
@@ -17,7 +17,6 @@ import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.hectorjpa.index.IndexDefinition;
 import com.datastax.hectorjpa.query.FieldExpression;
 import com.datastax.hectorjpa.query.IndexQuery;
 import com.datastax.hectorjpa.service.IndexAudit;

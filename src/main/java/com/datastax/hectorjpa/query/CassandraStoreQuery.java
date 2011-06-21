@@ -23,9 +23,9 @@ import org.apache.openjpa.util.UnsupportedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.hectorjpa.index.AbstractIndexOperation;
 import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexOrder;
-import com.datastax.hectorjpa.meta.AbstractIndexOperation;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.CassandraStoreConfiguration;
 import com.datastax.hectorjpa.store.EntityFacade;

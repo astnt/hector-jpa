@@ -1,4 +1,4 @@
-package com.datastax.hectorjpa.meta;
+package com.datastax.hectorjpa.index;
 
 import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
 import me.prettyprint.hector.api.Serializer;

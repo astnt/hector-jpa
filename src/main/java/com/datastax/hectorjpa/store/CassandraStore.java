@@ -5,15 +5,8 @@ import java.util.BitSet;
 import javax.persistence.Entity;
 import javax.persistence.MappedSuperclass;
 
-import me.prettyprint.cassandra.model.MutatorImpl;
-import me.prettyprint.cassandra.serializers.BytesArraySerializer;
-import me.prettyprint.cassandra.service.CassandraHostConfigurator;
-import me.prettyprint.cassandra.service.OperationType;
 import me.prettyprint.hector.api.Cluster;
-import me.prettyprint.hector.api.ConsistencyLevelPolicy;
-import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
@@ -23,12 +16,8 @@ import org.apache.openjpa.util.MetaDataException;
 import org.apache.openjpa.util.OpenJPAId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.support.MetaDataAccessException;
 
-import com.datastax.hectorjpa.consitency.JPAConsistency;
-import com.datastax.hectorjpa.service.InMemoryIndexingService;
 import com.datastax.hectorjpa.service.IndexQueue;
-import com.datastax.hectorjpa.service.IndexingService;
 
 /**
  * Holds the {@link Cluster} and {@link Keyspace} references needed for
@@ -41,9 +30,6 @@ public class CassandraStore {
 
   private static final Logger log = LoggerFactory
       .getLogger(CassandraStore.class);
-
-  // bitset used on deleting fields
-  private static final BitSet NONE = new BitSet();
 
  
   private final CassandraStoreConfiguration conf;
@@ -126,6 +112,7 @@ public class CassandraStore {
    * @param queue 
    * @return
    */
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   public void storeObject(Mutator mutator, OpenJPAStateManager stateManager,
       BitSet fields, long clock, IndexQueue queue) {
 

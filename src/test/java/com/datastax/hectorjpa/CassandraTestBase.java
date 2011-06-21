@@ -21,7 +21,7 @@ import org.apache.cassandra.thrift.KsDef;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.BeforeClass;
 
-import com.datastax.hectorjpa.meta.IndexOperation;
+import com.datastax.hectorjpa.index.IndexOperation;
 import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 
 public class CassandraTestBase {

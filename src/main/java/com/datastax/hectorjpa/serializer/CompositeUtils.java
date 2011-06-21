@@ -64,4 +64,25 @@ public class CompositeUtils {
    return ComparatorType.BYTESTYPE.getTypeName();
   }
   
+  /**
+   * Get the Cassandra component serializer, optionally adding the reversed parameter (reverse=true) if ascending == false
+   * @param instance
+   * @param reversed
+   * @return
+   */
+  public static String getCassType(Serializer<?> instance, boolean ascending){
+	  
+	  if(ascending){
+		  return getCassType(instance);
+	  }
+	  
+	  StringBuffer buffer = new StringBuffer();
+	  buffer.append(getCassType(instance));
+	  buffer.append("(reversed=true)");
+	  return buffer.toString();
+	  
+	  
+	  
+  }
+  
 }

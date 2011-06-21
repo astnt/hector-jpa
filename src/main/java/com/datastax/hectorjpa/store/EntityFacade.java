@@ -25,18 +25,18 @@ import org.apache.openjpa.util.OpenJPAId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.hectorjpa.index.AbstractIndexOperation;
 import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexDefinition;
+import com.datastax.hectorjpa.index.IndexOperation;
 import com.datastax.hectorjpa.index.IndexOrder;
-import com.datastax.hectorjpa.meta.AbstractIndexOperation;
+import com.datastax.hectorjpa.index.SubclassIndexOperation;
 import com.datastax.hectorjpa.meta.DiscriminatorColumn;
-import com.datastax.hectorjpa.meta.IndexOperation;
 import com.datastax.hectorjpa.meta.MetaCache;
 import com.datastax.hectorjpa.meta.ObjectTypeColumnStrategy;
 import com.datastax.hectorjpa.meta.SimpleColumnField;
 import com.datastax.hectorjpa.meta.StaticColumn;
 import com.datastax.hectorjpa.meta.StringColumnField;
-import com.datastax.hectorjpa.meta.SubclassIndexOperation;
 import com.datastax.hectorjpa.meta.ToOneColumn;
 import com.datastax.hectorjpa.meta.collection.AbstractCollectionField;
 import com.datastax.hectorjpa.meta.collection.OrderedCollectionField;
@@ -72,7 +72,6 @@ public class EntityFacade implements Serializable {
    * @param mappingUtils
    *          The mapping utils to use for byte mapping
    */
-  @SuppressWarnings("rawtypes")
   public EntityFacade(ClassMetaData classMetaData, EmbeddedSerializer serializer) {
 
     CassandraClassMetaData cassMeta = (CassandraClassMetaData) classMetaData;
@@ -165,8 +164,6 @@ public class EntityFacade implements Serializable {
 
     }
 
-    // TODO TN pick the strategy if theres a discriminator
-
     String discriminator = cassMeta.getDiscriminatorColumn();
 
     if (discriminator != null || cassMeta.isAbstract()) {
@@ -210,7 +207,7 @@ public class EntityFacade implements Serializable {
    * @param mutator
    * @param clock
    */
-  @SuppressWarnings({ "unchecked", "rawtypes", "unused" })
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public void delete(OpenJPAStateManager stateManager, Mutator mutator,
       long clock, IndexQueue queue) {
 
@@ -400,9 +397,8 @@ public class EntityFacade implements Serializable {
     // add our object type column strategy
     this.strategy.write(m, clockTime, keyBytes, columnFamilyName);
 
-    /**
-     * We have indexes, write them
-     */
+    
+    //We have indexes, write them
     if (indexOps != null) {
       for (AbstractIndexOperation op : indexOps.values()) {
         op.writeIndex(stateManager, m, clockTime, queue);

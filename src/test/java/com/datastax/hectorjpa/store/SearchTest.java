@@ -1035,7 +1035,7 @@ public class SearchTest extends ManagedEntityTestBase {
 	 * Tests descending order with subclassing
 	 */
 	@Test
-	public void subclassSearchWithOrderTest() {
+	public void subclassSearchWithDescendingOrderTest() {
 
 		long start1 = 1308633528l;
 		long start2 = 2308633528l;

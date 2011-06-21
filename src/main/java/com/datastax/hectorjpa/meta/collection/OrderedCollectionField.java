@@ -25,7 +25,7 @@ import org.apache.openjpa.meta.Order;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.hectorjpa.meta.AbstractIndexField;
+import com.datastax.hectorjpa.index.AbstractIndexField;
 import com.datastax.hectorjpa.meta.CollectionOrderField;
 import com.datastax.hectorjpa.proxy.ProxyUtils;
 import com.datastax.hectorjpa.service.IndexAudit;

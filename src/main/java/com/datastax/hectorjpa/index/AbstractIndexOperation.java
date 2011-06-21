@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.datastax.hectorjpa.meta;
+package com.datastax.hectorjpa.index;
 
 import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
 import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
@@ -33,11 +33,10 @@ import org.apache.openjpa.util.MetaDataException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.hectorjpa.index.FieldOrder;
-import com.datastax.hectorjpa.index.IndexDefinition;
-import com.datastax.hectorjpa.index.IndexOrder;
 import com.datastax.hectorjpa.meta.key.KeyStrategy;
 import com.datastax.hectorjpa.query.IndexQuery;
+import com.datastax.hectorjpa.query.QueryIndexField;
+import com.datastax.hectorjpa.query.QueryOrderField;
 import com.datastax.hectorjpa.service.IndexAudit;
 import com.datastax.hectorjpa.service.IndexQueue;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
@@ -234,7 +233,6 @@ public abstract class AbstractIndexOperation {
       DynamicComposite oldComposite, DynamicComposite tombstoneComposite,
       DynamicComposite auditComposite, OpenJPAStateManager stateManager) {
 
-    // TODO TN add reverse index writes
 
     boolean changed = false;
 
@@ -363,7 +361,7 @@ public abstract class AbstractIndexOperation {
       Comparable<Object> c1Id = null;
       Comparable<Object> c2Id = null;
 
-      // no order by, just order by each field starting from the bginning
+      // no order by, just order by each field starting from the beginning
       if (orders.length == 0) {
 
         size = fields.length;

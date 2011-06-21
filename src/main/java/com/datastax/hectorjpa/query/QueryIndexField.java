@@ -1,4 +1,4 @@
-package com.datastax.hectorjpa.meta;
+package com.datastax.hectorjpa.query;
 
 
 import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
@@ -10,6 +10,9 @@ import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.hectorjpa.index.AbstractIndexField;
+
 
 /**
  * Inner class to encapsulate order field logic and meta data

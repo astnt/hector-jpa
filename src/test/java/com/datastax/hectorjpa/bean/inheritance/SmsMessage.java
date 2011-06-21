@@ -24,7 +24,7 @@ import com.datastax.hectorjpa.bean.AbstractEntity;
 @Entity
 @DiscriminatorValue("SmsMessage")
 @ColumnFamily("SmsMessageColumnFamily")
-@Index(fields="phoneNumber, messageId", order="createdDate")
+@Index(fields="phoneNumber, messageId", order="createdDate desc")
 public abstract class SmsMessage extends AbstractEntity {
 
 	@Persistent
