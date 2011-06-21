@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -34,6 +35,7 @@ import com.datastax.hectorjpa.bean.inheritance.Client;
 import com.datastax.hectorjpa.bean.inheritance.Manager;
 import com.datastax.hectorjpa.bean.inheritance.Person;
 import com.datastax.hectorjpa.bean.inheritance.Person_;
+import com.datastax.hectorjpa.bean.inheritance.UberWarningSmsMessage;
 import com.datastax.hectorjpa.bean.inheritance.User;
 import com.datastax.hectorjpa.bean.inheritance.User_;
 import com.datastax.hectorjpa.bean.tree.Geek;
@@ -901,5 +903,45 @@ public class SearchTest extends ManagedEntityTestBase {
     assertTrue(others.contains(0));
     em2.getTransaction().commit();
     em2.close();
+  }
+  
+  @Test
+  public void subclassSearchTest() {
+
+	  
+	long start = 1308633528l;
+	
+	
+	
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+    
+    
+//    
+//    
+//    UberWarningSmsMessage sms1 = new UberWarningSmsMessage();
+//    sms1.setCreatedDate(new Date(start));
+//    
+//    
+//    
+//    
+//    em.getTransaction().commit();    
+//    em.close();
+//
+//    EntityManager em2 = entityManagerFactory.createEntityManager();
+//    em2.getTransaction().begin();
+//    
+//    TypedQuery<Foo1> query = em2.createNamedQuery("searchRangeExcludeMinIncludeMax", Foo1.class);
+//    query.setParameter("otherLow", 0);
+//    query.setParameter("otherHigh", 9);
+//
+//    for (final Foo1 foo : query.getResultList()) {
+//        others.remove(foo.getOther());
+//    }
+//    
+//    assertEquals(1, others.size());
+//    assertTrue(others.contains(0));
+//    em2.getTransaction().commit();
+//    em2.close();
   }
 }

@@ -12,6 +12,7 @@ import javax.persistence.MappedSuperclass;
 import org.apache.openjpa.persistence.Persistent;
 
 import com.datastax.hectorjpa.annotation.ColumnFamily;
+import com.datastax.hectorjpa.annotation.Index;
 import com.datastax.hectorjpa.bean.AbstractEntity;
 
 /**
@@ -23,6 +24,7 @@ import com.datastax.hectorjpa.bean.AbstractEntity;
 @Entity
 @DiscriminatorValue("SmsMessage")
 @ColumnFamily("SmsMessageColumnFamily")
+@Index(fields="phoneNumber, messageId", order="createdDate")
 public abstract class SmsMessage extends AbstractEntity {
 
 	@Persistent

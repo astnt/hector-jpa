@@ -20,6 +20,7 @@
     <class>com.datastax.hectorjpa.bean.inheritance.SmsMessage</class>
     <class>com.datastax.hectorjpa.bean.inheritance.VerificationSmsMessage</class>
     <class>com.datastax.hectorjpa.bean.inheritance.WarningSmsMessage</class>
+    <class>com.datastax.hectorjpa.bean.inheritance.UberWarningSmsMessage</class>
     <class>com.datastax.hectorjpa.bean.inheritance.IncomingSmsMessage</class>
     <class>com.datastax.hectorjpa.bean.inheritance.Person</class>
     <class>com.datastax.hectorjpa.bean.inheritance.User</class>
