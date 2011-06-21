@@ -1092,7 +1092,7 @@ public class SearchTest extends ManagedEntityTestBase {
 		
 		assertEquals(2, results.size());
 		assertEquals(sms2, results.get(0));
-		assertEquals(sms1, results.get(0));
+		assertEquals(sms1, results.get(1));
 		
 	
 		em2.getTransaction().commit();

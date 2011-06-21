@@ -21,7 +21,6 @@ public class CompositeUtils {
 
   private static Map<Class<? extends Serializer>, String>  mapping = new HashMap<Class<? extends Serializer>, String>();
   
-  
   static{
     DynamicComposite dynamic = new DynamicComposite();
     
@@ -29,8 +28,7 @@ public class CompositeUtils {
     
     mapping.put(TimeUUIDSerializer.class, ComparatorType.TIMEUUIDTYPE.getTypeName());
 
-    mapping.put(UUIDSerializer.class,  ComparatorType.LEXICALUUIDTYPE.getTypeName());
-    
+    mapping.put(UUIDSerializer.class,  ComparatorType.LEXICALUUIDTYPE.getTypeName());    
   }
   
 
@@ -71,15 +69,19 @@ public class CompositeUtils {
    * @return
    */
   public static String getCassType(Serializer<?> instance, boolean ascending){
-	  
-	  if(ascending){
-		  return getCassType(instance);
-	  }
-	  
-	  StringBuffer buffer = new StringBuffer();
-	  buffer.append(getCassType(instance));
-	  buffer.append("(reversed=true)");
-	  return buffer.toString();
+	 
+	  return getCassType(instance);
+	  //TODO TN fix this after Ed and Nate get back to me about DynamicColumn deserializion bug with reversed values
+//	  if(ascending){
+//		  return getCassType(instance);
+//	  }
+//	  
+	
+//	  StringBuffer buffer = new StringBuffer();
+//	  buffer.append(getCassType(instance));
+//	  buffer.append("(reversed=true)");
+//	  return buffer.toString();
+//	  
 	  
 	  
 	  
