@@ -325,25 +325,7 @@ public abstract class AbstractIndexOperation {
     } while (result.get().getColumns().size() == MAX_SIZE);
   }
 
-  /**
-   * We can only write non 0 separators at the last value in our composite type
-   * 
-   * @param orig
-   * @param index
-   * @param length
-   * @return
-   */
-  protected ComponentEquality getEquality(ComponentEquality orig, int index,
-      int length) {
-    // not the last value in the scan range, so we reset it from trailing 1
-    // bytes on the slice column to a 0 byte
-    if (index != length - 1) {
-      return ComponentEquality.EQUAL;
-    }
 
-    return orig;
-
-  }
 
   public Comparator<DynamicComposite> getComprator() {
     return new ResultComparator();

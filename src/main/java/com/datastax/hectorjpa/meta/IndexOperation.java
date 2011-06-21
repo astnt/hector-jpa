@@ -9,6 +9,7 @@ import java.util.Set;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.hector.api.Keyspace;
+import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.mutation.Mutator;
 
@@ -97,16 +98,30 @@ public class IndexOperation extends AbstractIndexOperation {
     DynamicComposite endScan = newComposite();
 
     int length = fields.length;
+    
+    int last = length -1;
 
-    for (int i = 0; i < length; i++) {
+    FieldExpression exp = null;
+    
+    for (int i = 0; i < last; i++) {
 
-      FieldExpression exp = query.getExpression(this.fields[i].getMetaData());
+      exp = query.getExpression(this.fields[i].getMetaData());
 
       this.fields[i].addToComposite(startScan, i, exp.getStart(),
-          getEquality(exp.getStartEquality(), i, length));
+          ComponentEquality.EQUAL);
       this.fields[i].addToComposite(endScan, i, exp.getEnd(),
-          getEquality(exp.getEndEquality(), i, length));
+    		  ComponentEquality.EQUAL);
     }
+    
+
+    exp = query.getExpression(this.fields[last].getMetaData());
+
+//    We can only write non 0 separators at the last value in our composite type
+    
+    this.fields[last].addToComposite(startScan, last, exp.getStart(), exp.getStartEquality());
+    this.fields[last].addToComposite(endScan, last, exp.getEnd(), exp.getEndEquality());
+    
+    
 
     super.executeQuery(startScan, endScan, results, keyspace);
 

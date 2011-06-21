@@ -140,15 +140,26 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
 
     int length = fields.length;
     
-    for (int i = 0; i < length; i++) {
+    int last = length -1;
+    int componentIndex = 1;
 
-      FieldExpression exp = query.getExpression(this.fields[i].getMetaData());
+    FieldExpression exp = null;
+    
+    for (int i = 0; i < last; i++, componentIndex++) {
 
-      this.fields[i].addToComposite(startScan, i+1, exp.getStart(),
-          getEquality(exp.getStartEquality(), i , length));
-      this.fields[i].addToComposite(endScan, i+1, exp.getEnd(),
-          getEquality(exp.getEndEquality(), i, length));
+      exp = query.getExpression(this.fields[i].getMetaData());
+
+      this.fields[i].addToComposite(startScan, componentIndex, exp.getStart(),
+          ComponentEquality.EQUAL);
+      this.fields[i].addToComposite(endScan, componentIndex, exp.getEnd(),
+    		  ComponentEquality.EQUAL);
     }
+    
+    exp = query.getExpression(this.fields[last].getMetaData());
+    
+    this.fields[last].addToComposite(startScan, componentIndex, exp.getStart(), exp.getStartEquality());
+    this.fields[last].addToComposite(endScan, componentIndex, exp.getEnd(), exp.getEndEquality());
+    
     
     // now query the values
     // get our slice range

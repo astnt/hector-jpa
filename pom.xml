@@ -68,11 +68,14 @@
 			</exclusions>
 		</dependency>
 
-		<!-- Required for indexing -->
+		<!-- Required for indexing.  Must be installed in cassandra until version 0.8.1 is released
+		https://issues.apache.org/jira/browse/CASSANDRA-2231
+		-->
 		<dependency>
 			<groupId>com.datastax.hector</groupId>
 			<artifactId>hector-composite</artifactId>
 			<version>0.8.0-jpa</version>
+			<scope>test</scope>
 		</dependency>
 
 		<!-- <dependency> <groupId>cassandra-indexed-collections</groupId> <artifactId>cassandra-indexed-collections</artifactId> 
@@ -343,6 +346,18 @@
 							<pomFile>lib/hector-composite-pom.xml</pomFile>
 							<file>lib/hector-composite-0.8.0-jpa.jar</file>
 							<sources>lib/hector-composite-0.8.0-jpa-sources.jar</sources>
+						</configuration>
+					</execution>
+					<execution>
+						<phase>validate</phase>
+						<id>install-source</id>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+						<configuration>
+							<pomFile>lib/hector-composite-pom.xml</pomFile>
+							<file>lib/hector-composite-0.8.0-jpa-sources.jar</file>
+							<packaging>sources</packaging>
 						</configuration>
 					</execution>
 				</executions>
