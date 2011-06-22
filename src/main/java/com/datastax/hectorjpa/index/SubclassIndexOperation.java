@@ -65,7 +65,6 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
       Mutator<byte[]> mutator, long clock, IndexQueue queue) {
 
     DynamicComposite newComposite = null;
-    DynamicComposite oldComposite = null;
     DynamicComposite tombstoneComposite = null;
     DynamicComposite idAudit = null;
 
@@ -79,9 +78,6 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
       newComposite.addComponent(subClasses[i], stringSerializer);
 
       // create our composite of the format order*+id
-      oldComposite = newComposite();
-
-      oldComposite.addComponent(subClasses[i], stringSerializer);
       
       tombstoneComposite = newComposite();
       
@@ -91,7 +87,7 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
       
       idAudit.addComponent(1, subClasses[i], stringSerializer, stringSerializer.getComparatorType().getTypeName(), ComponentEquality.EQUAL);
 
-      boolean changed = constructComposites(newComposite, oldComposite, tombstoneComposite, idAudit,
+      boolean changed = constructComposites(newComposite, tombstoneComposite, idAudit,
           stateManager);
 
       mutator.addInsertion(indexName, CF_NAME,
@@ -107,13 +103,13 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
 
 
       // value has changed since we loaded. Remove the old value
-      if (changed) {
-
-        // add it to our old value
-        mutator.addDeletion(indexName, CF_NAME, oldComposite,
-            compositeSerializer, clock);
-
-      }
+//      if (changed) {
+//
+//        // add it to our old value
+//        mutator.addDeletion(indexName, CF_NAME, oldComposite,
+//            compositeSerializer, clock);
+//
+//      }
     }
 
   }
