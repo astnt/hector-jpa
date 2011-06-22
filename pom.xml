@@ -4,7 +4,7 @@
 
 	<groupId>com.datastax.hectorjpa</groupId>
 	<artifactId>hector-jpa</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<version>0.7.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>hector-jpa</name>
@@ -50,12 +50,12 @@
 		<dependency>
 			<groupId>org.apache.cassandra</groupId>
 			<artifactId>cassandra-all</artifactId>
-			<version>0.8.0</version>
+			<version>0.7.4</version>
 		</dependency>
 		<dependency>
 			<groupId>me.prettyprint</groupId>
 			<artifactId>hector-core</artifactId>
-			<version>0.8.0-1</version>
+			<version>0.7.0-30</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -74,7 +74,7 @@
 		<dependency>
 			<groupId>com.datastax.hector</groupId>
 			<artifactId>hector-composite</artifactId>
-			<version>0.8.0-jpa</version>
+			<version>0.7.0-jpa</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -343,9 +343,9 @@
 							<goal>install-file</goal>
 						</goals>
 						<configuration>
-							<pomFile>lib/hector-composite-pom.xml</pomFile>
-							<file>lib/hector-composite-0.8.0-jpa.jar</file>
-							<sources>lib/hector-composite-0.8.0-jpa-sources.jar</sources>
+							<pomFile>lib/hector-composite-0.7.0-jpa.pom</pomFile>
+							<file>lib/hector-composite-0.7.0-jpa.jar</file>
+							<sources>lib/hector-composite-0.7.0-jpa-sources.jar</sources>
 						</configuration>
 					</execution>
 					<execution>
@@ -355,8 +355,8 @@
 							<goal>install-file</goal>
 						</goals>
 						<configuration>
-							<pomFile>lib/hector-composite-pom.xml</pomFile>
-							<file>lib/hector-composite-0.8.0-jpa-sources.jar</file>
+							<pomFile>lib/hector-composite-0.7.0-jpa.pom</pomFile>
+							<file>lib/hector-composite-0.7.0-jpa-sources.jar</file>
 							<packaging>sources</packaging>
 						</configuration>
 					</execution>

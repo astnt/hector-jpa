@@ -72,7 +72,7 @@ public class CassandraTestBase {
   public static void createKeyspace(Cluster cluster, String name,
       String strategy, int replicationFactor, List<CfDef> cfDefList) {
     try {
-      KsDef ksDef = new KsDef(name, strategy, cfDefList);
+      KsDef ksDef = new KsDef(name, strategy, replicationFactor, cfDefList);
       cluster.addKeyspace(new ThriftKsDef(ksDef));
       return;
     } catch (Throwable e) {
