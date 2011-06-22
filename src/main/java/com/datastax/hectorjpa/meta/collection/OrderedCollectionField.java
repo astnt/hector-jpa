@@ -414,11 +414,6 @@ public class OrderedCollectionField extends AbstractCollectionField {
     DynamicComposite idComposite = null;
     ByteBuffer currentId = null;
 
-    boolean changed;
-
-    DynamicComposite deleteOrderComposite;
-    DynamicComposite deleteIdComposite;
-
     Object field = null;
 
     StoreContext context = stateManager.getContext();
@@ -433,20 +428,17 @@ public class OrderedCollectionField extends AbstractCollectionField {
 
       // if any of the fields are dirty we need to set our changed flag so we
       // can delete the oiginal columns later
-      changed = false;
-
+    
       currentSm = context.getStateManager(current);
       oid = currentSm.fetchObjectId();
       currentId = elementKeyStrategy.toByteBuffer(oid);
 
       // create our composite of the format of id+order*
       idComposite = newComposite();
-      deleteIdComposite = newComposite();
-
+    
       // create our composite of the format order*+id
       orderComposite = newComposite();
-      deleteOrderComposite = newComposite();
-
+    
       // add our id to the beginning of our id based composite
       idComposite.addComponent(currentId, buffSerializer);
 
@@ -457,11 +449,9 @@ public class OrderedCollectionField extends AbstractCollectionField {
 
         // add this to all deletes for the order composite.
         order.addFieldWrite(orderComposite, field);
-        changed |= order.addFieldDelete(deleteOrderComposite, field);
-
+    
         // The deletes to teh is composite
         order.addFieldWrite(idComposite, current);
-        changed |= order.addFieldDelete(deleteIdComposite, field);
       }
 
       // add our id to the end of our order based composite
@@ -484,13 +474,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
       queue.addAudit(new IndexAudit(orderKey, idKey, idAudit, clock, CF_NAME,
           true));
 
-      if (changed) {
-        mutator.addDeletion(orderKey, CF_NAME, deleteOrderComposite,
-            compositeSerializer, clock);
-        mutator.addDeletion(idKey, CF_NAME, deleteIdComposite,
-            compositeSerializer, clock);
-
-      }
+    
 
     }
 

@@ -229,8 +229,7 @@ public abstract class AbstractIndexOperation {
    * @param oldComposite
    * @return
    */
-  protected boolean constructComposites(DynamicComposite newComposite,
-      DynamicComposite oldComposite, DynamicComposite tombstoneComposite,
+  protected boolean constructComposites(DynamicComposite newComposite, DynamicComposite tombstoneComposite,
       DynamicComposite auditComposite, OpenJPAStateManager stateManager) {
 
 
@@ -255,8 +254,7 @@ public abstract class AbstractIndexOperation {
       indexField.addFieldWrite(newComposite, field);
       indexField.addFieldWrite(tombstoneComposite, field);
 
-      // The deletes to the is composite
-      changed |= indexField.addFieldDelete(oldComposite, field);
+      
     }
 
     // now construct the composite with order by the ids at the end.
@@ -270,15 +268,12 @@ public abstract class AbstractIndexOperation {
       order.addFieldWrite(newComposite, field);
       order.addFieldWrite(tombstoneComposite, field);
 
-      // The deletes to teh is composite
-      changed |= order.addFieldDelete(oldComposite, field);
     }
 
     // add it to our new value
 
     newComposite.addComponent(key, buffSerializer, getCassType(buffSerializer));
 
-    oldComposite.addComponent(key, buffSerializer, getCassType(buffSerializer));
 
     return changed;
   }
