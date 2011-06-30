@@ -96,7 +96,8 @@ public class SimpleColumnField extends StringColumnField {
     HColumn<String, byte[]> column = result.get().getColumnByName(name);
 
     if (column == null) {
-      return false;
+    	stateManager.store(fieldId, null);
+    	return false;
     }
 
     Object value = serializer.fromBytes(column.getValue());
