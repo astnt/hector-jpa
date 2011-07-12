@@ -3,7 +3,6 @@ package com.datastax.hectorjpa.query;
 import java.util.Iterator;
 import java.util.Set;
 
-import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 
 import org.apache.openjpa.kernel.FetchConfiguration;

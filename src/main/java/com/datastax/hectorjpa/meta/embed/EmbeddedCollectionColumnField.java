@@ -13,7 +13,7 @@ import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
 import com.datastax.hectorjpa.service.IndexQueue;
 
 /**
- * Class for serialising a single Embedded entity to a column value
+ * Class for serializing a single Embedded entity to a column value
  * 
  * @author Todd Nine
  * 

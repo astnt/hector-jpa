@@ -5,27 +5,11 @@ package com.datastax.hectorjpa.store;
 
 import java.util.Map;
 
-import me.prettyprint.cassandra.service.CassandraHostConfigurator;
-import me.prettyprint.cassandra.service.OperationType;
-import me.prettyprint.hector.api.Cluster;
-import me.prettyprint.hector.api.ConsistencyLevelPolicy;
-import me.prettyprint.hector.api.HConsistencyLevel;
-import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.factory.HFactory;
-
 import org.apache.openjpa.conf.OpenJPAProductDerivation;
 import org.apache.openjpa.conf.Specification;
 import org.apache.openjpa.lib.conf.AbstractProductDerivation;
 import org.apache.openjpa.lib.conf.Configuration;
-import org.apache.openjpa.lib.conf.ConfigurationProvider;
 import org.apache.openjpa.persistence.PersistenceProductDerivation;
-import org.apache.openjpa.util.UserException;
-
-import com.datastax.hectorjpa.consitency.JPAConsistency;
-import com.datastax.hectorjpa.serialize.EmbeddedSerializer;
-import com.datastax.hectorjpa.serialize.JavaSerializer;
-import com.datastax.hectorjpa.service.InMemoryIndexingService;
-import com.datastax.hectorjpa.service.IndexingService;
 
 /**
  * Defines the derivations that the cassandra plugin uses. Mostly annotation

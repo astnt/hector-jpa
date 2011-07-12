@@ -3,9 +3,6 @@ package com.datastax.hectorjpa.service;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.datastax.hectorjpa.store.CassandraStore;
-import com.datastax.hectorjpa.store.CassandraStoreConfiguration;
-
 /**
  * Simple bean class to act as a "queue" for queueing index changes.
  *  
