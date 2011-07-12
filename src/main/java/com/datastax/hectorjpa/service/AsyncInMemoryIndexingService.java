@@ -8,8 +8,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.hectorjpa.store.CassandraStoreConfiguration;
-
 /**
  * Performs all writes and deletes in a worker thread each
  * 

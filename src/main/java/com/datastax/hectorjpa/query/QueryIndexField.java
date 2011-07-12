@@ -4,7 +4,6 @@ package com.datastax.hectorjpa.query;
 import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 import me.prettyprint.hector.api.beans.DynamicComposite;
-import me.prettyprint.hector.api.ddl.ComparatorType;
 
 import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;

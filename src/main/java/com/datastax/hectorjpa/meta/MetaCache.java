@@ -5,8 +5,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import javax.persistence.MappedSuperclass;
-
 import org.apache.openjpa.meta.ClassMetaData;
 
 import com.datastax.hectorjpa.serialize.EmbeddedSerializer;

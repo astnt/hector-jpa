@@ -6,7 +6,6 @@ package com.datastax.hectorjpa.service;
 import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import me.prettyprint.cassandra.model.MutatorImpl;
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;

@@ -5,14 +5,12 @@ package com.datastax.hectorjpa.index;
 
 import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
+import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.mutation.Mutator;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
@@ -22,7 +20,6 @@ import com.datastax.hectorjpa.query.IndexQuery;
 import com.datastax.hectorjpa.service.IndexAudit;
 import com.datastax.hectorjpa.service.IndexQueue;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
-import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
  * Class to perform all operations for secondary indexing on an instance in the

@@ -5,8 +5,6 @@ package com.datastax.hectorjpa.meta.key;
 
 import java.nio.ByteBuffer;
 
-import org.apache.openjpa.kernel.OpenJPAStateManager;
-
 /**
  * @author Todd Nine
  *
