@@ -3,9 +3,24 @@ package com.datastax.hectorjpa.store;
 import static org.junit.Assert.*;
 
 import javax.persistence.EntityManager;
+import javax.persistence.metamodel.EmbeddableType;
+import javax.persistence.metamodel.EntityType;
+
+import me.prettyprint.cassandra.connection.HConnectionManager;
+import me.prettyprint.cassandra.serializers.DynamicCompositeSerializer;
+import me.prettyprint.cassandra.serializers.IntegerSerializer;
+import me.prettyprint.cassandra.serializers.ObjectSerializer;
+import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.cassandra.service.CassandraHost;
+import me.prettyprint.cassandra.service.CassandraHostConfigurator;
+import me.prettyprint.hector.api.beans.DynamicComposite;
+import me.prettyprint.hector.api.factory.HFactory;
+import me.prettyprint.hector.api.mutation.Mutator;
 
 import org.junit.Test;
+import org.mortbay.jetty.HttpConnection;
 
+import com.datastax.hectorjpa.CassandraTestBase;
 import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.Customer;
 import com.datastax.hectorjpa.bean.Phone;
@@ -16,6 +31,10 @@ import com.datastax.hectorjpa.bean.Phone.PhoneType;
 import com.datastax.hectorjpa.bean.PrimitiveTypes.TestEnum;
 import com.datastax.hectorjpa.bean.tree.Role;
 import com.datastax.hectorjpa.bean.tree.Techie;
+import com.datastax.hectorjpa.meta.DiscriminatorColumn;
+import com.datastax.hectorjpa.meta.embed.EmbeddedCollectionColumnField;
+import com.datastax.hectorjpa.serializer.TimeUUIDSerializer;
+import com.eaio.uuid.UUID;
 
 public class SimpleTest extends ManagedEntityTestBase {
   
@@ -41,6 +60,59 @@ public class SimpleTest extends ManagedEntityTestBase {
     em2.getTransaction().commit();
     em2.close();
   }  
+  
+  
+  /**
+   * Save a phone object but remove 1 field
+   * Then try to load the object with all meta fields and it should not blow up
+   */
+  @Test
+  public void testObjectLoadedWithFieldAddedToMeta() {
+    EntityManager em = entityManagerFactory.createEntityManager();
+    
+    em.getTransaction().begin();
+
+    Phone phone = new Phone();
+    phone.setPhoneNumber("123123");
+    phone.setType(PhoneType.MOBILE);
+    phone.setId(null);
+    
+    Customer customer = new Customer();
+    customer.addOtherPhone(phone);
+
+    em.persist(customer);
+    em.getTransaction().commit();
+    em.close();
+
+    //manually save phone but take out the 'id' field
+    DynamicComposite c = new DynamicComposite();
+    c.addComponent(1, IntegerSerializer.get());
+    c.addComponent(2, IntegerSerializer.get());
+    c.addComponent("phoneNumber", StringSerializer.get());
+    c.addComponent(phone.getPhoneNumber(), StringSerializer.get());
+    c.addComponent("type", StringSerializer.get());
+    c.addComponent(phone.getType(), ObjectSerializer.get());
+    
+    DynamicCompositeSerializer dynamicCompositeSerializer = new DynamicCompositeSerializer(); 
+    
+    Mutator<UUID> mutator = HFactory.createMutator(CassandraTestBase.keyspace, TimeUUIDSerializer.get());
+	mutator.addInsertion(customer.getId(), "CustomerColumnFamily", HFactory.createColumn(
+			"otherPhones", c, StringSerializer.get(), dynamicCompositeSerializer));
+	mutator.execute();
+    
+    //em.getTransaction().begin();
+    
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+    Customer returned = em2.find(Customer.class, customer.getId());
+    
+    //this should blow up
+    returned.getOtherPhones().get(0).getId();
+    
+    em2.getTransaction().begin();
+    em2.remove(returned);
+    em2.getTransaction().commit();
+    em2.close();
+  } 
   
   @Test
   public void testPrimitives() {
