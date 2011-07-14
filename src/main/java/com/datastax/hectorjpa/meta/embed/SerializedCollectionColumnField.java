@@ -100,6 +100,7 @@ public class SerializedCollectionColumnField extends StringColumnField {
     HColumn<String, byte[]> column = result.get().getColumnByName(name);
 
     if (column == null) {
+    	stateManager.store(fieldId, null);
       return false;
     }
 

@@ -1,5 +1,6 @@
 package com.datastax.hectorjpa.meta.embed;
 
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -111,6 +112,13 @@ public class EmbeddedEntityValue {
     int length = c.get(startIndex, intSerializer);
     
     int offset = startIndex+1;
+    
+    //set the value of all fields to null.
+    //this means that new fields that have been added to the meta data but haven't been persisted are set to null
+    FieldMetaData[] fields = sm.getMetaData().getDeclaredFields();
+    for (FieldMetaData f : fields) {
+    	sm.store(f.getIndex(), null);
+    }
     
     //every field is in a pair, so increment read by 2
     for(int i = 0; i <  length * 2; i+=2){
