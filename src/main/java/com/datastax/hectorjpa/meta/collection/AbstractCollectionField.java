@@ -3,6 +3,8 @@ package com.datastax.hectorjpa.meta.collection;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 
+import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
+
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
@@ -65,7 +67,7 @@ public abstract class AbstractCollectionField extends Field {
 
   protected int compositeFieldLength = 0;
   
- 
+  protected String compositeComparator;
   
 
   public AbstractCollectionField(FieldMetaData fmd) {
@@ -98,6 +100,8 @@ public abstract class AbstractCollectionField extends Field {
     String columnFamilyName = MappingUtils.getColumnFamily(elementClassMeta);
 
     entityName = StringSerializer.get().toBytes(columnFamilyName);
+    
+    compositeComparator = getCassType(buffSerializer);
   }
   
   /**

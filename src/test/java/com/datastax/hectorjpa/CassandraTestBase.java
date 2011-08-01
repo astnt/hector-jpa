@@ -9,6 +9,7 @@ import java.util.List;
 import me.prettyprint.cassandra.service.ThriftKsDef;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
+import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.factory.HFactory;
 
 import org.apache.cassandra.contrib.utils.service.CassandraServiceDataCleaner;
@@ -28,7 +29,7 @@ public class CassandraTestBase {
   protected static boolean cassandraStarted = false;
   protected static Keyspace keyspace;
   protected static Cluster cluster;
-
+  
   public static void startCassandraInstance(String pathToDataDir)
       throws TTransportException, IOException, InterruptedException,
       SecurityException, IllegalArgumentException, NoSuchMethodException,
@@ -171,18 +172,23 @@ public class CassandraTestBase {
 
     // collection indexing
     cfDefList.add(new CfDef("TestKeyspace", AbstractCollectionField.CF_NAME)
-        .setComparator_type(DynamicCompositeType.class.getName())
+//        .setComparator_type(DynamicCompositeType.class.getName())
+ .setComparator_type(DynamicCompositeType.class.getSimpleName()+DynamicComposite.DEFAULT_DYNAMIC_COMPOSITE_ALIASES)
+    
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
     // search indexing
     cfDefList.add(new CfDef("TestKeyspace", IndexOperation.CF_NAME)
-        .setComparator_type(DynamicCompositeType.class.getName())
+//        .setComparator_type(DynamicCompositeType.class.getName())
+    .setComment(DynamicCompositeType.class.getSimpleName()+DynamicComposite.DEFAULT_DYNAMIC_COMPOSITE_ALIASES)
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
     cluster = HFactory.getOrCreateCluster("TestPool", "localhost:9161");
+    
     createKeyspace(cluster, "TestKeyspace",
         "org.apache.cassandra.locator.SimpleStrategy", 1, cfDefList);
     keyspace = HFactory.createKeyspace("TestKeyspace", cluster);
+    
     System.out.println("TestKeyspace and columnfamilies creation is complete");
   }
 }

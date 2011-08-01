@@ -1,1 +1,14 @@
 A JPA implementation for Apache Cassandra.
+
+This release is only compatible with 0.8.1 forward.  Cassandra now natively supports DynamicComposites.
+
+
+The hector jar in lib is required until this merge is built into the next release.
+
+https://github.com/rantav/hector/commit/be7b904c8a4ec57ce4773e2b7a5d8d62735ca007
+
+
+The current build is up to this version
+
+https://github.com/rantav/hector/commit/24277548729756076783ff5f1dc1b0656dba6bb1
+

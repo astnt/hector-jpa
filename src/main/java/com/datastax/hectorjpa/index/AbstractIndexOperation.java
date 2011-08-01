@@ -91,6 +91,8 @@ public abstract class AbstractIndexOperation {
   protected IndexDefinition indexDefinition;
 
   protected KeyStrategy keyStrategy;
+  
+  protected String compositeComparator;
 
   public AbstractIndexOperation(CassandraClassMetaData metaData,
       IndexDefinition indexDef) {
@@ -178,6 +180,8 @@ public abstract class AbstractIndexOperation {
                   metaData.getPrimaryKeyFields()[0].getName(),
                   metaData.getDescribedType()));
     }
+    
+    compositeComparator = getCassType(buffSerializer);
 
   }
 
@@ -239,11 +243,9 @@ public abstract class AbstractIndexOperation {
 
     Object field;
 
-    tombstoneComposite.setComponent(0, key, buffSerializer,
-        getCassType(buffSerializer), ComponentEquality.EQUAL);
+    tombstoneComposite.setComponent(0, key, buffSerializer, compositeComparator, ComponentEquality.EQUAL);
 
-    auditComposite.setComponent(0, key, buffSerializer,
-        getCassType(buffSerializer), ComponentEquality.EQUAL);
+    auditComposite.setComponent(0, key, buffSerializer, 	compositeComparator, ComponentEquality.EQUAL);
 
     // now construct the composite with order by the ids at the end.
     for (QueryIndexField indexField : fields) {
@@ -272,7 +274,7 @@ public abstract class AbstractIndexOperation {
 
     // add it to our new value
 
-    newComposite.addComponent(key, buffSerializer, getCassType(buffSerializer));
+    newComposite.addComponent(key, buffSerializer, compositeComparator);
 
 
     return changed;

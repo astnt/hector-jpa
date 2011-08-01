@@ -831,8 +831,7 @@ public class SearchTest extends ManagedEntityTestBase {
 		EntityManager em2 = entityManagerFactory.createEntityManager();
 		em2.getTransaction().begin();
 
-		TypedQuery<Foo1> query = em2.createNamedQuery(
-				"searchRangeIncludeMinExcludeMax", Foo1.class);
+		TypedQuery<Foo1> query = em2.createNamedQuery("searchRangeIncludeMinExcludeMax", Foo1.class);
 		query.setParameter("otherLow", 0);
 		query.setParameter("otherHigh", 9);
 

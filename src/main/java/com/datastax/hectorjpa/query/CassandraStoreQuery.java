@@ -62,7 +62,9 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
   protected ResultObjectProvider executeQuery(Executor ex, ClassMetaData base,
       ClassMetaData[] types, boolean subclasses, ExpressionFactory[] facts,
       QueryExpressions[] parsed, Object[] params, Range range) {
-    log.debug("In executeQuery");
+    
+	 log.debug("In executeQuery");
+  
     IndexExpressionVisitor visitor = new IndexExpressionVisitor(
         (CassandraClassMetaData) base, params);
 

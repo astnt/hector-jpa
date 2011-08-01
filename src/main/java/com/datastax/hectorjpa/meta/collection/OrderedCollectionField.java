@@ -3,7 +3,7 @@
  */
 package com.datastax.hectorjpa.meta.collection;
 
-import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
+
 import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 
 import java.nio.ByteBuffer;
@@ -39,12 +39,10 @@ import com.datastax.hectorjpa.service.IndexQueue;
  * 
  */
 public class OrderedCollectionField extends AbstractCollectionField {
-  private static Logger log = LoggerFactory
-      .getLogger(OrderedCollectionField.class);
+  private static Logger log = LoggerFactory.getLogger(OrderedCollectionField.class);
 
   // represents the end "ordered" in the key
-  private static final byte[] orderedMarker = StringSerializer.get().toBytes(
-      "o");
+  private static final byte[] orderedMarker = StringSerializer.get().toBytes("o");
 
   // represents the end "id" in the key
   private static final byte[] idMarker = StringSerializer.get().toBytes("i");
@@ -348,8 +346,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
       orderComposite = newComposite();
 
       // add our id to the beginning of our id based composite
-      idComposite.addComponent(currentId, buffSerializer,
-          getCassType(buffSerializer));
+      idComposite.addComponent(currentId, buffSerializer, compositeComparator);
 
       // now construct the composite with order by the ids at the end.
       for (AbstractIndexField order : orderBy) {
@@ -364,8 +361,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
       }
 
       // add our id to the end of our order based composite
-      orderComposite.addComponent(currentId, buffSerializer,
-          getCassType(buffSerializer));
+      orderComposite.addComponent(currentId, buffSerializer, compositeComparator);
 
       mutator.addInsertion(orderKey, CF_NAME,
           new HColumnImpl<DynamicComposite, byte[]>(orderComposite, HOLDER,

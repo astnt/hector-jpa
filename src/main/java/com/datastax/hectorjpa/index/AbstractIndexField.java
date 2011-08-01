@@ -24,6 +24,7 @@ public abstract class AbstractIndexField {
   
   protected Serializer<Object> serializer;
   protected FieldMetaData targetField;
+  protected String compositeComparator;
 
   
   public AbstractIndexField(FieldMetaData owningField, String fieldName) {
@@ -38,6 +39,7 @@ public abstract class AbstractIndexField {
     }
         
     this.serializer = MappingUtils.getSerializer(targetField);
+    this.compositeComparator =  getCassType(serializer);
 
   }
   
@@ -96,7 +98,7 @@ public abstract class AbstractIndexField {
       current = ProxyUtils.getAdded(instance);
     }
 
-    composite.addComponent(current, serializer, getCassType(serializer));
+    composite.addComponent(current, serializer, compositeComparator);
 
   }
 
@@ -115,7 +117,7 @@ public abstract class AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      composite.addComponent(original, serializer, getCassType(serializer));
+      composite.addComponent(original, serializer, compositeComparator);
       return true;
     }
     
@@ -123,7 +125,7 @@ public abstract class AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      composite.addComponent(original, serializer, getCassType(serializer));
+      composite.addComponent(original, serializer, compositeComparator);
       return true;
     }
 
@@ -131,7 +133,7 @@ public abstract class AbstractIndexField {
     // other fields could.
     Object current = ProxyUtils.getAdded(instance);
 
-    composite.addComponent(current, serializer, getCassType(serializer));
+    composite.addComponent(current, serializer, compositeComparator);
 
     return false;
 

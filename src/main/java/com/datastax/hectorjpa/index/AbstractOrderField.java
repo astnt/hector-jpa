@@ -21,6 +21,8 @@ public abstract class AbstractOrderField extends AbstractIndexField {
   
   private int invert;
 
+  private String compositeComprator;
+  
   public AbstractOrderField(Order order, FieldMetaData fmd) {
     super(fmd, order.getName());
     this.order = order;
@@ -31,6 +33,8 @@ public abstract class AbstractOrderField extends AbstractIndexField {
     if(!Comparable.class.isAssignableFrom(targetField.getDeclaredType())){
       throw new MetaDataException(String.format("You specified the field '%s' on class '%s' as an order field, but it does not implement the '%s' interface ", fmd.getName(), fmd.getDeclaringMetaData().getDescribedType(), Comparable.class));
     }
+    
+    compositeComprator = getCassType(serializer, order.isAscending());
 
   }
 
@@ -52,7 +56,7 @@ public abstract class AbstractOrderField extends AbstractIndexField {
       current = ProxyUtils.getAdded(instance);
     }
 
-    composite.addComponent(current, serializer, getCassType(serializer, order.isAscending()));
+    composite.addComponent(current, serializer, compositeComprator);
 
   }
 
@@ -71,7 +75,7 @@ public abstract class AbstractOrderField extends AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      composite.addComponent(original, serializer, getCassType(serializer, order.isAscending()));
+      composite.addComponent(original, serializer, compositeComprator);
       return true;
     }
     
@@ -79,7 +83,7 @@ public abstract class AbstractOrderField extends AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      composite.addComponent(original, serializer, getCassType(serializer, order.isAscending()));
+      composite.addComponent(original, serializer, compositeComprator);
       return true;
     }
 
@@ -87,7 +91,7 @@ public abstract class AbstractOrderField extends AbstractIndexField {
     // other fields could.
     Object current = ProxyUtils.getAdded(instance);
 
-    composite.addComponent(current, serializer, getCassType(serializer, order.isAscending()));
+    composite.addComponent(current, serializer, compositeComprator);
 
     return false;
 

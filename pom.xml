@@ -4,7 +4,7 @@
 
 	<groupId>com.datastax.hectorjpa</groupId>
 	<artifactId>hector-jpa</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<version>0.8.0-2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>hector-jpa</name>
@@ -41,7 +41,7 @@
 			<version>4.8.1</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
+		 <dependency>
 			<groupId>org.apache.cassandra</groupId>
 			<artifactId>cassandra-javautils</artifactId>
 			<version>0.7.1</version>
@@ -50,12 +50,12 @@
 		<dependency>
 			<groupId>org.apache.cassandra</groupId>
 			<artifactId>cassandra-all</artifactId>
-			<version>0.8.0</version>
+			<version>0.8.2</version>
 		</dependency>
 		<dependency>
 			<groupId>me.prettyprint</groupId>
 			<artifactId>hector-core</artifactId>
-			<version>0.8.0-1</version>
+			<version>0.8.0-2-24277548729756076783ff5f1dc1b0656dba6bb1</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -68,16 +68,7 @@
 			</exclusions>
 		</dependency>
 
-		<!-- Required for indexing.  Must be installed in cassandra until version 0.8.1 is released
-		https://issues.apache.org/jira/browse/CASSANDRA-2231
-		-->
-		<dependency>
-			<groupId>com.datastax.hector</groupId>
-			<artifactId>hector-composite</artifactId>
-			<version>0.8.0-jpa</version>
-			<scope>test</scope>
-		</dependency>
-
+		
 		<!-- <dependency> <groupId>cassandra-indexed-collections</groupId> <artifactId>cassandra-indexed-collections</artifactId> 
 			<version>0.0.2-SNAPSHOT</version> </dependency> -->
 		<dependency>
@@ -343,9 +334,10 @@
 							<goal>install-file</goal>
 						</goals>
 						<configuration>
-							<pomFile>lib/hector-composite-pom.xml</pomFile>
-							<file>lib/hector-composite-0.8.0-jpa.jar</file>
-							<sources>lib/hector-composite-0.8.0-jpa-sources.jar</sources>
+							<pomFile>lib/hector-core-0.8.0-2-24277548729756076783ff5f1dc1b0656dba6bb1.pom</pomFile>
+							<file>lib/hector-core-0.8.0-2-24277548729756076783ff5f1dc1b0656dba6bb1.jar</file>
+							<sources>lib/hector-core-0.8.0-2-24277548729756076783ff5f1dc1b0656dba6bb1-sources.jar</sources>
+							<packaging>jar</packaging>
 						</configuration>
 					</execution>
 					<execution>
@@ -355,15 +347,69 @@
 							<goal>install-file</goal>
 						</goals>
 						<configuration>
-							<pomFile>lib/hector-composite-pom.xml</pomFile>
-							<file>lib/hector-composite-0.8.0-jpa-sources.jar</file>
-							<packaging>sources</packaging>
+							<pomFile>lib/hector-core-0.8.0-2-24277548729756076783ff5f1dc1b0656dba6bb1.pom</pomFile>
+							<file>lib/hector-core-0.8.0-2-24277548729756076783ff5f1dc1b0656dba6bb1-sources.jar</file>
+							<packaging>java-source</packaging>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
 
 		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.apache.maven.plugins
+										</groupId>
+										<artifactId>
+											maven-install-plugin
+										</artifactId>
+										<versionRange>
+											[2.3.1,)
+										</versionRange>
+										<goals>
+											<goal>install-file</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.codehaus.mojo
+										</groupId>
+										<artifactId>
+											openjpa-maven-plugin
+										</artifactId>
+										<versionRange>
+											[1.2,)
+										</versionRange>
+										<goals>
+											<goal>test-enhance</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 	<properties>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

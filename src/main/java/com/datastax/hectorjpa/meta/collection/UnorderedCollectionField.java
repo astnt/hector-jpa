@@ -3,7 +3,6 @@
  */
 package com.datastax.hectorjpa.meta.collection;
 
-import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
 import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 
 import java.nio.ByteBuffer;
@@ -41,9 +40,11 @@ public class UnorderedCollectionField extends AbstractCollectionField {
   // represents the end "id" in the key
   private static final byte[] unorderedMarker = StringSerializer.get().toBytes(
       "u");
+  
 
   public UnorderedCollectionField(FieldMetaData fmd) {
     super(fmd);
+ 
   }
 
   /*
@@ -181,14 +182,14 @@ public class UnorderedCollectionField extends AbstractCollectionField {
 
       // add our id to the beginning of our id based composite
       idComposite.addComponent(currentId, buffSerializer,
-          getCassType(buffSerializer));
+    		  compositeComparator);
 
       mutator.addDeletion(idKey, CF_NAME, idComposite, compositeSerializer,
           clock);
 
       DynamicComposite idAudit = new DynamicComposite();
       idAudit.addComponent(currentId, buffSerializer,
-          getCassType(buffSerializer));
+    		  compositeComparator);
 
       // add the check to the audit queue
       queue.addDelete(new IndexAudit(idKey, idKey, idAudit, clock, CF_NAME,
@@ -239,7 +240,7 @@ public class UnorderedCollectionField extends AbstractCollectionField {
 
       // add our id to the beginning of our id based composite
       idComposite.addComponent(currentId, buffSerializer,
-          getCassType(buffSerializer));
+    		  compositeComparator);
 
       mutator.addInsertion(idKey, CF_NAME,
           new HColumnImpl<DynamicComposite, byte[]>(idComposite, HOLDER, clock,
@@ -247,7 +248,7 @@ public class UnorderedCollectionField extends AbstractCollectionField {
 
       DynamicComposite idAudit = new DynamicComposite();
       idAudit.addComponent(currentId, buffSerializer,
-          getCassType(buffSerializer));
+    		  compositeComparator);
 
       queue.addAudit(new IndexAudit(idKey, idKey, idAudit, clock, CF_NAME,
           false));

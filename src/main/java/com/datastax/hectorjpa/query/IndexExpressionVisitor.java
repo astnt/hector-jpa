@@ -91,7 +91,7 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
     
     if(exp instanceof LessThanExpression){
       FieldExpression field = getFieldExpression();
-      field.setEnd(value, ComponentEquality.LESS_THAN_EQUAL);
+      field.setEnd(value, ComponentEquality.EQUAL);
       
       return;
     }
@@ -136,8 +136,6 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
   @Override
   public void exit(Value val) {
     log.debug("in exit with value {}", val);
-    // TODO Auto-generated method stub
-
   }
 
   /**
