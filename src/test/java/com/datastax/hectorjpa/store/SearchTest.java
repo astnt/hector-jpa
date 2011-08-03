@@ -45,8 +45,12 @@ import com.datastax.hectorjpa.bean.tree.Geek;
 import com.datastax.hectorjpa.bean.tree.Geek_;
 import com.datastax.hectorjpa.bean.tree.Nerd;
 import com.datastax.hectorjpa.bean.tree.Nerd_;
+import com.datastax.hectorjpa.bean.tree.Notification;
+import com.datastax.hectorjpa.bean.tree.Notification_;
 import com.datastax.hectorjpa.bean.tree.Techie;
 import com.datastax.hectorjpa.bean.tree.Techie_;
+import com.datastax.hectorjpa.query.ast.OrExpression;
+import com.eaio.uuid.UUID;
 import com.google.common.collect.Sets;
 
 /**
@@ -567,6 +571,554 @@ public class SearchTest extends ManagedEntityTestBase {
 
 	}
 
+	
+	@Test
+	public void greaterThanDateTest() {
+
+		EntityManager em = entityManagerFactory.createEntityManager();
+		em.getTransaction().begin();
+
+		UUID userId = new UUID();
+
+		Date date = new Date();
+
+		for (int i = 0; i < 10; i++) {
+			Notification n = new Notification(userId, "message" + i);
+			date.setTime(date.getTime() + 1);
+			n.setCreatedTime(new Date(date.getTime()));
+			em.persist(n);
+		}
+
+		em.getTransaction().commit();
+		em.close();
+
+		EntityManager em2 = entityManagerFactory.createEntityManager();
+
+		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+		CriteriaQuery<Notification> query = queryBuilder
+				.createQuery(Notification.class);
+
+		Root<Notification> n = query.from(Notification.class);
+
+		Predicate userIdPredicate = queryBuilder.equal(n.get(Notification_.userId), userId);
+		
+		
+		Date earliestDate = new Date(date.getTime() - 100);
+		Predicate createdTimePredicate = queryBuilder.greaterThanOrEqualTo(n.get(Notification_.createdTime), earliestDate);
+
+		query.where(userIdPredicate, createdTimePredicate);
+
+		Order readOrder = queryBuilder.asc(n.get(Notification_.read));
+		Order createdTimeorder = queryBuilder.desc(n.get(Notification_.createdTime));
+		query.orderBy(readOrder, createdTimeorder);
+
+		TypedQuery<Notification> q = em2.createQuery(query);
+
+		q.setFirstResult(0);
+		q.setMaxResults(10);
+
+		List<Notification> results = q.getResultList();
+
+		assertEquals(10, results.size());
+		
+	}
+	
+	
+	
+	/**
+	 * Test that we get all results when the number of results is less than the
+	 * defined range
+	 */
+	@Test
+	public void searchResultsLessThanDefinedRange() {
+
+		EntityManager em = entityManagerFactory.createEntityManager();
+		em.getTransaction().begin();
+
+		String name = new UUID().toString();
+
+		Geek g = new Geek();
+		g.setName(name);
+
+		Geek g2 = new Geek();
+		g2.setName(name);
+
+		em.persist(g);
+		em.persist(g2);
+
+		em.getTransaction().commit();
+		em.close();
+
+		EntityManager em2 = entityManagerFactory.createEntityManager();
+
+		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+		CriteriaQuery<Geek> query = queryBuilder.createQuery(Geek.class);
+
+		Root<Geek> n = query.from(Geek.class);
+
+		Predicate predicate = queryBuilder.equal(n.get(Geek_.name), name);
+
+		query.where(predicate);
+
+		TypedQuery<Geek> geekQuery = em2.createQuery(query);
+
+		geekQuery.setFirstResult(0);
+		geekQuery.setMaxResults(100);
+
+		List<Geek> results = geekQuery.getResultList();
+
+		assertEquals(2, results.size());
+
+		assertTrue(results.contains(g));
+		assertTrue(results.contains(g2));
+
+	}
+
+	
+	@Test
+	public void searchNoResults() {
+
+		EntityManager em2 = entityManagerFactory.createEntityManager();
+
+		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+		CriteriaQuery<Geek> query = queryBuilder.createQuery(Geek.class);
+
+		Root<Geek> n = query.from(Geek.class);
+
+		Predicate predicate = queryBuilder.equal(n.get(Geek_.name), "blah");
+
+		query.where(predicate);
+
+		TypedQuery<Geek> geekQuery = em2.createQuery(query);
+
+		geekQuery.setFirstResult(0);
+		geekQuery.setMaxResults(100);
+
+		List<Geek> results = geekQuery.getResultList();
+
+		assertEquals(0, results.size());
+
+	}
+	
+	/**
+	 * Test that we get all results when the number of results is less than the
+	 * defined range
+	 */
+	@Test
+	public void searchResultsExactRange() {
+
+		EntityManager em = entityManagerFactory.createEntityManager();
+		em.getTransaction().begin();
+
+		String name = new UUID().toString();
+
+		Geek g = new Geek();
+		g.setName(name);
+
+		Geek g2 = new Geek();
+		g2.setName(name);
+
+		em.persist(g);
+		em.persist(g2);
+
+		em.getTransaction().commit();
+		em.close();
+
+		EntityManager em2 = entityManagerFactory.createEntityManager();
+
+		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+		CriteriaQuery<Geek> query = queryBuilder.createQuery(Geek.class);
+
+		Root<Geek> n = query.from(Geek.class);
+
+		Predicate predicate = queryBuilder.equal(n.get(Geek_.name), name);
+
+		query.where(predicate);
+
+		TypedQuery<Geek> geekQuery = em2.createQuery(query);
+
+		geekQuery.setFirstResult(0);
+		geekQuery.setMaxResults(2);
+
+		List<Geek> results = geekQuery.getResultList();
+
+		assertEquals(2, results.size());
+
+		assertTrue(results.contains(g));
+		assertTrue(results.contains(g2));
+
+	}
+	
+	/**
+	 * Test that we can page results
+	 */
+	@Test
+	public void searchResultsPaging() {
+		EntityManager em = entityManagerFactory.createEntityManager();
+		em.getTransaction().begin();
+
+		UUID userId = new UUID();
+
+		Date date = new Date();
+
+		for (int i = 0; i < 10; i++) {
+			Notification n = new Notification(userId, "message" + i);
+			date.setTime(date.getTime() + 1);
+			n.setCreatedTime(new Date(date.getTime()));
+			em.persist(n);
+		}
+
+		em.getTransaction().commit();
+		em.close();
+
+		EntityManager em2 = entityManagerFactory.createEntityManager();
+
+		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+		CriteriaQuery<Notification> query = queryBuilder
+				.createQuery(Notification.class);
+
+		Root<Notification> n = query.from(Notification.class);
+
+		Predicate predicate = queryBuilder.equal(n.get(Notification_.userId),
+				userId);
+
+		query.where(predicate);
+
+		Order readOrder = queryBuilder.asc(n.get(Notification_.read));
+		Order createdTimeorder = queryBuilder.desc(n.get(Notification_.createdTime));
+		query.orderBy(readOrder, createdTimeorder);
+
+		TypedQuery<Notification> q = em2.createQuery(query);
+
+		q.setFirstResult(0);
+		q.setMaxResults(5);
+
+		List<Notification> results = q.getResultList();
+
+		assertEquals(5, results.size());
+		assertEquals("message9", results.get(0).getMessage());
+		assertEquals("message8", results.get(1).getMessage());
+		assertEquals("message7", results.get(2).getMessage());
+		assertEquals("message6", results.get(3).getMessage());
+		assertEquals("message5", results.get(4).getMessage());
+		
+		
+		
+		
+		em2 = entityManagerFactory.createEntityManager();
+
+		queryBuilder = em2.getCriteriaBuilder();
+
+		query = queryBuilder
+				.createQuery(Notification.class);
+
+		n = query.from(Notification.class);
+
+		predicate = queryBuilder.equal(n.get(Notification_.userId),
+				userId);
+
+		query.where(predicate);
+
+		readOrder = queryBuilder.asc(n.get(Notification_.read));
+		createdTimeorder = queryBuilder.desc(n.get(Notification_.createdTime));
+		query.orderBy(readOrder, createdTimeorder);
+
+		q = em2.createQuery(query);
+
+		q.setFirstResult(5);
+		q.setMaxResults(5);
+
+		results = q.getResultList();
+
+		assertEquals(5, results.size());
+		assertEquals("message4", results.get(0).getMessage());
+		assertEquals("message3", results.get(1).getMessage());
+		assertEquals("message2", results.get(2).getMessage());
+		assertEquals("message1", results.get(3).getMessage());
+		assertEquals("message0", results.get(4).getMessage());
+
+
+	}
+	
+	/**
+	 * Test that we get last 5 results when the search range overlaps the result
+	 * set
+	 */
+	@Test
+	public void searchResultsOverlapingDefinedRange() {
+
+		EntityManager em = entityManagerFactory.createEntityManager();
+		em.getTransaction().begin();
+
+		UUID userId = new UUID();
+
+		Date date = new Date();
+
+		for (int i = 0; i < 10; i++) {
+			Notification n = new Notification(userId, "message" + i);
+			date.setTime(date.getTime() + 1);
+			n.setCreatedTime(new Date(date.getTime()));
+			em.persist(n);
+		}
+
+		em.getTransaction().commit();
+		em.close();
+
+		EntityManager em2 = entityManagerFactory.createEntityManager();
+
+		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+		CriteriaQuery<Notification> query = queryBuilder
+				.createQuery(Notification.class);
+
+		Root<Notification> n = query.from(Notification.class);
+
+		Predicate predicate = queryBuilder.equal(n.get(Notification_.userId),
+				userId);
+
+		query.where(predicate);
+
+		Order readOrder = queryBuilder.asc(n.get(Notification_.read));
+		Order createdTimeorder = queryBuilder.desc(n
+				.get(Notification_.createdTime));
+		query.orderBy(readOrder, createdTimeorder);
+
+		TypedQuery<Notification> q = em2.createQuery(query);
+
+		q.setFirstResult(5);
+		q.setMaxResults(10);
+
+		List<Notification> results = q.getResultList();
+
+		assertEquals(5, results.size());
+		assertEquals("message4", results.get(0).getMessage());
+		assertEquals("message3", results.get(1).getMessage());
+		assertEquals("message2", results.get(2).getMessage());
+		assertEquals("message1", results.get(3).getMessage());
+		assertEquals("message0", results.get(4).getMessage());
+	}
+
+	/**
+	 * Test ordering. First order by read and then by createdTime
+	 */
+	@Test
+	public void searchResultsOrdering() {
+
+		EntityManager em = entityManagerFactory.createEntityManager();
+		em.getTransaction().begin();
+
+		UUID userId = new UUID();
+
+		Date date = new Date();
+
+		for (int i = 0; i < 10; i++) {
+			Notification n = new Notification(userId, "message" + i);
+			date.setTime(date.getTime() + 1);
+			n.setCreatedTime(new Date(date.getTime()));
+
+			if (i % 2 == 0) {
+				n.setRead(true);
+			}
+
+			em.persist(n);
+		}
+
+		em.getTransaction().commit();
+		em.close();
+
+		EntityManager em2 = entityManagerFactory.createEntityManager();
+
+		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+		CriteriaQuery<Notification> query = queryBuilder
+				.createQuery(Notification.class);
+
+		Root<Notification> n = query.from(Notification.class);
+
+		Predicate predicate = queryBuilder.equal(n.get(Notification_.userId),
+				userId);
+
+		query.where(predicate);
+
+		Order readOrder = queryBuilder.asc(n.get(Notification_.read));
+		Order createdTimeorder = queryBuilder.desc(n
+				.get(Notification_.createdTime));
+		query.orderBy(readOrder, createdTimeorder);
+
+		TypedQuery<Notification> q = em2.createQuery(query);
+
+		q.setFirstResult(0);
+		q.setMaxResults(10);
+
+		List<Notification> results = q.getResultList();
+
+		assertEquals(10, results.size());
+		assertEquals("message9", results.get(0).getMessage());
+		assertEquals("message7", results.get(1).getMessage());
+		assertEquals("message5", results.get(2).getMessage());
+		assertEquals("message3", results.get(3).getMessage());
+		assertEquals("message1", results.get(4).getMessage());
+		assertEquals("message8", results.get(5).getMessage());
+		assertEquals("message6", results.get(6).getMessage());
+		assertEquals("message4", results.get(7).getMessage());
+		assertEquals("message2", results.get(8).getMessage());
+		assertEquals("message0", results.get(9).getMessage());
+	}
+
+	@Test
+	public void queryOrExpression() {
+
+		EntityManager em = entityManagerFactory.createEntityManager();
+		em.getTransaction().begin();
+
+		String name1 = new UUID().toString();
+		String name2 = new UUID().toString();
+
+		Geek g = new Geek();
+		g.setName(name1);
+
+		Geek g2 = new Geek();
+		g2.setName(name2);
+
+		em.persist(g);
+		em.persist(g2);
+
+		em.getTransaction().commit();
+		em.close();
+
+		EntityManager em2 = entityManagerFactory.createEntityManager();
+
+		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+		CriteriaQuery<Geek> query = queryBuilder.createQuery(Geek.class);
+
+		Root<Geek> n = query.from(Geek.class);
+
+		Predicate predicate = queryBuilder.equal(n.get(Geek_.name), name1);
+		Predicate predicate2 = queryBuilder.equal(n.get(Geek_.name), name2);
+
+		query.where(queryBuilder.or(predicate, predicate2));
+
+		TypedQuery<Geek> geekQuery = em2.createQuery(query);
+
+		List<Geek> results = geekQuery.getResultList();
+
+		assertEquals(2, results.size());
+
+		assertTrue(results.contains(g));
+		assertTrue(results.contains(g2));
+	}
+
+	@Test
+	public void queryOrExpressionLessThanDefinedRange() {
+
+		EntityManager em = entityManagerFactory.createEntityManager();
+		em.getTransaction().begin();
+
+		String name1 = new UUID().toString();
+		String name2 = new UUID().toString();
+
+		Geek g = new Geek();
+		g.setName(name1);
+
+		Geek g2 = new Geek();
+		g2.setName(name2);
+
+		em.persist(g);
+		em.persist(g2);
+
+		em.getTransaction().commit();
+		em.close();
+
+		EntityManager em2 = entityManagerFactory.createEntityManager();
+
+		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+		CriteriaQuery<Geek> query = queryBuilder.createQuery(Geek.class);
+
+		Root<Geek> n = query.from(Geek.class);
+
+		Predicate predicate = queryBuilder.equal(n.get(Geek_.name), name1);
+		Predicate predicate2 = queryBuilder.equal(n.get(Geek_.name), name2);
+
+		query.where(queryBuilder.or(predicate, predicate2));
+
+		TypedQuery<Geek> geekQuery = em2.createQuery(query);
+
+		geekQuery.setFirstResult(0);
+		geekQuery.setMaxResults(100);
+
+		List<Geek> results = geekQuery.getResultList();
+
+		assertEquals(2, results.size());
+
+		assertTrue(results.contains(g));
+		assertTrue(results.contains(g2));
+	}
+
+	@Test
+	public void queryOrExpressionOverlappingDefinedRange() {
+
+		EntityManager em = entityManagerFactory.createEntityManager();
+		em.getTransaction().begin();
+
+		UUID userId = new UUID();
+		UUID userId2 = new UUID();
+
+		Date date = new Date();
+
+		for (int i = 0; i < 10; i++) {
+			Notification n = new Notification(i % 2 == 0 ? userId : userId2, "message" + i);
+			date.setTime(date.getTime() + 1);
+			n.setCreatedTime(new Date(date.getTime()));
+			em.persist(n);
+		}
+
+		em.getTransaction().commit();
+		em.close();
+
+		EntityManager em2 = entityManagerFactory.createEntityManager();
+
+		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+		CriteriaQuery<Notification> query = queryBuilder
+				.createQuery(Notification.class);
+
+		Root<Notification> n = query.from(Notification.class);
+
+		Predicate predicate = queryBuilder.equal(n.get(Notification_.userId), userId);
+		Predicate predicate2 = queryBuilder.equal(n.get(Notification_.userId), userId2);
+
+		query.where(queryBuilder.or(predicate, predicate2));
+
+		Order readOrder = queryBuilder.asc(n.get(Notification_.read));
+		Order createdTimeorder = queryBuilder.desc(n
+				.get(Notification_.createdTime));
+		query.orderBy(readOrder, createdTimeorder);
+
+		TypedQuery<Notification> q = em2.createQuery(query);
+
+		q.setFirstResult(5);
+		q.setMaxResults(10);
+
+		List<Notification> results = q.getResultList();
+
+		assertEquals(5, results.size());
+		
+
+		//NOT SURE WHAT THE RESULTS SHOULD BE FOR OR QUERIES
+		assertEquals("message4", results.get(0).getMessage());
+		assertEquals("message3", results.get(1).getMessage());
+		assertEquals("message2", results.get(2).getMessage());
+		assertEquals("message1", results.get(3).getMessage());
+		assertEquals("message0", results.get(4).getMessage());
+	}
+
 	/**
 	 * Make sure when we delete an entity it's removed from the index
 	 */
@@ -831,7 +1383,8 @@ public class SearchTest extends ManagedEntityTestBase {
 		EntityManager em2 = entityManagerFactory.createEntityManager();
 		em2.getTransaction().begin();
 
-		TypedQuery<Foo1> query = em2.createNamedQuery("searchRangeIncludeMinExcludeMax", Foo1.class);
+		TypedQuery<Foo1> query = em2.createNamedQuery(
+				"searchRangeIncludeMinExcludeMax", Foo1.class);
 		query.setParameter("otherLow", 0);
 		query.setParameter("otherHigh", 9);
 
@@ -924,7 +1477,7 @@ public class SearchTest extends ManagedEntityTestBase {
 
 		EntityManager em = entityManagerFactory.createEntityManager();
 		em.getTransaction().begin();
-		
+
 		String phoneNumber1 = "+64555444333";
 		String phoneNumber2 = "+74555444333";
 		int messageId = 100;
@@ -933,60 +1486,63 @@ public class SearchTest extends ManagedEntityTestBase {
 		sms1.setCreatedDate(new Date(start));
 		sms1.setPhoneNumber(phoneNumber1);
 		sms1.setMessageId(messageId);
-		
+
 		em.persist(sms1);
-		
+
 		WarningSmsMessage sms2 = new WarningSmsMessage();
 		sms2.setCreatedDate(new Date(start));
 		sms2.setPhoneNumber(phoneNumber2);
 		sms2.setMessageId(messageId);
-		
+
 		em.persist(sms2);
 
-		
 		em.getTransaction().commit();
 		em.close();
 
 		EntityManager em2 = entityManagerFactory.createEntityManager();
 		em2.getTransaction().begin();
 
-
 		// See comment in header to get this to build
 		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
 
-		CriteriaQuery<WarningSmsMessage> query = queryBuilder.createQuery(WarningSmsMessage.class);
+		CriteriaQuery<WarningSmsMessage> query = queryBuilder
+				.createQuery(WarningSmsMessage.class);
 
 		Root<WarningSmsMessage> root = query.from(WarningSmsMessage.class);
 
-		Predicate phonePred = queryBuilder.equal(root.get(WarningSmsMessage_.phoneNumber), phoneNumber1);
-		Predicate messagePred = queryBuilder.equal(root.get(WarningSmsMessage_.messageId), messageId);
-		
+		Predicate phonePred = queryBuilder.equal(
+				root.get(WarningSmsMessage_.phoneNumber), phoneNumber1);
+		Predicate messagePred = queryBuilder.equal(
+				root.get(WarningSmsMessage_.messageId), messageId);
+
 		query.where(phonePred, messagePred);
-		
-		Order order = queryBuilder.desc(root.get(WarningSmsMessage_.createdDate));
+
+		Order order = queryBuilder.desc(root
+				.get(WarningSmsMessage_.createdDate));
 
 		query.orderBy(order);
 
 		TypedQuery<WarningSmsMessage> smsQuery = em2.createQuery(query);
 
 		List<WarningSmsMessage> results = smsQuery.getResultList();
-		
-		
+
 		assertEquals(1, results.size());
 		assertEquals(sms1, results.get(0));
-		
-		//now create a new query and make sure we get the second value
+
+		// now create a new query and make sure we get the second value
 		queryBuilder = em2.getCriteriaBuilder();
 
 		query = queryBuilder.createQuery(WarningSmsMessage.class);
 
 		root = query.from(WarningSmsMessage.class);
 
-		phonePred = queryBuilder.equal(root.get(WarningSmsMessage_.phoneNumber), phoneNumber2);
-		messagePred = queryBuilder.equal(root.get(WarningSmsMessage_.messageId), messageId);
-		
+		phonePred = queryBuilder.equal(
+				root.get(WarningSmsMessage_.phoneNumber), phoneNumber2);
+		messagePred = queryBuilder.equal(
+				root.get(WarningSmsMessage_.messageId), messageId);
+
 		query.where(phonePred, messagePred);
-		
+
 		order = queryBuilder.desc(root.get(WarningSmsMessage_.createdDate));
 
 		query.orderBy(order);
@@ -994,41 +1550,44 @@ public class SearchTest extends ManagedEntityTestBase {
 		smsQuery = em2.createQuery(query);
 
 		results = smsQuery.getResultList();
-		
+
 		assertEquals(1, results.size());
 		assertEquals(sms2, results.get(0));
-		
-		//test searching for a child class form WarningSmsMessage, it shoudln't exist
-		
+
+		// test searching for a child class form WarningSmsMessage, it shoudln't
+		// exist
+
 		queryBuilder = em2.getCriteriaBuilder();
 
-		CriteriaQuery<UberWarningSmsMessage> subQuery = queryBuilder.createQuery(UberWarningSmsMessage.class);
+		CriteriaQuery<UberWarningSmsMessage> subQuery = queryBuilder
+				.createQuery(UberWarningSmsMessage.class);
 
-		Root<UberWarningSmsMessage> subRoot = subQuery.from(UberWarningSmsMessage.class);
+		Root<UberWarningSmsMessage> subRoot = subQuery
+				.from(UberWarningSmsMessage.class);
 
-		Predicate subPhonePred = queryBuilder.equal(subRoot.get(UberWarningSmsMessage_.phoneNumber), phoneNumber2);
-		Predicate subMessagePred = queryBuilder.equal(subRoot.get(UberWarningSmsMessage_.messageId), messageId);
-		
+		Predicate subPhonePred = queryBuilder.equal(
+				subRoot.get(UberWarningSmsMessage_.phoneNumber), phoneNumber2);
+		Predicate subMessagePred = queryBuilder.equal(
+				subRoot.get(UberWarningSmsMessage_.messageId), messageId);
+
 		subQuery.where(subPhonePred, subMessagePred);
-		
-		Order subOrder = queryBuilder.desc(subRoot.get(UberWarningSmsMessage_.createdDate));
+
+		Order subOrder = queryBuilder.desc(subRoot
+				.get(UberWarningSmsMessage_.createdDate));
 
 		subQuery.orderBy(subOrder);
 
-		TypedQuery<UberWarningSmsMessage> subSmsQuery = em2.createQuery(subQuery);
+		TypedQuery<UberWarningSmsMessage> subSmsQuery = em2
+				.createQuery(subQuery);
 
 		List<UberWarningSmsMessage> subResults = subSmsQuery.getResultList();
-		
-		
+
 		assertEquals(0, subResults.size());
-		
-		
+
 		em2.getTransaction().commit();
 		em2.close();
-		
-		
+
 	}
-	
 
 	/**
 	 * Tests descending order with subclassing
@@ -1041,7 +1600,7 @@ public class SearchTest extends ManagedEntityTestBase {
 
 		EntityManager em = entityManagerFactory.createEntityManager();
 		em.getTransaction().begin();
-		
+
 		String phoneNumber1 = "+94555444333";
 		int messageId = 100;
 
@@ -1049,54 +1608,52 @@ public class SearchTest extends ManagedEntityTestBase {
 		sms1.setCreatedDate(new Date(start1));
 		sms1.setPhoneNumber(phoneNumber1);
 		sms1.setMessageId(messageId);
-		
+
 		em.persist(sms1);
-		
 
 		UberWarningSmsMessage sms2 = new UberWarningSmsMessage();
 		sms2.setCreatedDate(new Date(start2));
 		sms2.setPhoneNumber(phoneNumber1);
 		sms2.setMessageId(messageId);
-		
+
 		em.persist(sms2);
 
-		
 		em.getTransaction().commit();
 		em.close();
 
 		EntityManager em2 = entityManagerFactory.createEntityManager();
 		em2.getTransaction().begin();
 
-
 		// See comment in header to get this to build
 		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
 
-		CriteriaQuery<WarningSmsMessage> query = queryBuilder.createQuery(WarningSmsMessage.class);
+		CriteriaQuery<WarningSmsMessage> query = queryBuilder
+				.createQuery(WarningSmsMessage.class);
 
 		Root<WarningSmsMessage> root = query.from(WarningSmsMessage.class);
 
-		Predicate phonePred = queryBuilder.equal(root.get(WarningSmsMessage_.phoneNumber), phoneNumber1);
-		Predicate messagePred = queryBuilder.equal(root.get(WarningSmsMessage_.messageId), messageId);
-		
+		Predicate phonePred = queryBuilder.equal(
+				root.get(WarningSmsMessage_.phoneNumber), phoneNumber1);
+		Predicate messagePred = queryBuilder.equal(
+				root.get(WarningSmsMessage_.messageId), messageId);
+
 		query.where(phonePred, messagePred);
-		
-		Order order = queryBuilder.desc(root.get(WarningSmsMessage_.createdDate));
+
+		Order order = queryBuilder.desc(root
+				.get(WarningSmsMessage_.createdDate));
 
 		query.orderBy(order);
 
 		TypedQuery<WarningSmsMessage> smsQuery = em2.createQuery(query);
 
 		List<WarningSmsMessage> results = smsQuery.getResultList();
-		
-		
+
 		assertEquals(2, results.size());
 		assertEquals(sms2, results.get(0));
 		assertEquals(sms1, results.get(1));
-		
-	
+
 		em2.getTransaction().commit();
 		em2.close();
-		
-		
+
 	}
 }

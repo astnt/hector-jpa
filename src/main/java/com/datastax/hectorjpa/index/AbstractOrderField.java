@@ -114,7 +114,15 @@ public abstract class AbstractOrderField extends AbstractIndexField {
     Comparable<Object> c2Value = (Comparable<Object>) c2.get(c2index,
         this.serializer);
 
-
+    if (c1Value == null && c2Value == null) {
+    	return 0;
+    }
+    if (c1Value == null) {
+    	return 1;
+    }
+    if (c2Value == null) {
+    	return -1;
+    }
     return c1Value.compareTo(c2Value) * invert;
 
   }

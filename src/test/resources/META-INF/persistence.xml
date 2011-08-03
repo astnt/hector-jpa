@@ -30,6 +30,7 @@
     <class>com.datastax.hectorjpa.bean.tree.Geek</class>
     <class>com.datastax.hectorjpa.bean.tree.Nerd</class>
     <class>com.datastax.hectorjpa.bean.tree.Techie</class>
+    <class>com.datastax.hectorjpa.bean.tree.Notification</class>
 
 
 

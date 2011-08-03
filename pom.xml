@@ -418,7 +418,7 @@
 		<org.springframework.version>3.0.5.RELEASE</org.springframework.version>
 		<slf4j.version>1.6.1</slf4j.version>
 		<aspectj.version>1.6.8</aspectj.version>
-		<openjpa.version>2.1.0</openjpa.version>
+		<openjpa.version>2.1.1</openjpa.version>
 	</properties>
 
 </project>

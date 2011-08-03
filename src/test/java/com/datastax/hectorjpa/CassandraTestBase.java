@@ -160,6 +160,9 @@ public class CassandraTestBase {
     .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
     
     
+    cfDefList.add(new CfDef("TestKeyspace", "NotificationColumnFamily")
+    .setComparator_type(BytesType.class.getSimpleName())
+    .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
     
     cfDefList.add(new CfDef("TestKeyspace", "MagazineColumnFamily")
     .setComparator_type(BytesType.class.getSimpleName())
@@ -168,6 +171,7 @@ public class CassandraTestBase {
     cfDefList.add(new CfDef("TestKeyspace", "Foo1ColumnFamily")
     .setComparator_type(BytesType.class.getSimpleName())
     .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
+    
 
 
     // collection indexing

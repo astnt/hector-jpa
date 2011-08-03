@@ -6,6 +6,9 @@ package com.datastax.hectorjpa.query;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.NoSuchElementException;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -73,7 +76,7 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
     // the list of queries we need to execute
     List<IndexQuery> queries = visitor.getVisitors();
 
-    SortedSet<DynamicComposite> columnResults = null;
+    NavigableSet<DynamicComposite> columnResults = null;
 
     AbstractIndexOperation indexOp = null;
 
@@ -114,13 +117,18 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
       // Calculate our size
       long size = range.end - range.start;
 
-      for (long index = 0; index < size && currentSet.hasNext(); index++) {
-        end = currentSet.next();
+      if (columnResults.size() > 0 && size > columnResults.size()) {
+    	  end = columnResults.last();
+      } else {
+    	  //start at 1 as we have already progressed to 1 with the currentSet.next() call above
+    	  for (long index = 1; index < size && currentSet.hasNext(); index++) {
+    		  end = currentSet.next();
+    	  }
       }
-
+      
       // Get the set results between the start and end.  If start or end or null, we can't properly page the result set
       if (start != null && end != null) {
-        columnResults = columnResults.subSet(start, end);
+        columnResults = columnResults.subSet(start, true, end, true);
       }
 
     }
