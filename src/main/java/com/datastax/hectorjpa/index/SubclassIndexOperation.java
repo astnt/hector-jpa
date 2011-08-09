@@ -4,9 +4,6 @@
 package com.datastax.hectorjpa.index;
 
 import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
-
-import java.util.Set;
-
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
@@ -17,6 +14,7 @@ import org.apache.openjpa.kernel.OpenJPAStateManager;
 
 import com.datastax.hectorjpa.query.FieldExpression;
 import com.datastax.hectorjpa.query.IndexQuery;
+import com.datastax.hectorjpa.query.iterator.ScanIterator;
 import com.datastax.hectorjpa.service.IndexAudit;
 import com.datastax.hectorjpa.service.IndexQueue;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
@@ -116,9 +114,9 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
    * comparator of the dynamic columns are compared via a tree comparator
    * 
    * @param query
+   * @return 
    */
-  public void scanIndex(IndexQuery query, Set<DynamicComposite> results,
-      Keyspace keyspace) {
+  public ScanIterator scanIndex(IndexQuery query, Keyspace keyspace) {
     
    
     DynamicComposite startScan = newComposite();
@@ -153,9 +151,7 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
     this.fields[last].addToComposite(endScan, componentIndex, exp.getEnd(), exp.getEndEquality());
     
     
-    // now query the values
-    // get our slice range
-    super.executeQuery(startScan, endScan, results, keyspace);
+    return new ScanIterator(keyspace, startScan, endScan, indexName);
 
   }
   

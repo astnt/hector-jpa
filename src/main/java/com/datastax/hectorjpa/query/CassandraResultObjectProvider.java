@@ -1,6 +1,7 @@
 package com.datastax.hectorjpa.query;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import me.prettyprint.hector.api.beans.DynamicComposite;
@@ -28,9 +29,9 @@ public class CassandraResultObjectProvider implements ResultObjectProvider {
   
   
 	private Iterator<DynamicComposite> iterator;
-	private Set<DynamicComposite> results;
+	private List<DynamicComposite> results;
 	
-	public CassandraResultObjectProvider(Set<DynamicComposite> results,
+	public CassandraResultObjectProvider(List<DynamicComposite> results,
 			StoreContext ctx, FetchConfiguration fetchConfig,
 			CassandraClassMetaData classMeta) {
 		this.results = results;
@@ -73,7 +74,7 @@ public class CassandraResultObjectProvider implements ResultObjectProvider {
 
 	@Override
 	public boolean absolute(int pos) throws Exception {
-		return false;
+		return results.size() > pos;
 
 	}
 

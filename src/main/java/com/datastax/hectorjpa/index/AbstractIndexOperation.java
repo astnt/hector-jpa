@@ -37,6 +37,7 @@ import com.datastax.hectorjpa.meta.key.KeyStrategy;
 import com.datastax.hectorjpa.query.IndexQuery;
 import com.datastax.hectorjpa.query.QueryIndexField;
 import com.datastax.hectorjpa.query.QueryOrderField;
+import com.datastax.hectorjpa.query.iterator.ScanIterator;
 import com.datastax.hectorjpa.service.IndexAudit;
 import com.datastax.hectorjpa.service.IndexQueue;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
@@ -51,7 +52,7 @@ import com.datastax.hectorjpa.store.MappingUtils;
  */
 public abstract class AbstractIndexOperation {
   
-  private static final Logger log = LoggerFactory.getLogger(AbstractIndexOperation.class);
+
 
   public static final String CF_NAME = "Index_Container";
   
@@ -196,13 +197,11 @@ public abstract class AbstractIndexOperation {
       Mutator<byte[]> mutator, long clock, IndexQueue queue);
 
   /**
-   * Scan the given index query and add the results to the provided set. The set
-   * comparator of the dynamic columns are compared via a tree comparator
+   * Prepare and return the singlescaniterator for the result set
    * 
    * @param query
    */
-  public abstract void scanIndex(IndexQuery query,
-      Set<DynamicComposite> results, Keyspace keyspace);
+  public abstract ScanIterator scanIndex(IndexQuery query, Keyspace keyspace);
 
   /**
    * Remove all values from the index that were for the given statemanager
@@ -280,45 +279,44 @@ public abstract class AbstractIndexOperation {
     return changed;
   }
 
-  /**
-   * Execute a query with the given start and end dynamic composites
-   * 
-   * @param start
-   *          The start value from the range scan
-   * @param end
-   *          The end value in the range scan
-   * @param results
-   *          The results to add the returned values to. Sorted by order fields,
-   *          then id
-   * @param keyspace
-   *          The kesypace
-   */
-  @SuppressWarnings({ "rawtypes", "unchecked" })
-  protected void executeQuery(DynamicComposite start, DynamicComposite end,
-      Set<DynamicComposite> results, Keyspace keyspace) {
-
-    SliceQuery<byte[], DynamicComposite, byte[]> sliceQuery = new ThriftSliceQuery(
-        keyspace, BytesArraySerializer.get(), compositeSerializer,
-        BytesArraySerializer.get());
-
-    DynamicComposite startScan = start;
-    QueryResult<ColumnSlice<DynamicComposite, byte[]>> result = null;
-
-    do {
-
-      sliceQuery.setRange(startScan, end, false, MAX_SIZE);
-      sliceQuery.setKey(indexName);
-      sliceQuery.setColumnFamily(CF_NAME);
-      log.debug("in executeQuery with sliceQuery {}", sliceQuery);
-      result = sliceQuery.execute();
-      log.debug("found result {}", result.get());
-      for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
-        start = col.getName();
-        results.add(start);
-      }
-
-    } while (result.get().getColumns().size() == MAX_SIZE);
-  }
+//  /**
+//   * Execute a query with the given start and end dynamic composites
+//   * 
+//   * @param start
+//   *          The start value from the range scan
+//   * @param end
+//   *          The end value in the range scan
+//   * @param results
+//   *          The results to add the returned values to. Sorted by order fields,
+//   *          then id
+//   * @param keyspace
+//   *          The kesypace
+//   */
+//  @SuppressWarnings({ "rawtypes", "unchecked" })
+//  protected SliceQuery<byte[], DynamicComposite, byte[]> createSliceQuery(DynamicComposite start, DynamicComposite end, Keyspace keyspace) {
+//
+//    SliceQuery<byte[], DynamicComposite, byte[]> sliceQuery = new ThriftSliceQuery(
+//        keyspace, BytesArraySerializer.get(), compositeSerializer,
+//        BytesArraySerializer.get());
+//
+//    DynamicComposite startScan = start;
+//    QueryResult<ColumnSlice<DynamicComposite, byte[]>> result = null;
+//
+//    do {
+//
+//      sliceQuery.setRange(startScan, end, false, MAX_SIZE);
+//      sliceQuery.setKey(indexName);
+//      sliceQuery.setColumnFamily(CF_NAME);
+//      log.debug("in executeQuery with sliceQuery {}", sliceQuery);
+//      result = sliceQuery.execute();
+//      log.debug("found result {}", result.get());
+//      for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
+//        start = col.getName();
+//        results.add(start);
+//      }
+//
+//    } while (result.get().getColumns().size() == MAX_SIZE);
+//  }
 
 
 

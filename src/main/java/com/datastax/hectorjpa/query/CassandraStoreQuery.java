@@ -12,6 +12,7 @@ import java.util.NoSuchElementException;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 
 import org.apache.openjpa.kernel.ExpressionStoreQuery;
@@ -29,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import com.datastax.hectorjpa.index.AbstractIndexOperation;
 import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexOrder;
+import com.datastax.hectorjpa.index.AbstractIndexOperation.ResultComparator;
+import com.datastax.hectorjpa.query.iterator.ResultCompiler;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.CassandraStoreConfiguration;
 import com.datastax.hectorjpa.store.EntityFacade;
@@ -76,68 +79,39 @@ public class CassandraStoreQuery extends ExpressionStoreQuery {
     // the list of queries we need to execute
     List<IndexQuery> queries = visitor.getVisitors();
 
-    NavigableSet<DynamicComposite> columnResults = null;
-
-    AbstractIndexOperation indexOp = null;
-
-    // TODO TN, this is a mess, comparator operations for index ops aren't
-    // properly setup in the class structure. Refactor to fix this
 
     
-    for (IndexQuery query : queries) {
-      
-      indexOp = getIndexOp(query, parsed[0].ordering, parsed[0].ascending,
-          (CassandraClassMetaData) base);
+    AbstractIndexOperation indexOp = getIndexOp(queries.get(0), parsed[0].ordering, parsed[0].ascending, (CassandraClassMetaData) base);
+
+    
+    ResultCompiler compiler = new ResultCompiler(indexOp.getComprator());
+ 
+    Keyspace keyspace = conf.getKeyspace();
+    
+    compiler.addScanIterator(indexOp.scanIndex(queries.get(0), keyspace));
+    
+    //loop throught and add all other clauses
+    for(int i = 1; i < queries.size(); i ++){
       log.debug("indexOp: {} and base: {} with range: {}", new Object[]{indexOp, base,range});
-      
-      if (columnResults == null) {
-        columnResults = new TreeSet<DynamicComposite>(indexOp.getComprator());
-      }
-
-      // we have an index operation, now get the columns from it
-      indexOp.scanIndex(query, columnResults, conf.getKeyspace());
-
+      compiler.addScanIterator(indexOp.scanIndex(queries.get(i), keyspace));
     }
-
-    // now use our limit to remove items we don't need
-    // TODO TN, this kind of sucks, figure out a better way
-    if (range.start != 0 || range.end != Long.MAX_VALUE) {
-
-      long current = 0;
-
-      DynamicComposite start = null;
-      DynamicComposite end = null;
-
-      Iterator<DynamicComposite> currentSet = columnResults.iterator();
-
-      for (; current <= range.start && currentSet.hasNext(); current++) {
-        start = currentSet.next();
-      }
-
-      // Calculate our size
-      long size = range.end - range.start;
-
-      if (columnResults.size() > 0 && size > columnResults.size()) {
-    	  end = columnResults.last();
-      } else {
-    	  //start at 1 as we have already progressed to 1 with the currentSet.next() call above
-    	  for (long index = 1; index < size && currentSet.hasNext(); index++) {
-    		  end = currentSet.next();
-    	  }
-      }
-      
-      // Get the set results between the start and end.  If start or end or null, we can't properly page the result set
-      if (start != null && end != null) {
-        columnResults = columnResults.subSet(start, true, end, true);
-      }
-
+    
+    int start = 0;
+    int size = Integer.MAX_VALUE;
+    
+    if(range.start != 0 || range.end != Long.MAX_VALUE){
+      start = (int) range.start;
+      size = (int) (range.end - range.start);
+      //this is a limitation in cassandra paging, more than an int isn't supported for loading columns.  Not really an issue since that many rows propbably can't be loaded in ram anyway
     }
-
+    
+    
+    //TODO T.N. incorporate LRS
+    compiler.compile(start, size);
+    
     CassandraResultObjectProvider results = new CassandraResultObjectProvider(
-        columnResults, this.getContext().getStoreContext(),
+        compiler.getResults(), this.getContext().getStoreContext(),
         ctx.getFetchConfiguration(), (CassandraClassMetaData) base);
-
-    // TODO Auto-generated method stub
 
     return results;
   }
