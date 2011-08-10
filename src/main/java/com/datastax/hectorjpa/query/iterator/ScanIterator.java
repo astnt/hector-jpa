@@ -224,7 +224,11 @@ public class ScanIterator {
     }
     
     if(logger.isDebugEnabled()){
-      logger.debug("Query start: {}, end: {}, size: {}", new Object[]{ByteBufferUtil.bytesToHex(startScan.serialize()),  ByteBufferUtil.bytesToHex(end.serialize()), size});
+      
+      String startHex = startScan == null ? "" : ByteBufferUtil.bytesToHex(startScan.serialize());
+      String endHex = end == null? "" :  ByteBufferUtil.bytesToHex(end.serialize());
+      
+      logger.debug("Query start: {}, end: {}, size: {}", new Object[]{startHex, endHex, size});
     }
     
     SliceQuery<byte[], DynamicComposite, byte[]> sliceQuery = HFactory.createSliceQuery(keyspace, BytesArraySerializer.get(), DynamicCompositeSerializer.get(),
