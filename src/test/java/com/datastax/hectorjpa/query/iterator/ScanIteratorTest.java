@@ -3,16 +3,26 @@
  */
 package com.datastax.hectorjpa.query.iterator;
 
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
+import java.nio.ByteBuffer;
+import java.util.List;
+
+import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.DynamicCompositeSerializer;
 import me.prettyprint.cassandra.serializers.IntegerSerializer;
+import me.prettyprint.cassandra.serializers.LongSerializer;
+import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 import me.prettyprint.hector.api.beans.DynamicComposite;
+import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
+import me.prettyprint.hector.api.query.SliceQuery;
 
+import org.apache.cassandra.utils.ByteBufferUtil;
 import org.junit.Test;
 
 import com.datastax.hectorjpa.CassandraTestBase;
@@ -356,6 +366,106 @@ public class ScanIteratorTest extends CassandraTestBase {
 
   }
 
+  /**
+   * Test ordering composites
+   * 
+   * @param size
+   */
+  @Test
+  public void testCompositeOrdering() {
+
+    Mutator<byte[]> mutator = HFactory.createMutator(
+        CassandraTestBase.keyspace, BytesArraySerializer.get());
+    
+    byte[] rowKey = generateRowKey();
+
+    long size = 10;
+    
+    System.out.println("Insertion values");
+    
+    for (long i = 0; i < size; i++) {
+
+      DynamicComposite composite = new DynamicComposite();
+      
+      
+      //make all values the same first column
+      composite.addComponent("jeans", StringSerializer.get(), StringSerializer
+          .get().getComparatorType().getTypeName());
+
+      //now increment the second value
+      
+      composite.addComponent(i, LongSerializer.get(), "BytesType(reversed=true)");
+      
+      
+//      composite.addComponent(0l, LongSerializer.get(), LongSerializer.get().getComparatorType().getTypeName());
+//      composite.addComponent(i, LongSerializer.get(), LongSerializer.get().getComparatorType().getTypeName());
+      
+      mutator.addInsertion(
+          rowKey,
+          AbstractIndexOperation.CF_NAME,
+          HFactory.createColumn(composite, holder,
+              DynamicCompositeSerializer.get(), BytesArraySerializer.get()));
+    
+      System.out.println(ByteBufferUtil.bytesToHex(composite.serialize()));
+    
+    }
+
+    mutator.execute();
+
+    
+    //now query them with a scan and ensure they're returned correctly.
+    
+    SliceQuery<byte[], DynamicComposite, ByteBuffer> sliceQuery = HFactory.createSliceQuery(keyspace, BytesArraySerializer.get(), DynamicCompositeSerializer.get(), ByteBufferSerializer.get());
+    
+    sliceQuery.setColumnFamily(AbstractIndexOperation.CF_NAME);
+    sliceQuery.setKey(rowKey);
+    
+    DynamicComposite start = new DynamicComposite();
+    start.addComponent("jeans", StringSerializer.get(), StringSerializer.get().getComparatorType().getTypeName(),ComponentEquality.EQUAL );
+    
+    DynamicComposite end = new DynamicComposite();
+    end.addComponent("jeans", StringSerializer.get(), StringSerializer.get().getComparatorType().getTypeName(),ComponentEquality.GREATER_THAN_EQUAL );
+ 
+    
+    sliceQuery.setRange(start, end, false, 1000);
+    
+    
+    System.out.println("Range values");
+    System.out.println(ByteBufferUtil.bytesToHex(start.serialize()));
+    System.out.println(ByteBufferUtil.bytesToHex(end.serialize()));
+    
+    
+    List<HColumn<DynamicComposite, ByteBuffer>> cols = sliceQuery.execute().get().getColumns();
+    
+    
+    System.out.println("Returned values");
+    
+    for (long i = size -1; i >-1; i--) {
+      System.out.println(ByteBufferUtil.bytesToHex(cols.get((int)i).getNameBytes()));
+      
+     
+      DynamicComposite composite = cols.get((int) i).getName();
+      
+      
+      
+      //make all values the same first column
+      
+      assertEquals("jeans", composite.get(0, StringSerializer.get()));
+      
+      
+//      assertEquals(i, (long)composite.get(1, LongSerializer.get()));
+      
+      
+      
+    
+      
+    }
+    
+    
+
+  }
+  
+  
   private DynamicComposite genComposite(int start, ComponentEquality equality) {
     DynamicComposite composite = new DynamicComposite();
     composite.addComponent(start, IntegerSerializer.get(), IntegerSerializer

@@ -4,9 +4,6 @@
 package com.datastax.hectorjpa.index;
 
 import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
-
-import java.util.Set;
-
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
@@ -52,7 +49,7 @@ public class IndexOperation extends AbstractIndexOperation {
   public void writeIndex(OpenJPAStateManager stateManager,
       Mutator<byte[]> mutator, long clock, IndexQueue queue) {
 
-    DynamicComposite newComposite = newComposite();
+    DynamicComposite searchComposite = newComposite();
     DynamicComposite tombstoneComposite = newComposite();
     DynamicComposite idAudit = newComposite();
 
@@ -60,10 +57,12 @@ public class IndexOperation extends AbstractIndexOperation {
 
     // create our composite of the format id+order*
 
-    constructComposites(newComposite, tombstoneComposite, idAudit, stateManager);
+    constructComposites(searchComposite, tombstoneComposite, idAudit, stateManager);
+    
+    
 
     mutator.addInsertion(indexName, CF_NAME,
-        new HColumnImpl<DynamicComposite, byte[]>(newComposite, HOLDER, clock,
+        new HColumnImpl<DynamicComposite, byte[]>(searchComposite, HOLDER, clock,
             compositeSerializer, bytesSerializer));
 
     mutator.addInsertion(reverseIndexName, CF_NAME,

@@ -6,7 +6,6 @@ package com.datastax.hectorjpa.query.iterator;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.DynamicCompositeSerializer;
 import me.prettyprint.hector.api.Keyspace;
@@ -15,9 +14,11 @@ import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.beans.HColumn;
+import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
 
+import org.apache.cassandra.utils.ByteBufferUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,15 +27,14 @@ import com.datastax.hectorjpa.index.AbstractIndexOperation;
 /**
  * Simple iterator that iterates over rows.
  * 
- * TODO get max size from settings. TODO this is inefficient when loadNext is
- * called, it should perform a delta and only load those values
+ * TODO get max size from settings. 
  * 
  * @author Todd Nine
  * 
  */
 public class ScanIterator {
 
-  private static final Logger log = LoggerFactory.getLogger(ScanIterator.class);
+  private static final Logger logger = LoggerFactory.getLogger(ScanIterator.class);
 
   protected static int PAGE_SIZE = 500;
 
@@ -196,7 +196,7 @@ public class ScanIterator {
 
     for (int i = 0; i < size - 1; i++) {
 
-      component = newComposite.getComponent(i);
+      component = composite.getComponent(i);
 
       newComposite.addComponent(component.getValue(),
           component.getSerializer(), component.getComparator(),
@@ -223,19 +223,25 @@ public class ScanIterator {
       return new ArrayList<HColumn<DynamicComposite, byte[]>>();
     }
     
-    SliceQuery<byte[], DynamicComposite, byte[]> sliceQuery = new ThriftSliceQuery(
-        keyspace, BytesArraySerializer.get(), DynamicCompositeSerializer.get(),
+    if(logger.isDebugEnabled()){
+      logger.debug("Query start: {}, end: {}, size: {}", new Object[]{ByteBufferUtil.bytesToHex(startScan.serialize()),  ByteBufferUtil.bytesToHex(end.serialize()), size});
+    }
+    
+    SliceQuery<byte[], DynamicComposite, byte[]> sliceQuery = HFactory.createSliceQuery(keyspace, BytesArraySerializer.get(), DynamicCompositeSerializer.get(),
         BytesArraySerializer.get());
     QueryResult<ColumnSlice<DynamicComposite, byte[]>> result = null;
 
     sliceQuery.setRange(startScan, end, false, size);
     sliceQuery.setKey(indexName);
     sliceQuery.setColumnFamily(AbstractIndexOperation.CF_NAME);
-    log.debug("in executeQuery with sliceQuery {}", sliceQuery);
+    logger.debug("in executeQuery with sliceQuery {}", sliceQuery);
     result = sliceQuery.execute();
-    log.debug("found result {}", result.get());
+    
+    List<HColumn<DynamicComposite, byte[]>> columns = result.get().getColumns();
+    
+    logger.debug("found {} results", columns.size());
 
-    return result.get().getColumns();
+    return columns;
 
   }
 

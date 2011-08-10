@@ -7,6 +7,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import org.apache.cassandra.utils.ByteBufferUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.beans.HColumn;
 
@@ -19,6 +23,9 @@ import me.prettyprint.hector.api.beans.HColumn;
  * 
  */
 public class ResultCompiler {
+  private static final Logger logger = LoggerFactory.getLogger(ResultCompiler.class);
+
+  
 
   private List<DynamicComposite> results;
 
@@ -145,6 +152,11 @@ public class ResultCompiler {
     results = new ArrayList<DynamicComposite>(itr.getColumns().size());
     
     for(HColumn<DynamicComposite, byte[]> col: itr.getColumns()){
+      
+      if(logger.isDebugEnabled()){
+        logger.debug("Adding column to results : {}", ByteBufferUtil.bytesToHex(col.getNameBytes()));
+      }
+      
       results.add(col.getName());
     }
     

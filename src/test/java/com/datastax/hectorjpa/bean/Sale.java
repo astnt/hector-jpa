@@ -80,6 +80,21 @@ public class Sale extends AbstractEntity {
   public void setCustomer(Customer customer) {
     this.customer = customer;
   }
+
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("Sale [itemName=");
+    builder.append(itemName);
+    builder.append(", sellDate=");
+    builder.append(sellDate);
+    builder.append(", customer=");
+    builder.append(customer);
+    builder.append(", getId()=");
+    builder.append(getId());
+    builder.append("]");
+    return builder.toString();
+  }
   
   
   

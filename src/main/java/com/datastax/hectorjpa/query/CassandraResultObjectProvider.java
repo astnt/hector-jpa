@@ -1,8 +1,6 @@
 package com.datastax.hectorjpa.query;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import me.prettyprint.hector.api.beans.DynamicComposite;
 
@@ -28,8 +26,8 @@ public class CassandraResultObjectProvider implements ResultObjectProvider {
   private final KeyStrategy keyStrategy;
   
   
-	private Iterator<DynamicComposite> iterator;
 	private List<DynamicComposite> results;
+	private int index;
 	
 	public CassandraResultObjectProvider(List<DynamicComposite> results,
 			StoreContext ctx, FetchConfiguration fetchConfig,
@@ -38,25 +36,26 @@ public class CassandraResultObjectProvider implements ResultObjectProvider {
 		this.ctx = ctx;
 		this.classMeta = classMeta;
 		this.fetchConfig = fetchConfig;
+		this.index = -1;
 
 		keyStrategy = MappingUtils.getKeyStrategy(classMeta);
 	}
 
 	@Override
 	public boolean supportsRandomAccess() {
-		return false;
+		return true;
 	}
 
 	@Override
 	public void open() throws Exception {
-		this.iterator = results.iterator();
+		//no op
 
 	}
 
 	@Override
 	public Object getResultObject() throws Exception {
 
-		DynamicComposite current = iterator.next();
+		DynamicComposite current = results.get(index);
 
 		int length = current.getComponents().size();
 
@@ -69,12 +68,19 @@ public class CassandraResultObjectProvider implements ResultObjectProvider {
 
 	@Override
 	public boolean next() throws Exception {
-		return iterator.hasNext();
+		 index++;
+		 
+		 return index < results.size();
 	}
 
 	@Override
 	public boolean absolute(int pos) throws Exception {
-		return results.size() > pos;
+		if(pos < results.size()){
+		  this.index = pos;
+		  return true;
+		}
+		
+		return false;
 
 	}
 
@@ -85,7 +91,7 @@ public class CassandraResultObjectProvider implements ResultObjectProvider {
 
 	@Override
 	public void reset() throws Exception {
-		this.iterator = results.iterator();
+		this.index = -1;
 	}
 
 	@Override

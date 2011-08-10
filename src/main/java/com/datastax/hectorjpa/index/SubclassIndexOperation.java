@@ -27,8 +27,7 @@ import com.datastax.hectorjpa.store.CassandraClassMetaData;
  * 
  */
 public class SubclassIndexOperation extends AbstractIndexOperation {
-
-  /**
+ /**
    * String array of all subclass discriminator values
    */
   private String[] subClasses;
@@ -59,7 +58,7 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
   public void writeIndex(OpenJPAStateManager stateManager,
       Mutator<byte[]> mutator, long clock, IndexQueue queue) {
 
-    DynamicComposite newComposite = null;
+    DynamicComposite searchComposite = null;
     DynamicComposite tombstoneComposite = null;
     DynamicComposite idAudit = null;
 
@@ -68,9 +67,9 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
 
     for (int i = 0; i < subClasses.length; i++) {
 
-      newComposite = newComposite();
+      searchComposite = newComposite();
 
-      newComposite.addComponent(subClasses[i], stringSerializer);
+      searchComposite.addComponent(subClasses[i], stringSerializer);
 
       // create our composite of the format order*+id
       
@@ -82,11 +81,11 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
       
       idAudit.addComponent(1, subClasses[i], stringSerializer, stringSerializer.getComparatorType().getTypeName(), ComponentEquality.EQUAL);
 
-      boolean changed = constructComposites(newComposite, tombstoneComposite, idAudit,
-          stateManager);
+      constructComposites(searchComposite, tombstoneComposite, idAudit, stateManager);
 
+      
       mutator.addInsertion(indexName, CF_NAME,
-          new HColumnImpl<DynamicComposite, byte[]>(newComposite, HOLDER,
+          new HColumnImpl<DynamicComposite, byte[]>(searchComposite, HOLDER,
               clock, compositeSerializer, bytesSerializer));
       
       mutator.addInsertion(reverseIndexName, CF_NAME,
@@ -97,14 +96,6 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
       queue.addAudit(new IndexAudit(indexName, reverseIndexName, idAudit, clock, CF_NAME, true));
 
 
-      // value has changed since we loaded. Remove the old value
-//      if (changed) {
-//
-//        // add it to our old value
-//        mutator.addDeletion(indexName, CF_NAME, oldComposite,
-//            compositeSerializer, clock);
-//
-//      }
     }
 
   }

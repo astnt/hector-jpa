@@ -49,7 +49,6 @@ import com.datastax.hectorjpa.bean.tree.Notification;
 import com.datastax.hectorjpa.bean.tree.Notification_;
 import com.datastax.hectorjpa.bean.tree.Techie;
 import com.datastax.hectorjpa.bean.tree.Techie_;
-import com.datastax.hectorjpa.query.ast.OrExpression;
 import com.eaio.uuid.UUID;
 import com.google.common.collect.Sets;
 

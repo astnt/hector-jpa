@@ -9,9 +9,7 @@ import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Set;
 
-import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
 import me.prettyprint.cassandra.serializers.DynamicCompositeSerializer;
@@ -20,13 +18,10 @@ import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.utils.ByteBufferOutputStream;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
-import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.DynamicComposite;
-import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
-import me.prettyprint.hector.api.query.QueryResult;
-import me.prettyprint.hector.api.query.SliceQuery;
 
+import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.util.MetaDataException;
@@ -53,13 +48,15 @@ import com.datastax.hectorjpa.store.MappingUtils;
 public abstract class AbstractIndexOperation {
   
 
+  private static final Logger logger = LoggerFactory.getLogger(AbstractIndexOperation.class);
+ 
 
   public static final String CF_NAME = "Index_Container";
   
   /**
    * The version to prepend to every row key for indexing
    */
-  public static final int INDEXING_VERSION = 1;
+  public static final int INDEXING_VERSION = 2;
 
   protected static byte[] HOLDER = new byte[] { 0 };
 
@@ -76,9 +73,16 @@ public abstract class AbstractIndexOperation {
   protected static int MAX_SIZE = 500;
 
   /**
-   * the byte value for the row key of our index
+   * the byte value for the row key of our index with the version prepended to the index name
    */
   protected byte[] indexName;
+
+  /**
+   * The index name as a string.  Not really used during runtime other than for debugging output
+   */
+  protected String searchIndexNameString;
+  
+  protected String reverseIndexNameString;
 
   /**
    * The bytes that represent the reverse index
@@ -105,13 +109,9 @@ public abstract class AbstractIndexOperation {
     this.fields = new QueryIndexField[fieldDirections.length];
     this.orders = new QueryOrderField[indexOrders.length];
 
-    ByteBufferOutputStream searchIndexNameBuff = new ByteBufferOutputStream();
-    ByteBufferOutputStream reverseIndexNameBuff = new ByteBufferOutputStream();
-
-    
-    searchIndexNameBuff.write(IntegerSerializer.get().toByteBuffer(INDEXING_VERSION));
-    reverseIndexNameBuff.write(IntegerSerializer.get().toByteBuffer(INDEXING_VERSION));
-    
+    StringBuffer searchIndexName = new StringBuffer();
+    StringBuffer reverseIndexName = new StringBuffer();
+   
     FieldMetaData fmd = null;
 
     for (int i = 0; i < fieldDirections.length; i++) {
@@ -127,10 +127,9 @@ public abstract class AbstractIndexOperation {
 
       fields[i] = new QueryIndexField(fmd);
 
-      searchIndexNameBuff.write(stringSerializer
-          .toByteBuffer(fieldDirections[i].getName()));
-      reverseIndexNameBuff.write(stringSerializer
-          .toByteBuffer(fieldDirections[i].getName()));
+      searchIndexName.append(fieldDirections[i].getName());
+      reverseIndexName.append(fieldDirections[i].getName());
+      
 
     }
 
@@ -147,22 +146,30 @@ public abstract class AbstractIndexOperation {
 
       orders[i] = new QueryOrderField(indexOrders[i], fmd);
 
-      searchIndexNameBuff.write(stringSerializer.toByteBuffer(indexOrders[i]
-          .getName()));
-      reverseIndexNameBuff.write(stringSerializer.toByteBuffer(indexOrders[i]
-          .getName()));
+      searchIndexName.append(indexOrders[i].getName());
+      reverseIndexName.append(indexOrders[i].getName());
     }
 
-    searchIndexNameBuff.write(stringSerializer.toByteBuffer("search"));
-    reverseIndexNameBuff.write(stringSerializer.toByteBuffer("reverse"));
-
-    ByteBuffer result = searchIndexNameBuff.getByteBuffer();
+    searchIndexName.append("search");
+    reverseIndexName.append("reverse");
+    
+    
+    searchIndexNameString = searchIndexName.toString();
+    reverseIndexNameString = reverseIndexName.toString();
+    
+    ByteBuffer result = ByteBuffer.allocate(searchIndexNameString.length()+4);
+    result.putInt(INDEXING_VERSION);
+    result.put(StringSerializer.get().toBytes(searchIndexNameString));
+    result.rewind();
 
     indexName = new byte[result.limit() - result.position()];
 
-    result.get(indexName);
+    result.get(this.indexName);
 
-    result = reverseIndexNameBuff.getByteBuffer();
+    result = ByteBuffer.allocate(reverseIndexNameString.length()+4);
+    result.putInt(INDEXING_VERSION);
+    result.put(StringSerializer.get().toBytes(reverseIndexNameString));
+    result.rewind();
 
     this.reverseIndexName = new byte[result.limit() - result.position()];
 
@@ -181,6 +188,15 @@ public abstract class AbstractIndexOperation {
                   metaData.getPrimaryKeyFields()[0].getName(),
                   metaData.getDescribedType()));
     }
+    
+    
+    ByteBufferOutputStream searchIndexNameBuff = new ByteBufferOutputStream();
+    ByteBufferOutputStream reverseIndexNameBuff = new ByteBufferOutputStream();
+
+    
+    searchIndexNameBuff.write(IntegerSerializer.get().toByteBuffer(INDEXING_VERSION));
+    reverseIndexNameBuff.write(IntegerSerializer.get().toByteBuffer(INDEXING_VERSION));
+    
     
     compositeComparator = getCassType(buffSerializer);
 
@@ -228,15 +244,12 @@ public abstract class AbstractIndexOperation {
    * Construct the 2 composites from the fields in this index. Returns true if
    * the index values have changed.
    * 
-   * @param newComposite
+   * @param searchComposite
    * @param oldComposite
    * @return
    */
-  protected boolean constructComposites(DynamicComposite newComposite, DynamicComposite tombstoneComposite,
+  protected void constructComposites(DynamicComposite searchComposite, DynamicComposite tombstoneComposite,
       DynamicComposite auditComposite, OpenJPAStateManager stateManager) {
-
-
-    boolean changed = false;
 
     ByteBuffer key = keyStrategy.toByteBuffer(stateManager.fetchObjectId());
 
@@ -252,7 +265,7 @@ public abstract class AbstractIndexOperation {
           stateManager.getPersistenceCapable());
 
       // add this to all deletes for the order composite.
-      indexField.addFieldWrite(newComposite, field);
+      indexField.addFieldWrite(searchComposite, field);
       indexField.addFieldWrite(tombstoneComposite, field);
 
       
@@ -266,58 +279,22 @@ public abstract class AbstractIndexOperation {
           .getValue(stateManager, stateManager.getPersistenceCapable());
 
       // add this to all deletes for the order composite.
-      order.addFieldWrite(newComposite, field);
+      order.addFieldWrite(searchComposite, field);
       order.addFieldWrite(tombstoneComposite, field);
 
     }
 
     // add it to our new value
 
-    newComposite.addComponent(key, buffSerializer, compositeComparator);
+    searchComposite.addComponent(key, buffSerializer, compositeComparator);
 
+    if(logger.isDebugEnabled()){
+      logger.debug("Writing search index with row key: {} and column: {}", this.searchIndexNameString, ByteBufferUtil.bytesToHex(searchComposite.serialize()));
+      logger.debug("Writing tombstone index with row key: {} and column: {}", this.reverseIndexNameString, ByteBufferUtil.bytesToHex(tombstoneComposite.serialize()));
+    }
+    
 
-    return changed;
   }
-
-//  /**
-//   * Execute a query with the given start and end dynamic composites
-//   * 
-//   * @param start
-//   *          The start value from the range scan
-//   * @param end
-//   *          The end value in the range scan
-//   * @param results
-//   *          The results to add the returned values to. Sorted by order fields,
-//   *          then id
-//   * @param keyspace
-//   *          The kesypace
-//   */
-//  @SuppressWarnings({ "rawtypes", "unchecked" })
-//  protected SliceQuery<byte[], DynamicComposite, byte[]> createSliceQuery(DynamicComposite start, DynamicComposite end, Keyspace keyspace) {
-//
-//    SliceQuery<byte[], DynamicComposite, byte[]> sliceQuery = new ThriftSliceQuery(
-//        keyspace, BytesArraySerializer.get(), compositeSerializer,
-//        BytesArraySerializer.get());
-//
-//    DynamicComposite startScan = start;
-//    QueryResult<ColumnSlice<DynamicComposite, byte[]>> result = null;
-//
-//    do {
-//
-//      sliceQuery.setRange(startScan, end, false, MAX_SIZE);
-//      sliceQuery.setKey(indexName);
-//      sliceQuery.setColumnFamily(CF_NAME);
-//      log.debug("in executeQuery with sliceQuery {}", sliceQuery);
-//      result = sliceQuery.execute();
-//      log.debug("found result {}", result.get());
-//      for (HColumn<DynamicComposite, byte[]> col : result.get().getColumns()) {
-//        start = col.getName();
-//        results.add(start);
-//      }
-//
-//    } while (result.get().getColumns().size() == MAX_SIZE);
-//  }
-
 
 
   public Comparator<DynamicComposite> getComprator() {

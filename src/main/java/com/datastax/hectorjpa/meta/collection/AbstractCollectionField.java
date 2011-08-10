@@ -41,7 +41,7 @@ public abstract class AbstractCollectionField extends Field {
   /**
    * The version to prepend to every row key for indexing
    */
-  public static final int COLLECTION_VERSION = 1;
+  public static final int COLLECTION_VERSION = 2;
 
   protected static byte[] HOLDER = new byte[] { 0 };
 
