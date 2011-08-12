@@ -571,60 +571,6 @@ public class SearchTest extends ManagedEntityTestBase {
 	}
 
 	
-	@Test
-	public void greaterThanDateTest() {
-
-		EntityManager em = entityManagerFactory.createEntityManager();
-		em.getTransaction().begin();
-
-		UUID userId = new UUID();
-
-		Date date = new Date();
-
-		for (int i = 0; i < 10; i++) {
-			Notification n = new Notification(userId, "message" + i);
-			date.setTime(date.getTime() + 1);
-			n.setCreatedTime(new Date(date.getTime()));
-			em.persist(n);
-		}
-
-		em.getTransaction().commit();
-		em.close();
-
-		EntityManager em2 = entityManagerFactory.createEntityManager();
-
-		CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
-
-		CriteriaQuery<Notification> query = queryBuilder
-				.createQuery(Notification.class);
-
-		Root<Notification> n = query.from(Notification.class);
-
-		Predicate userIdPredicate = queryBuilder.equal(n.get(Notification_.userId), userId);
-		
-		
-		Date earliestDate = new Date(date.getTime() - 100);
-		Predicate createdTimePredicate = queryBuilder.greaterThanOrEqualTo(n.get(Notification_.createdTime), earliestDate);
-
-		query.where(userIdPredicate, createdTimePredicate);
-
-		Order readOrder = queryBuilder.asc(n.get(Notification_.read));
-		Order createdTimeorder = queryBuilder.desc(n.get(Notification_.createdTime));
-		query.orderBy(readOrder, createdTimeorder);
-
-		TypedQuery<Notification> q = em2.createQuery(query);
-
-		q.setFirstResult(0);
-		q.setMaxResults(10);
-
-		List<Notification> results = q.getResultList();
-
-		assertEquals(10, results.size());
-		
-	}
-	
-	
-	
 	/**
 	 * Test that we get all results when the number of results is less than the
 	 * defined range
@@ -919,10 +865,8 @@ public class SearchTest extends ManagedEntityTestBase {
 			Notification n = new Notification(userId, "message" + i);
 			date.setTime(date.getTime() + 1);
 			n.setCreatedTime(new Date(date.getTime()));
-
-			if (i % 2 == 0) {
-				n.setRead(true);
-			}
+			n.setRead(i % 2 == 0);
+			
 
 			em.persist(n);
 		}
@@ -970,6 +914,7 @@ public class SearchTest extends ManagedEntityTestBase {
 	}
 
 	@Test
+	@Ignore("Or expression currently unsupported.  Waiting on CASSANDRA-2915 to refactor query logic")
 	public void queryOrExpression() {
 
 		EntityManager em = entityManagerFactory.createEntityManager();
@@ -1014,6 +959,7 @@ public class SearchTest extends ManagedEntityTestBase {
 	}
 
 	@Test
+	@Ignore("Or expression currently unsupported.  Waiting on CASSANDRA-2915 to refactor query logic")
 	public void queryOrExpressionLessThanDefinedRange() {
 
 		EntityManager em = entityManagerFactory.createEntityManager();
@@ -1061,6 +1007,7 @@ public class SearchTest extends ManagedEntityTestBase {
 	}
 
 	@Test
+	@Ignore("Or expression currently unsupported.  Waiting on CASSANDRA-2915 to refactor query logic")
 	public void queryOrExpressionOverlappingDefinedRange() {
 
 		EntityManager em = entityManagerFactory.createEntityManager();

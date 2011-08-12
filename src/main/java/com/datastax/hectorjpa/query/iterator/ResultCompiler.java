@@ -29,7 +29,7 @@ public class ResultCompiler {
 
   private List<DynamicComposite> results;
 
-  private List<ScanIterator> iterators = new ArrayList<ScanIterator>();
+  private List<ScanBuffer> iterators = new ArrayList<ScanBuffer>();
 
   private Comparator<DynamicComposite> comparator;
 
@@ -42,7 +42,7 @@ public class ResultCompiler {
    * 
    * @param iterator
    */
-  public void addScanIterator(ScanIterator iterator) {
+  public void addScanIterator(ScanBuffer iterator) {
     iterators.add(iterator);
   }
 
@@ -81,11 +81,11 @@ public class ResultCompiler {
     DynamicComposite current = null;
     
     //pointer to the scan iterator that contains the element we want
-    ScanIterator nextIterator = null;
+    ScanBuffer nextIterator = null;
 
     for (int i = 0; i < startIndex; i++) {
 
-      for (ScanIterator currentItr : iterators) {
+      for (ScanBuffer currentItr : iterators) {
 
         current = currentItr.current();
 
@@ -108,7 +108,7 @@ public class ResultCompiler {
     
     for(int i = 0; i < size; i ++){
       
-      for (ScanIterator currentItr : iterators) {
+      for (ScanBuffer currentItr : iterators) {
 
         current = currentItr.current();
 
@@ -138,26 +138,28 @@ public class ResultCompiler {
    */
   private void singleIterator(int startIndex, int size) {
 
-    ScanIterator itr = iterators.get(0);
+    ScanBuffer itr = iterators.get(0);
 
-    int advanced = itr.advance(startIndex);
+    int advanced = itr.advance(startIndex+1);
 
     // no results
-    if (advanced < startIndex) {
+    if (advanced < startIndex +1) {
+      results = new ArrayList<DynamicComposite>(0);
       return;
     }
 
     itr.loadNext(size);
-
-    results = new ArrayList<DynamicComposite>(itr.getColumns().size());
     
-    for(HColumn<DynamicComposite, byte[]> col: itr.getColumns()){
+    int iterations = Math.min(itr.getColumns().size(), size);
+
+    results = new ArrayList<DynamicComposite>(iterations);
+    
+    for(int i = 0; i < iterations; i ++){
+      results.add(itr.current());
       
-      if(logger.isDebugEnabled()){
-        logger.debug("Adding column to results : {}", ByteBufferUtil.bytesToHex(col.getNameBytes()));
+      if(itr.advance(1) != 1){
+        break;
       }
-      
-      results.add(col.getName());
     }
     
     

@@ -14,7 +14,7 @@ import org.apache.openjpa.kernel.OpenJPAStateManager;
 
 import com.datastax.hectorjpa.query.FieldExpression;
 import com.datastax.hectorjpa.query.IndexQuery;
-import com.datastax.hectorjpa.query.iterator.ScanIterator;
+import com.datastax.hectorjpa.query.iterator.ScanBuffer;
 import com.datastax.hectorjpa.service.IndexAudit;
 import com.datastax.hectorjpa.service.IndexQueue;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
@@ -107,7 +107,7 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
    * @param query
    * @return 
    */
-  public ScanIterator scanIndex(IndexQuery query, Keyspace keyspace) {
+  public ScanBuffer scanIndex(IndexQuery query, Keyspace keyspace) {
     
    
     DynamicComposite startScan = newComposite();
@@ -142,7 +142,7 @@ public class SubclassIndexOperation extends AbstractIndexOperation {
     this.fields[last].addToComposite(endScan, componentIndex, exp.getEnd(), exp.getEndEquality());
     
     
-    return new ScanIterator(keyspace, startScan, endScan, indexName);
+    return new ScanBuffer(keyspace, startScan, endScan, indexName);
 
   }
   

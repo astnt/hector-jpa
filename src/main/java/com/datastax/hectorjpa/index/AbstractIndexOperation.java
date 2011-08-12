@@ -32,7 +32,7 @@ import com.datastax.hectorjpa.meta.key.KeyStrategy;
 import com.datastax.hectorjpa.query.IndexQuery;
 import com.datastax.hectorjpa.query.QueryIndexField;
 import com.datastax.hectorjpa.query.QueryOrderField;
-import com.datastax.hectorjpa.query.iterator.ScanIterator;
+import com.datastax.hectorjpa.query.iterator.ScanBuffer;
 import com.datastax.hectorjpa.service.IndexAudit;
 import com.datastax.hectorjpa.service.IndexQueue;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
@@ -217,7 +217,7 @@ public abstract class AbstractIndexOperation {
    * 
    * @param query
    */
-  public abstract ScanIterator scanIndex(IndexQuery query, Keyspace keyspace);
+  public abstract ScanBuffer scanIndex(IndexQuery query, Keyspace keyspace);
 
   /**
    * Remove all values from the index that were for the given statemanager

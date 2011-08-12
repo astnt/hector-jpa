@@ -176,15 +176,13 @@ public class CassandraTestBase {
 
     // collection indexing
     cfDefList.add(new CfDef("TestKeyspace", AbstractCollectionField.CF_NAME)
-//        .setComparator_type(DynamicCompositeType.class.getName())
  .setComparator_type(DynamicCompositeType.class.getSimpleName()+DynamicComposite.DEFAULT_DYNAMIC_COMPOSITE_ALIASES)
     
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
     // search indexing
     cfDefList.add(new CfDef("TestKeyspace", IndexOperation.CF_NAME)
-//        .setComparator_type(DynamicCompositeType.class.getName())
-    .setComment(DynamicCompositeType.class.getSimpleName()+DynamicComposite.DEFAULT_DYNAMIC_COMPOSITE_ALIASES)
+    .setComparator_type(DynamicCompositeType.class.getSimpleName()+DynamicComposite.DEFAULT_DYNAMIC_COMPOSITE_ALIASES)
         .setKey_cache_size(0).setRow_cache_size(0).setGc_grace_seconds(86400));
 
     cluster = HFactory.getOrCreateCluster("TestPool", "localhost:9161");

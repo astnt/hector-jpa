@@ -181,7 +181,7 @@ column_index_size_in_kb: 64
 in_memory_compaction_limit_in_mb: 64
 
 # Time to wait for a reply from other nodes before failing the command 
-rpc_timeout_in_ms: 10000
+rpc_timeout_in_ms: 10000000000
 
 # phi value that must be reached for a host to be marked down.
 # most users should never need to adjust this.

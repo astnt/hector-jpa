@@ -32,9 +32,9 @@ import com.datastax.hectorjpa.index.AbstractIndexOperation;
  * @author Todd Nine
  * 
  */
-public class ScanIterator {
+public class ScanBuffer {
 
-  private static final Logger logger = LoggerFactory.getLogger(ScanIterator.class);
+  private static final Logger logger = LoggerFactory.getLogger(ScanBuffer.class);
 
   protected static int PAGE_SIZE = 500;
 
@@ -60,7 +60,7 @@ public class ScanIterator {
    */
   private int index;
 
-  public ScanIterator(Keyspace keyspace, DynamicComposite start,
+  public ScanBuffer(Keyspace keyspace, DynamicComposite start,
       DynamicComposite end, byte[] indexName) {
     this.keyspace = keyspace;
     this.start = start;

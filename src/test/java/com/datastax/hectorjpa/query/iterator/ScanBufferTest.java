@@ -36,7 +36,7 @@ import com.eaio.uuid.UUID;
  * @author Todd Nine
  * 
  */
-public class ScanIteratorTest extends CassandraTestBase {
+public class ScanBufferTest extends CassandraTestBase {
 
   private static final byte[] holder = new byte[] { 0 };
 
@@ -49,7 +49,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     byte[] rowKey = generateComposites(100);
 
-    ScanIterator iterator = new ScanIterator(CassandraTestBase.keyspace,
+    ScanBuffer iterator = new ScanBuffer(CassandraTestBase.keyspace,
         genComposite(0, ComponentEquality.EQUAL), genComposite(100,
             ComponentEquality.GREATER_THAN_EQUAL), rowKey);
 
@@ -78,7 +78,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     byte[] rowKey = generateComposites(100);
 
-    ScanIterator iterator = new ScanIterator(CassandraTestBase.keyspace,
+    ScanBuffer iterator = new ScanBuffer(CassandraTestBase.keyspace,
         genComposite(0, ComponentEquality.EQUAL), genComposite(100,
             ComponentEquality.GREATER_THAN_EQUAL), rowKey);
 
@@ -107,7 +107,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     byte[] rowKey = generateComposites(100);
 
-    ScanIterator iterator = new ScanIterator(CassandraTestBase.keyspace,
+    ScanBuffer iterator = new ScanBuffer(CassandraTestBase.keyspace,
         genComposite(0, ComponentEquality.EQUAL), genComposite(100,
             ComponentEquality.GREATER_THAN_EQUAL), rowKey);
 
@@ -144,7 +144,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     byte[] rowKey = generateComposites(100);
 
-    ScanIterator iterator = new ScanIterator(CassandraTestBase.keyspace,
+    ScanBuffer iterator = new ScanBuffer(CassandraTestBase.keyspace,
         genComposite(0, ComponentEquality.EQUAL), genComposite(100,
             ComponentEquality.GREATER_THAN_EQUAL), rowKey);
 
@@ -182,7 +182,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     byte[] rowKey = generateComposites(2000);
 
-    ScanIterator iterator = new ScanIterator(CassandraTestBase.keyspace,
+    ScanBuffer iterator = new ScanBuffer(CassandraTestBase.keyspace,
         genComposite(0, ComponentEquality.EQUAL), null, rowKey);
 
     // advance 0
@@ -214,7 +214,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     byte[] rowKey = generateComposites(2000);
 
-    ScanIterator iterator = new ScanIterator(CassandraTestBase.keyspace,
+    ScanBuffer iterator = new ScanBuffer(CassandraTestBase.keyspace,
         genComposite(0, ComponentEquality.EQUAL), null, rowKey);
 
     // advance 0
@@ -252,7 +252,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     byte[] rowKey = generateComposites(1000);
 
-    ScanIterator iterator = new ScanIterator(CassandraTestBase.keyspace,
+    ScanBuffer iterator = new ScanBuffer(CassandraTestBase.keyspace,
         genComposite(0, ComponentEquality.EQUAL), genComposite(799,
             ComponentEquality.EQUAL), rowKey);
 
@@ -287,7 +287,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     byte[] rowKey = generateComposites(1000);
 
-    ScanIterator iterator = new ScanIterator(CassandraTestBase.keyspace,
+    ScanBuffer iterator = new ScanBuffer(CassandraTestBase.keyspace,
         genComposite(0, ComponentEquality.EQUAL), genComposite(799,
             ComponentEquality.EQUAL), rowKey);
 
@@ -311,7 +311,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     byte[] rowKey = generateComposites(1000);
 
-    ScanIterator iterator = new ScanIterator(CassandraTestBase.keyspace,
+    ScanBuffer iterator = new ScanBuffer(CassandraTestBase.keyspace,
         genComposite(0, ComponentEquality.EQUAL), null, rowKey);
 
     // there should only be 200 that are loaded
@@ -340,7 +340,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     byte[] rowKey = generateComposites(1000);
 
-    ScanIterator iterator = new ScanIterator(CassandraTestBase.keyspace,
+    ScanBuffer iterator = new ScanBuffer(CassandraTestBase.keyspace,
         genComposite(0, ComponentEquality.EQUAL), null, rowKey);
 
     // advance 0
@@ -504,7 +504,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     // now increment the second value
 
-    composite.addComponent(1l, LongSerializer.get(),
+    composite.addComponent(0l, LongSerializer.get(),
         "BytesType(reversed=true)");
 
     // composite.addComponent(0l, LongSerializer.get(),
@@ -528,7 +528,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     // now increment the second value
 
-    composite.addComponent(2l, LongSerializer.get(),
+    composite.addComponent(1l, LongSerializer.get(),
         "BytesType(reversed=true)");
 
     // composite.addComponent(0l, LongSerializer.get(),
@@ -558,11 +558,12 @@ public class ScanIteratorTest extends CassandraTestBase {
     DynamicComposite start = new DynamicComposite();
     start.addComponent("jeans", StringSerializer.get(), StringSerializer.get()
         .getComparatorType().getTypeName(), ComponentEquality.EQUAL);
-
+    
     DynamicComposite end = new DynamicComposite();
     end.addComponent("jeans", StringSerializer.get(), StringSerializer.get()
         .getComparatorType().getTypeName(),
         ComponentEquality.GREATER_THAN_EQUAL);
+    
 
     sliceQuery.setRange(start, end, false, 1000);
 
@@ -583,7 +584,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     assertEquals("jeans", composite.get(0, StringSerializer.get()));
 
-    assertEquals(2l, (long) composite.get(1, LongSerializer.get()));
+    assertEquals(1l, (long) composite.get(1, LongSerializer.get()));
 
     composite = cols.get(1).getName();
 
@@ -591,7 +592,7 @@ public class ScanIteratorTest extends CassandraTestBase {
 
     assertEquals("jeans", composite.get(0, StringSerializer.get()));
 
-    assertEquals(1l, (long) composite.get(1, LongSerializer.get()));
+    assertEquals(0l, (long) composite.get(1, LongSerializer.get()));
 
   }
 

@@ -55,4 +55,19 @@ public class Store extends AbstractEntity {
     
     customers.add(customer);
   }
+
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("Store [name=");
+    builder.append(name);
+    builder.append(", customers=");
+    builder.append(customers);
+    builder.append(", getId()=");
+    builder.append(getId());
+    builder.append("]");
+    return builder.toString();
+  }
+
+
 }
