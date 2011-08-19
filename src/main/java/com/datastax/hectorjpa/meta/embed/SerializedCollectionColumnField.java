@@ -113,6 +113,9 @@ public class SerializedCollectionColumnField extends StringColumnField {
     
     for(int i = 1; i <= size; i ++){
       Object value = embeddedSerializer.getObject(composite.getComponent(i).getBytes());
+      if (value == null) {
+    	  continue;
+      }
       
       collection.add(value);
       
