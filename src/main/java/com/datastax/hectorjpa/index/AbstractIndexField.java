@@ -1,7 +1,5 @@
 package com.datastax.hectorjpa.index;
 
-import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
-import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
@@ -10,8 +8,9 @@ import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.util.MetaDataException;
 import org.apache.openjpa.util.UserException;
 
+import com.datastax.hectorjpa.index.field.IndexSerializationStrategy;
+import com.datastax.hectorjpa.index.field.IndexSerializationStrategyFactory;
 import com.datastax.hectorjpa.proxy.ProxyUtils;
-import com.datastax.hectorjpa.store.MappingUtils;
 
 /**
  * Inner class to encapsulate order field logic and meta data
@@ -21,11 +20,9 @@ import com.datastax.hectorjpa.store.MappingUtils;
  */
 public abstract class AbstractIndexField {
 
-  
-  protected Serializer<Object> serializer;
   protected FieldMetaData targetField;
-  protected String compositeComparator;
 
+  protected IndexSerializationStrategy serializer;
   
   public AbstractIndexField(FieldMetaData owningField, String fieldName) {
     super();
@@ -38,9 +35,7 @@ public abstract class AbstractIndexField {
       throw new MetaDataException(String.format("You specified field '%s' to be used in a order by on class '%s' but couldn't find it", fieldName, owningClass));
     }
         
-    this.serializer = MappingUtils.getSerializer(targetField);
-    this.compositeComparator =  getCassType(serializer);
-
+    this.serializer = IndexSerializationStrategyFactory.getFieldSerializationStrategy(targetField, true);
   }
   
   
@@ -98,7 +93,7 @@ public abstract class AbstractIndexField {
       current = ProxyUtils.getAdded(instance);
     }
 
-    composite.addComponent(current, serializer, compositeComparator);
+    serializer.addToComponent(composite, current);
 
   }
 
@@ -117,7 +112,7 @@ public abstract class AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      composite.addComponent(original, serializer, compositeComparator);
+      serializer.addToComponent(composite, original);
       return true;
     }
     
@@ -125,7 +120,7 @@ public abstract class AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      composite.addComponent(original, serializer, compositeComparator);
+      serializer.addToComponent(composite, original);
       return true;
     }
 
@@ -133,13 +128,39 @@ public abstract class AbstractIndexField {
     // other fields could.
     Object current = ProxyUtils.getAdded(instance);
 
-    composite.addComponent(current, serializer, compositeComparator);
+    serializer.addToComponent(composite, current);
 
     return false;
 
   }
   
 
+  /**
+   * Compare the two dynamic composites at the given index
+   * @param first
+   * @param second
+   * @param index
+   * @return
+   */
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  public int compare(DynamicComposite first, DynamicComposite second, int index) {
+    Comparable c1Value = (Comparable)serializer.get(first, index);
+    Comparable c2Value = (Comparable)serializer.get(second, index);
+    
+    if (c1Value == null && c2Value == null) {
+      return 0;
+    }
+    if (c1Value == null) {
+      return 1;
+    }
+    if (c2Value == null) {
+      return -1;
+    }
+    
+    return c1Value.compareTo(c2Value);
+  }
+
+  
   
   /**
    * Get the class meta data for the class that owns the ordered field
@@ -151,30 +172,12 @@ public abstract class AbstractIndexField {
   
 
   
-  /**
-   * @return the serializer
-   */
-  public Serializer<Object> getSerializer() {
-    return serializer;
-  }
 
   
   public FieldMetaData getMetaData(){
     return targetField;
   }
-//  /**
-//   * @return the targetFieldIndex
-//   */
-//  public int getTargetFieldIndex() {
-//    return targetFieldIndex;
-//  }
-//
-//  /**
-//   * @return the targetFieldName
-//   */
-//  public String getTargetFieldName() {
-//    return targetFieldName;
-//  }
+
 
   /**
    * Prints information about this field

@@ -46,7 +46,7 @@ public abstract class AbstractCollectionField extends Field {
   protected static byte[] HOLDER = new byte[] { 0 };
 
   // the default batch size when it hasn't been set into the context
-  protected int DEFAULT_FETCH_SIZE = 100;
+  protected int DEFAULT_FETCH_SIZE = Integer.MAX_VALUE;
 
   protected static final DynamicCompositeSerializer compositeSerializer = new DynamicCompositeSerializer();
   

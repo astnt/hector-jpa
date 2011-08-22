@@ -21,6 +21,8 @@ import com.datastax.hectorjpa.query.ast.GreaterThanExpression;
 import com.datastax.hectorjpa.query.ast.LessThanEqualExpression;
 import com.datastax.hectorjpa.query.ast.LessThanExpression;
 import com.datastax.hectorjpa.query.ast.OrExpression;
+import com.datastax.hectorjpa.query.field.FieldExpression;
+import com.datastax.hectorjpa.query.field.FieldExpressionFactory;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 
 /**
@@ -156,7 +158,7 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
     FieldExpression exp = query.getExpression(field);
     
     if(exp == null){
-      exp = new FieldExpression(field);
+      exp = FieldExpressionFactory.createFieldExpression(field);
       query.addExpression(exp);
     }
     

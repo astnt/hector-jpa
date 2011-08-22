@@ -189,7 +189,6 @@ public class CassandraStoreManager extends AbstractStoreManager {
 	@Override
 	public boolean isCached(List<Object> oids, BitSet edata) {
 		log.debug("In CSM.isCached()");
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -201,7 +200,6 @@ public class CassandraStoreManager extends AbstractStoreManager {
 
 	@Override
 	public boolean syncVersion(OpenJPAStateManager sm, Object edata) {
-		// TODO Auto-generated method stub
 		log.debug("in CSM.syncVersion");
 		return super.syncVersion(sm, edata);
 	}

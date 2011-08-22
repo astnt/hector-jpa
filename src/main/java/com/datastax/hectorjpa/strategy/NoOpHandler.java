@@ -48,7 +48,6 @@ public class NoOpHandler implements ValueHandler {
 
 	@Override
 	public Object getResultArgument(ValueMapping vm) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

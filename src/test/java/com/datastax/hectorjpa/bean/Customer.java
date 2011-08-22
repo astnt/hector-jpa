@@ -112,4 +112,25 @@ public class Customer extends AbstractEntity {
 		this.sales.add(sale);
 	}
 
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("Customer [name=");
+    builder.append(name);
+    builder.append(", phoneNumber=");
+    builder.append(phoneNumber);
+    builder.append(", otherPhones=");
+    builder.append(otherPhones);
+    builder.append(", email=");
+    builder.append(email);
+    builder.append(", store=");
+    builder.append(store);
+    builder.append(", sales=");
+    builder.append(sales);
+    builder.append(", getId()=");
+    builder.append(getId());
+    builder.append("]");
+    return builder.toString();
+  }
+
 }

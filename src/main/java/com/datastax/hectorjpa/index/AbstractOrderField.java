@@ -1,12 +1,13 @@
 package com.datastax.hectorjpa.index;
 
-import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.meta.Order;
 import org.apache.openjpa.util.MetaDataException;
 
+import com.datastax.hectorjpa.index.field.IndexSerializationStrategy;
+import com.datastax.hectorjpa.index.field.IndexSerializationStrategyFactory;
 import com.datastax.hectorjpa.proxy.ProxyUtils;
 
 /**
@@ -20,9 +21,15 @@ public abstract class AbstractOrderField extends AbstractIndexField {
   private Order order;
   
   private int invert;
-
-  private String compositeComprator;
   
+  private IndexSerializationStrategy orderSerializer;
+  
+  /**
+   * 
+   * @param order The order object
+   * @param fmd The field meta data
+   * @param index The 0 based position in the index
+   */
   public AbstractOrderField(Order order, FieldMetaData fmd) {
     super(fmd, order.getName());
     this.order = order;
@@ -34,7 +41,7 @@ public abstract class AbstractOrderField extends AbstractIndexField {
       throw new MetaDataException(String.format("You specified the field '%s' on class '%s' as an order field, but it does not implement the '%s' interface ", fmd.getName(), fmd.getDeclaringMetaData().getDescribedType(), Comparable.class));
     }
     
-    compositeComprator = getCassType(serializer, order.isAscending());
+    orderSerializer = IndexSerializationStrategyFactory.getFieldSerializationStrategy(fmd, order.isAscending());
 
   }
 
@@ -55,9 +62,8 @@ public abstract class AbstractOrderField extends AbstractIndexField {
     if(instance != null){
       current = ProxyUtils.getAdded(instance);
     }
-
-    composite.addComponent(current, serializer, compositeComprator);
-
+    
+    orderSerializer.addToComponent(composite, current);
   }
 
   /**
@@ -75,7 +81,7 @@ public abstract class AbstractOrderField extends AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      composite.addComponent(original, serializer, compositeComprator);
+      orderSerializer.addToComponent(composite, original);
       return true;
     }
     
@@ -83,7 +89,7 @@ public abstract class AbstractOrderField extends AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      composite.addComponent(original, serializer, compositeComprator);
+      orderSerializer.addToComponent(composite, original);
       return true;
     }
 
@@ -91,40 +97,17 @@ public abstract class AbstractOrderField extends AbstractIndexField {
     // other fields could.
     Object current = ProxyUtils.getAdded(instance);
 
-    composite.addComponent(current, serializer, compositeComprator);
+    orderSerializer.addToComponent(composite, current);
 
     return false;
 
   }
 
-/**
-   * Compare the values at the given index in c1 and c2. Will return 0 if equal
-   * < 0 if c1 is less > 0 if c1 is greater
-   * 
-   * @param c1
-   * @param c2
-   * @param index
-   * @return
-   */
-  public int compare(DynamicComposite c1, int c1Index, DynamicComposite c2, int c2index) {
-
-    Comparable<Object> c1Value = (Comparable<Object>) c1.get(c1Index,
-        this.serializer);
-
-    Comparable<Object> c2Value = (Comparable<Object>) c2.get(c2index,
-        this.serializer);
-
-    if (c1Value == null && c2Value == null) {
-    	return 0;
-    }
-    if (c1Value == null) {
-    	return 1;
-    }
-    if (c2Value == null) {
-    	return -1;
-    }
-    return c1Value.compareTo(c2Value) * invert;
-
+@Override
+  public int compare(DynamicComposite first, DynamicComposite second, int index) {
+    return super.compare(first, second, index)*invert;
   }
+
+
 
 }

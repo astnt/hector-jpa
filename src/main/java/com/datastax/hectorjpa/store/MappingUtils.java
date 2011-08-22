@@ -48,7 +48,7 @@ public class MappingUtils {
   private static final Map<Integer, Serializer<?>> typeSerializerMap = new HashMap<Integer, Serializer<?>>();
   private static final Map<Class<?>, Serializer<?>> classSerializerMap = new HashMap<Class<?>, Serializer<?>>();
 
-  // TODO need to figure out UUID
+ 
   static {
     typeSerializerMap.put(JavaTypes.STRING, StringSerializer.get());
     

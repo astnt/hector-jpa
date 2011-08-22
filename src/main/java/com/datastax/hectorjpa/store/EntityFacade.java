@@ -257,12 +257,7 @@ public class EntityFacade implements Serializable {
 
     byte[] key = keyStrategy.toByteArray(stateManager.fetchObjectId());
 
-    // // This entity has never been persisted, we can't possibly load it
-    // TODO TN is this still necessary?
-    // if (MappingUtils.getTargetObject(entityId) == null) {
-    // return false;
-    // }
-
+  
     // load all collections as we encounter them since they're seperate row
     // reads and construct columns for sliceQuery in primary CF
     for (int i = fieldSet.nextSetBit(0); i >= 0; i = fieldSet.nextSetBit(i + 1)) {

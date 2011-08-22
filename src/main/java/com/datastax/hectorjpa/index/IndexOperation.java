@@ -14,8 +14,8 @@ import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.hectorjpa.query.FieldExpression;
 import com.datastax.hectorjpa.query.IndexQuery;
+import com.datastax.hectorjpa.query.field.FieldExpression;
 import com.datastax.hectorjpa.query.iterator.ScanBuffer;
 import com.datastax.hectorjpa.service.IndexAudit;
 import com.datastax.hectorjpa.service.IndexQueue;
@@ -60,12 +60,11 @@ public class IndexOperation extends AbstractIndexOperation {
     constructComposites(searchComposite, tombstoneComposite, idAudit, stateManager);
     
     
-    //TODO TN remove the realtime insert and add to mutation
-    mutator.insert(indexName, CF_NAME,
+    mutator.addInsertion(indexName, CF_NAME,
         new HColumnImpl<DynamicComposite, byte[]>(searchComposite, HOLDER, clock,
             compositeSerializer, bytesSerializer));
 
-    mutator.insert(reverseIndexName, CF_NAME,
+    mutator.addInsertion(reverseIndexName, CF_NAME,
         new HColumnImpl<DynamicComposite, byte[]>(tombstoneComposite, HOLDER,
             clock, compositeSerializer, bytesSerializer));
 

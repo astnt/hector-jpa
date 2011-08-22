@@ -341,11 +341,14 @@ public abstract class AbstractIndexOperation {
         size = fields.length;
 
         for (int i = 0; i < size; i++) {
-          c1Id = (Comparable<Object>) c1.get(i, fields[i].getSerializer());
-
-          c2Id = (Comparable<Object>) c2.get(i, fields[i].getSerializer());
-
-          compare = c1Id.compareTo(c2Id);
+          
+          compare = fields[i].compare(c1, c2, i);
+          
+//          c1Id = (Comparable<Object>) c1.get(i, fields[i].getSerializer());
+//
+//          c2Id = (Comparable<Object>) c2.get(i, fields[i].getSerializer());
+//
+//          compare = c1Id.compareTo(c2Id);
 
           if (compare != 0) {
             return compare;
@@ -375,7 +378,7 @@ public abstract class AbstractIndexOperation {
 
       for (int i = 0; i < orders.length; i++) {
 
-        compare = orders[i].compare(c1, c1StartIndex + i, c2, c2StartIndex + i);
+        compare = orders[i].compare(c1, c2, c1StartIndex + i);
 
         if (compare != 0) {
           return compare;

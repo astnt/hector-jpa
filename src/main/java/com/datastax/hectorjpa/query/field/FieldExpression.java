@@ -1,12 +1,8 @@
-package com.datastax.hectorjpa.query;
-
-import java.math.BigInteger;
-import java.util.Date;
+package com.datastax.hectorjpa.query.field;
 
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 
 import org.apache.openjpa.meta.FieldMetaData;
-import org.apache.openjpa.meta.JavaTypes;
 import org.apache.openjpa.util.UnsupportedException;
 
 /**
@@ -20,22 +16,22 @@ import org.apache.openjpa.util.UnsupportedException;
  * @author Todd Nine
  * 
  */
-public class FieldExpression {
+public abstract class FieldExpression {
 
-  private FieldMetaData field;
+  protected FieldMetaData field;
 
-  private ComponentEquality startEquality;
+  protected ComponentEquality startEquality;
 
-  private Object start;
+  protected Object start;
 
-  private boolean startSet = false;
+  protected boolean startSet = false;
   
-  private ComponentEquality endEquality;
+  protected ComponentEquality endEquality;
 
   // the end value in a range scan
-  private Object end;
+  protected Object end;
   
-  private boolean endSet = false;
+  protected boolean endSet = false;
   
 
   public FieldExpression(FieldMetaData field) {
@@ -47,57 +43,10 @@ public class FieldExpression {
   }
 
   /**
+   * Get the start value in a range scan
    * @return the start
    */
-  public Object getStart() {
-    if (startSet) {
-      return start;
-    }
-
-    // check if we're a primitive, if we are and we're undefined, we need to
-    // return the MAX value for each one
-    switch (field.getDeclaredTypeCode()) {
-    case JavaTypes.BOOLEAN:
-    case JavaTypes.BOOLEAN_OBJ:
-      return false;
-    case JavaTypes.BYTE:
-    case JavaTypes.BYTE_OBJ:
-      return Byte.MIN_VALUE;
-    case JavaTypes.CHAR:
-    case JavaTypes.CHAR_OBJ:
-      return Character.MIN_VALUE;
-    case JavaTypes.DOUBLE:
-    case JavaTypes.DOUBLE_OBJ:
-      return Double.MIN_VALUE;
-    case JavaTypes.FLOAT:
-    case JavaTypes.FLOAT_OBJ:
-      return Float.MIN_VALUE;
-    case JavaTypes.INT:
-    case JavaTypes.INT_OBJ:
-      return Integer.MIN_VALUE;
-    case JavaTypes.LONG:
-    case JavaTypes.LONG_OBJ:
-      return Long.MIN_VALUE;
-    case JavaTypes.SHORT:
-    case JavaTypes.SHORT_OBJ:
-      return Short.MAX_VALUE;
-    case JavaTypes.STRING:
-      return new String(new char[] { Character.MIN_VALUE });
-    case JavaTypes.DATE:
-      return new Date(Long.MIN_VALUE);
-    case JavaTypes.NUMBER:    
-    case JavaTypes.BIGDECIMAL:
-    case JavaTypes.BIGINTEGER:
-      return BigInteger.valueOf(Long.MIN_VALUE);
-    case JavaTypes.LOCALE:
-    case JavaTypes.OBJECT:
-    case JavaTypes.OID:
-      return end;
-    }
-
-    return null;
-
-  }
+  public abstract Object getStart();
 
   /**
    * @param start
@@ -120,58 +69,10 @@ public class FieldExpression {
   }
 
   /**
-   * @return the end
+   * Get the end value in a range scan
+   * @return
    */
-  public Object getEnd() {
-    // we need to get the min if we're null
-    if (this.endSet) {
-      return end;
-    }
-
-    // check if we're a primitive, if we are and we're undefined, we need to
-    // return the MAX value for each one
-    switch (field.getDeclaredTypeCode()) {
-    case JavaTypes.BOOLEAN:
-    case JavaTypes.BOOLEAN_OBJ:
-      return true;
-    case JavaTypes.BYTE:
-    case JavaTypes.BYTE_OBJ:
-      return Byte.MAX_VALUE;
-    case JavaTypes.CHAR:
-    case JavaTypes.CHAR_OBJ:
-      return Character.MAX_VALUE;
-    case JavaTypes.DOUBLE:
-    case JavaTypes.DOUBLE_OBJ:
-      return Double.MAX_VALUE;
-    case JavaTypes.FLOAT:
-    case JavaTypes.FLOAT_OBJ:
-      return Float.MAX_VALUE;
-    case JavaTypes.INT:
-    case JavaTypes.INT_OBJ:
-      return Integer.MAX_VALUE;
-    case JavaTypes.LONG:
-    case JavaTypes.LONG_OBJ:
-      return Long.MAX_VALUE;
-    case JavaTypes.SHORT:
-    case JavaTypes.SHORT_OBJ:
-      return Short.MAX_VALUE;
-    case JavaTypes.STRING:
-      return new String(new char[] { Character.MAX_VALUE });
-    case JavaTypes.DATE:
-      return new Date(Long.MAX_VALUE);
-    case JavaTypes.NUMBER:
-    case JavaTypes.BIGDECIMAL:
-    case JavaTypes.BIGINTEGER:
-      return BigInteger.valueOf(Long.MAX_VALUE);
-    case JavaTypes.LOCALE:
-    case JavaTypes.OBJECT:
-    case JavaTypes.OID:
-      return end;
-    }
-
-    return null;
-
-  }
+  public abstract Object getEnd();
 
   /**
    * @return the startEquality

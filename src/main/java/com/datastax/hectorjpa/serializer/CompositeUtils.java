@@ -74,10 +74,6 @@ public class CompositeUtils {
 	 * @return
 	 */
 	public static String getCassType(Serializer<?> instance, boolean ascending) {
-
-		// return getCassType(instance);
-		// TODO TN fix this after Ed and Nate get back to me about DynamicColumn
-		// deserializion bug with reversed values
 		if (ascending) {
 			return getCassType(instance);
 		}

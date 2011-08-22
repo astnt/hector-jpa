@@ -8,6 +8,7 @@ import org.apache.openjpa.meta.FieldMetaData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.hectorjpa.query.field.FieldExpression;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 
 /**

@@ -31,6 +31,7 @@ import com.datastax.hectorjpa.index.AbstractIndexOperation;
 import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexOrder;
 import com.datastax.hectorjpa.index.AbstractIndexOperation.ResultComparator;
+import com.datastax.hectorjpa.query.field.FieldExpression;
 import com.datastax.hectorjpa.query.iterator.ResultCompiler;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;
 import com.datastax.hectorjpa.store.CassandraStoreConfiguration;

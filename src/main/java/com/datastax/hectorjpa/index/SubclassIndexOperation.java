@@ -12,8 +12,8 @@ import me.prettyprint.hector.api.mutation.Mutator;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 
-import com.datastax.hectorjpa.query.FieldExpression;
 import com.datastax.hectorjpa.query.IndexQuery;
+import com.datastax.hectorjpa.query.field.FieldExpression;
 import com.datastax.hectorjpa.query.iterator.ScanBuffer;
 import com.datastax.hectorjpa.service.IndexAudit;
 import com.datastax.hectorjpa.service.IndexQueue;

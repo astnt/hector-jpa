@@ -46,7 +46,6 @@ public class CollectionProxy extends AbstractLRSProxyCollection {
    */
   @Override
   protected boolean has(Object o) {
-    // TODO Auto-generated method stub
     return false;
   }
 
@@ -55,7 +54,6 @@ public class CollectionProxy extends AbstractLRSProxyCollection {
    */
   @Override
   protected int count() {
-    // TODO Auto-generated method stub
     return 0;
   }
 
@@ -72,19 +70,16 @@ public class CollectionProxy extends AbstractLRSProxyCollection {
     
     @Override
     public boolean hasNext() {
-      // TODO Auto-generated method stub
       return false;
     }
 
     @Override
     public Object next() {
-      // TODO Auto-generated method stub
       return null;
     }
 
     @Override
     public void remove() {
-      // TODO Auto-generated method stub
       
     }
     

@@ -1,7 +1,8 @@
 package com.datastax.hectorjpa.query;
 
 
-import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
+import java.util.Comparator;
+
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 
@@ -22,11 +23,9 @@ import com.datastax.hectorjpa.index.AbstractIndexField;
 public class QueryIndexField extends AbstractIndexField {
 
   private static final Logger log = LoggerFactory.getLogger(QueryIndexField.class);
-  private String compositeType;
   
   public QueryIndexField(FieldMetaData fmd) {
     super(fmd, fmd.getName());
-    compositeType = getCassType(serializer);
   }
 
   @Override
@@ -44,8 +43,10 @@ public class QueryIndexField extends AbstractIndexField {
    */
   public void addToComposite(DynamicComposite composite, int index, Object value, ComponentEquality equality) {
     log.debug("Adding value {} to composite: {} ", value, composite);
-    composite.addComponent(index, value, serializer, compositeType, equality);
+    this.serializer.addToComponent(composite, index, value, equality);
   }
+  
+
 
 
 }

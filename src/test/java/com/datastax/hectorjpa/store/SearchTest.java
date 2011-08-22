@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -25,8 +27,10 @@ import org.junit.Test;
 import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.Customer;
 import com.datastax.hectorjpa.bean.Foo1;
+import com.datastax.hectorjpa.bean.Invoice_;
 import com.datastax.hectorjpa.bean.Phone;
 import com.datastax.hectorjpa.bean.Phone.PhoneType;
+import com.datastax.hectorjpa.bean.Invoice;
 import com.datastax.hectorjpa.bean.Sale;
 import com.datastax.hectorjpa.bean.Sale_;
 import com.datastax.hectorjpa.bean.Store;
@@ -1713,4 +1717,68 @@ public class SearchTest extends ManagedEntityTestBase {
 		em2.close();
 
 	}
+	
+	/**
+   * Tests an enumeration collection is saved properly when in a collection
+   */
+  @Test
+  public void bigDecimalTest() {
+
+    long startDate = 1313973045000l;
+
+    Invoice invoiceOne = new Invoice();
+    invoiceOne.setAmount(new BigDecimal(BigInteger.valueOf(10000l), 2));
+    invoiceOne.setStartDate(new Date(startDate));
+    invoiceOne.setEndDate(new Date(startDate + 24 * 60 * 60 * 1000));
+
+    Invoice invoiceTwo = new Invoice();
+    invoiceTwo.setAmount(new BigDecimal(BigInteger.valueOf(20000l), 2));
+    invoiceTwo.setStartDate(new Date(startDate));
+    invoiceTwo.setEndDate(new Date(startDate + 24 * 60 * 60 * 1000));
+
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+
+    em.persist(invoiceOne);
+    em.persist(invoiceTwo);
+
+    em.getTransaction().commit();
+    em.close();
+    
+
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+
+
+    CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+    CriteriaQuery<Invoice> query = queryBuilder.createQuery(Invoice.class);
+
+    Root<Invoice> root = query.from(Invoice.class);
+
+    Predicate amountPred = queryBuilder.greaterThan( root.get(Invoice_.amount), invoiceOne.getAmount());
+ 
+    query.where(amountPred);
+
+    Order order = queryBuilder.desc(root.get(Invoice_.startDate));
+
+    query.orderBy(order);
+
+    TypedQuery<Invoice> smsQuery = em2.createQuery(query);
+
+    List<Invoice> results = smsQuery.getResultList();
+
+    
+    int index = results.indexOf(invoiceTwo);
+    
+    assertTrue(index > -1);
+
+    Invoice returned = results.get(index);
+
+    assertEquals(invoiceTwo.getAmount(), returned.getAmount());
+    
+
+    em2.close();
+
+
+  }
 }

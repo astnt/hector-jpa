@@ -8,7 +8,6 @@ import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.List;
 
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.serializers.BytesArraySerializer;
@@ -124,7 +123,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
 
     StoreContext context = stateManager.getContext();
 
-    // TODO TN use our CollectionProxy here
+    
     Collection<Object> collection = (Collection<Object>) stateManager
         .newFieldProxy(fieldId);
 
@@ -357,7 +356,7 @@ public class OrderedCollectionField extends AbstractCollectionField {
         // add this to all deletes for the order composite.
         order.addFieldWrite(orderComposite, field);
 
-        // The deletes to teh is composite
+        // add the deletes to the composite
         order.addFieldWrite(idComposite, field);
       }
 

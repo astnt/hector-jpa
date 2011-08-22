@@ -2,6 +2,10 @@ package com.datastax.hectorjpa.store;
 
 import static org.junit.Assert.*;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Date;
+
 import javax.persistence.EntityManager;
 import javax.persistence.metamodel.EmbeddableType;
 import javax.persistence.metamodel.EntityType;
@@ -23,6 +27,7 @@ import org.mortbay.jetty.HttpConnection;
 import com.datastax.hectorjpa.CassandraTestBase;
 import com.datastax.hectorjpa.ManagedEntityTestBase;
 import com.datastax.hectorjpa.bean.Customer;
+import com.datastax.hectorjpa.bean.Invoice;
 import com.datastax.hectorjpa.bean.Phone;
 import com.datastax.hectorjpa.bean.PrimitiveTypes;
 import com.datastax.hectorjpa.bean.SimpleTestBean;
@@ -37,46 +42,44 @@ import com.datastax.hectorjpa.serializer.TimeUUIDSerializer;
 import com.eaio.uuid.UUID;
 
 public class SimpleTest extends ManagedEntityTestBase {
-  
+
   @Test
   public void testBuildEntityManagerFactory() {
-    
+
     EntityManager em = entityManagerFactory.createEntityManager();
     em.getTransaction().begin();
     em.persist(new SimpleTestBean(1, "foo"));
     em.getTransaction().commit();
     em.close();
-    
-    //em.getTransaction().begin();
-    
+
+    // em.getTransaction().begin();
+
     EntityManager em2 = entityManagerFactory.createEntityManager();
     SimpleTestBean stb = em2.find(SimpleTestBean.class, 1);
-    //em.getTransaction().commit();
-    assertEquals("foo",stb.getName());
-    
+    // em.getTransaction().commit();
+    assertEquals("foo", stb.getName());
 
     em2.getTransaction().begin();
     em2.remove(stb);
     em2.getTransaction().commit();
     em2.close();
-  }  
-  
-  
+  }
+
   /**
-   * Save a phone object but remove 1 field
-   * Then try to load the object with all meta fields and it should not blow up
+   * Save a phone object but remove 1 field Then try to load the object with all
+   * meta fields and it should not blow up
    */
   @Test
   public void testObjectLoadedWithFieldAddedToMeta() {
     EntityManager em = entityManagerFactory.createEntityManager();
-    
+
     em.getTransaction().begin();
 
     Phone phone = new Phone();
     phone.setPhoneNumber("123123");
     phone.setType(PhoneType.MOBILE);
     phone.setId(null);
-    
+
     Customer customer = new Customer();
     customer.addOtherPhone(phone);
 
@@ -84,7 +87,7 @@ public class SimpleTest extends ManagedEntityTestBase {
     em.getTransaction().commit();
     em.close();
 
-    //manually save phone but take out the 'id' field
+    // manually save phone but take out the 'id' field
     DynamicComposite c = new DynamicComposite();
     c.addComponent(1, IntegerSerializer.get());
     c.addComponent(2, IntegerSerializer.get());
@@ -92,28 +95,30 @@ public class SimpleTest extends ManagedEntityTestBase {
     c.addComponent(phone.getPhoneNumber(), StringSerializer.get());
     c.addComponent("type", StringSerializer.get());
     c.addComponent(phone.getType(), ObjectSerializer.get());
-    
-    DynamicCompositeSerializer dynamicCompositeSerializer = new DynamicCompositeSerializer(); 
-    
-    Mutator<UUID> mutator = HFactory.createMutator(CassandraTestBase.keyspace, TimeUUIDSerializer.get());
-	mutator.addInsertion(customer.getId(), "CustomerColumnFamily", HFactory.createColumn(
-			"otherPhones", c, StringSerializer.get(), dynamicCompositeSerializer));
-	mutator.execute();
-    
-    //em.getTransaction().begin();
-    
+
+    DynamicCompositeSerializer dynamicCompositeSerializer = new DynamicCompositeSerializer();
+
+    Mutator<UUID> mutator = HFactory.createMutator(CassandraTestBase.keyspace,
+        TimeUUIDSerializer.get());
+    mutator.addInsertion(customer.getId(), "CustomerColumnFamily", HFactory
+        .createColumn("otherPhones", c, StringSerializer.get(),
+            dynamicCompositeSerializer));
+    mutator.execute();
+
+    // em.getTransaction().begin();
+
     EntityManager em2 = entityManagerFactory.createEntityManager();
     Customer returned = em2.find(Customer.class, customer.getId());
-    
-    //this should blow up
+
+    // this should blow up
     returned.getOtherPhones().get(0).getId();
-    
+
     em2.getTransaction().begin();
     em2.remove(returned);
     em2.getTransaction().commit();
     em2.close();
-  } 
-  
+  }
+
   @Test
   public void testPrimitives() {
     PrimitiveTypes saved = new PrimitiveTypes();
@@ -125,22 +130,21 @@ public class SimpleTest extends ManagedEntityTestBase {
     saved.setLongVal(200000000l);
     saved.setFloatVal(22.0029292f);
     saved.setTestEnum(TestEnum.TWO);
-        
-    
+
     EntityManager em = entityManagerFactory.createEntityManager();
     em.getTransaction().begin();
     em.persist(saved);
     em.getTransaction().commit();
     em.close();
-    
-    //em.getTransaction().begin();
-    
+
+    // em.getTransaction().begin();
+
     EntityManager em2 = entityManagerFactory.createEntityManager();
-    
+
     PrimitiveTypes returned = em2.find(PrimitiveTypes.class, saved.getId());
-   
-    //em.getTransaction().commit();
-    assertEquals(saved,returned);
+
+    // em.getTransaction().commit();
+    assertEquals(saved, returned);
     assertEquals(saved.isBoolValue(), returned.isBoolValue());
     assertEquals(saved.getCharValue(), returned.getCharValue());
     assertEquals(saved.getShortVal(), returned.getShortVal());
@@ -149,15 +153,14 @@ public class SimpleTest extends ManagedEntityTestBase {
     assertEquals(saved.getLongVal(), returned.getLongVal());
     assertEquals(saved.getFloatVal(), returned.getFloatVal(), 0);
     assertEquals(saved.getTestEnum(), returned.getTestEnum());
-    
 
     em2.close();
-  }  
+  }
 
-  
   /**
-   * Test that after saving an entity with embedded object flush is correctly called if only
-   * the embedded entity is updated.  Causing bugs in non transactional read then a transactional write.
+   * Test that after saving an entity with embedded object flush is correctly
+   * called if only the embedded entity is updated. Causing bugs in non
+   * transactional read then a transactional write.
    */
   @Test
   public void embeddedFieldOnlyDirty() {
@@ -170,61 +173,57 @@ public class SimpleTest extends ManagedEntityTestBase {
     james.setName("James");
     james.setPhoneNumber(new Phone("+641112223333", PhoneType.MOBILE));
 
-  
     em.persist(james);
     em.getTransaction().commit();
     em.close();
 
     EntityManager em2 = entityManagerFactory.createEntityManager();
-  
+
     em2.getTransaction().begin();
-    
+
     Customer returned = em2.find(Customer.class, james.getId());
- 
+
     em2.getTransaction().commit();
     /**
      * Make sure the stores are equal and everything is in sorted order
      */
     assertEquals(james, returned);
 
-    
-    //test embedded objects
+    // test embedded objects
     assertEquals(james.getPhoneNumber(), returned.getPhoneNumber());
-    assertEquals(james.getPhoneNumber().getPhoneNumber(), returned.getPhoneNumber().getPhoneNumber());
-    assertEquals(james.getPhoneNumber().getType(), returned.getPhoneNumber().getType());
-    
+    assertEquals(james.getPhoneNumber().getPhoneNumber(), returned
+        .getPhoneNumber().getPhoneNumber());
+    assertEquals(james.getPhoneNumber().getType(), returned.getPhoneNumber()
+        .getType());
 
-    
-    //now update the values
+    // now update the values
     returned.getPhoneNumber().setPhoneNumber("+6411122255555");
-    
-    //now start a transaction and flush, this value should be retained and persisted
+
+    // now start a transaction and flush, this value should be retained and
+    // persisted
     em2.getTransaction().begin();
-    
+
     Customer merged = em2.merge(returned);
-    
+
     em2.persist(merged);
-    
+
     em2.getTransaction().commit();
-    
+
     em2.close();
-    
-    
+
     EntityManager em3 = entityManagerFactory.createEntityManager();
 
     Customer returned2 = em3.find(Customer.class, james.getId());
-    
+
     assertEquals(returned, returned2);
-    
+
     assertEquals(returned.getPhoneNumber(), returned2.getPhoneNumber());
-    assertEquals(returned.getPhoneNumber().getPhoneNumber(), returned2.getPhoneNumber().getPhoneNumber());
-    assertEquals(returned.getPhoneNumber().getType(), returned2.getPhoneNumber().getType());
-    
-    
-    
+    assertEquals(returned.getPhoneNumber().getPhoneNumber(), returned2
+        .getPhoneNumber().getPhoneNumber());
+    assertEquals(returned.getPhoneNumber().getType(), returned2
+        .getPhoneNumber().getType());
 
   }
-  
 
   /**
    * Test simple instance with no collections to ensure we persist properly
@@ -243,22 +242,21 @@ public class SimpleTest extends ManagedEntityTestBase {
     james.setEmail("james@test.com");
     james.setName("James");
     james.setPhoneNumber(new Phone("+641112223333", PhoneType.MOBILE));
-   
+
     Phone other1 = new Phone("+641112223334", PhoneType.HOME);
     Phone other2 = new Phone("+641112223335", PhoneType.HOME);
-    
+
     james.addOtherPhone(other1);
     james.addOtherPhone(other2);
 
     store.addCustomer(james);
-    
+
     em.persist(store);
     em.getTransaction().commit();
     em.close();
 
     EntityManager em2 = entityManagerFactory.createEntityManager();
 
-    
     Store returnedStore = em2.find(Store.class, store.getId());
 
     /**
@@ -267,55 +265,98 @@ public class SimpleTest extends ManagedEntityTestBase {
     assertEquals(store, returnedStore);
 
     assertEquals(james, returnedStore.getCustomers().get(0));
-    
-    Customer returnedCust = returnedStore.getCustomers().get(0);
-    
-    //test embedded objects
-    assertEquals(james.getPhoneNumber(), returnedCust.getPhoneNumber());
-    
-    assertEquals(other1, returnedCust.getOtherPhones().get(0));
-    
-    assertEquals(other1.getPhoneNumber(), returnedCust.getOtherPhones().get(0).getPhoneNumber());
-    assertEquals(other1.getType(), returnedCust.getOtherPhones().get(0).getType());
-    
-    assertEquals(other2, returnedCust.getOtherPhones().get(1));
-    
-    assertEquals(other2.getPhoneNumber(), returnedCust.getOtherPhones().get(1).getPhoneNumber());
-    assertEquals(other2.getType(), returnedCust.getOtherPhones().get(1).getType());
 
+    Customer returnedCust = returnedStore.getCustomers().get(0);
+
+    // test embedded objects
+    assertEquals(james.getPhoneNumber(), returnedCust.getPhoneNumber());
+
+    assertEquals(other1, returnedCust.getOtherPhones().get(0));
+
+    assertEquals(other1.getPhoneNumber(), returnedCust.getOtherPhones().get(0)
+        .getPhoneNumber());
+    assertEquals(other1.getType(), returnedCust.getOtherPhones().get(0)
+        .getType());
+
+    assertEquals(other2, returnedCust.getOtherPhones().get(1));
+
+    assertEquals(other2.getPhoneNumber(), returnedCust.getOtherPhones().get(1)
+        .getPhoneNumber());
+    assertEquals(other2.getType(), returnedCust.getOtherPhones().get(1)
+        .getType());
 
   }
-  
+
   /**
    * Tests an enumeration collection is saved properly when in a collection
    */
   @Test
-  public void enumCollection(){
+  public void enumCollection() {
     Techie tech = new Techie();
-    
+
     tech.addRole(Role.ADMIN);
     tech.addRole(Role.POWERUSER);
-    
+
     EntityManager em = entityManagerFactory.createEntityManager();
     em.getTransaction().begin();
 
     em.persist(tech);
-    
+
     em.getTransaction().commit();
     em.close();
-    
-    
+
     EntityManager em2 = entityManagerFactory.createEntityManager();
-    
+
     Techie returned = em2.find(Techie.class, tech.getId());
-    
+
     assertEquals(tech, returned);
-    
+
     assertTrue(returned.getRoles().contains(Role.ADMIN));
     assertTrue(returned.getRoles().contains(Role.POWERUSER));
-    
-    
-    
+
+  }
+
+  /**
+   * Tests an enumeration collection is saved properly when in a collection
+   */
+  @Test
+  public void bigDecimalTest() {
+
+    long startDate = 1313973045000l;
+
+    Invoice invoiceOne = new Invoice();
+    invoiceOne.setAmount(new BigDecimal(BigInteger.valueOf(10000l), 2));
+    invoiceOne.setStartDate(new Date(startDate));
+    invoiceOne.setEndDate(new Date(startDate + 24 * 60 * 60 * 1000));
+
+    Invoice invoiceTwo = new Invoice();
+    invoiceTwo.setAmount(new BigDecimal(BigInteger.valueOf(20000l), 2));
+    invoiceTwo.setStartDate(new Date(startDate));
+    invoiceTwo.setEndDate(new Date(startDate + 24 * 60 * 60 * 1000));
+
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+
+    em.persist(invoiceOne);
+    em.persist(invoiceTwo);
+
+    em.getTransaction().commit();
+    em.close();
+
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+
+    Invoice returned = em2.find(Invoice.class, invoiceOne.getId());
+
+    assertEquals(invoiceOne, returned);
+
+    assertEquals(invoiceOne.getAmount(), returned.getAmount());
+
+    returned = em2.find(Invoice.class, invoiceTwo.getId());
+
+    assertEquals(invoiceTwo, returned);
+
+    assertEquals(invoiceTwo.getAmount(), returned.getAmount());
+
   }
 
 }
