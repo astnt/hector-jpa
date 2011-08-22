@@ -21,6 +21,7 @@ import me.prettyprint.hector.api.query.SliceQuery;
 import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
+import org.apache.openjpa.meta.JavaTypes;
 import org.apache.openjpa.util.OpenJPAId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ import com.datastax.hectorjpa.index.IndexDefinition;
 import com.datastax.hectorjpa.index.IndexOperation;
 import com.datastax.hectorjpa.index.IndexOrder;
 import com.datastax.hectorjpa.index.SubclassIndexOperation;
+import com.datastax.hectorjpa.meta.BigDecimalColumnField;
 import com.datastax.hectorjpa.meta.DiscriminatorColumn;
 import com.datastax.hectorjpa.meta.MetaCache;
 import com.datastax.hectorjpa.meta.ObjectTypeColumnStrategy;
@@ -84,7 +86,7 @@ public class EntityFacade implements Serializable {
     collectionFieldIds = new HashMap<Integer, AbstractCollectionField>();
 
     FieldMetaData[] fmds = cassMeta.getFields();
-    SimpleColumnField columnField = null;
+    StringColumnField columnField = null;
 
     CassandraFieldMetaData field = null;
 
@@ -155,7 +157,16 @@ public class EntityFacade implements Serializable {
                 field.getElement().getDeclaredTypeMetaData() });
       }
 
-      columnField = new SimpleColumnField(field);
+      // some primitives require special persistence, detect the correct type
+      switch (field.getDeclaredTypeCode()) {
+
+      case JavaTypes.BIGDECIMAL:
+        columnField = new BigDecimalColumnField(field);
+        break;
+
+      default:
+        columnField = new SimpleColumnField(field);
+      }
 
       // TODO if field.getAssociationType() > 0 .. we found an attached
       // entity
@@ -278,7 +289,7 @@ public class EntityFacade implements Serializable {
         continue;
       }
 
-      fields.add(field.getName());
+      field.addFieldNames(fields);
     }
 
     fields.add(this.strategy.getColumnName());
@@ -397,8 +408,7 @@ public class EntityFacade implements Serializable {
     // add our object type column strategy
     this.strategy.write(m, clockTime, keyBytes, columnFamilyName);
 
-    
-    //We have indexes, write them
+    // We have indexes, write them
     if (indexOps != null) {
       for (AbstractIndexOperation op : indexOps.values()) {
         op.writeIndex(stateManager, m, clockTime, queue);

@@ -3,6 +3,8 @@
  */
 package com.datastax.hectorjpa.meta;
 
+import java.util.List;
+
 import me.prettyprint.hector.api.mutation.Mutator;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
@@ -35,14 +37,6 @@ public abstract class Field {
     return fieldId;
   }
 
-  
-  /**
-   * @return the name
-   */
-  public String getName() {
-    return name;
-  }
-
 
   /**
    * Add this field the the mutator
@@ -54,7 +48,7 @@ public abstract class Field {
    */
   public abstract void addField(OpenJPAStateManager stateManager, Mutator<byte[]> mutator, long clock, byte[] key, String cfName, IndexQueue queue);
 
-  
+
   
   @Override
   public String toString() {  

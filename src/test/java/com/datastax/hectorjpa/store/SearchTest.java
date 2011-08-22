@@ -790,6 +790,117 @@ public class SearchTest extends ManagedEntityTestBase {
 
 	}
 	
+
+  /**
+   * Tests that when 2 indexes use the same field ordering, they do not conflict.  I.E.
+   * 
+   * fields=userId, order=read, createdDate desc
+   * fields=userId, read, createdDate
+   * 
+   * These two should not be equal, and should not generate the same row key
+   */
+  @Test
+  public void duplicateFieldOrder() {
+    EntityManager em = entityManagerFactory.createEntityManager();
+    em.getTransaction().begin();
+
+    UUID userId = new UUID();
+
+    
+    long startTime = 1313730170000l;
+    long time = startTime;
+
+    for (int i = 0; i < 10; i++) {
+      Notification n = new Notification(userId, "message" + i);
+      n.setCreatedTime(new Date(time));
+      n.setRead(i%2==0);
+      em.persist(n);
+      time+=1000l;
+    }
+
+    em.getTransaction().commit();
+    em.close();
+
+    EntityManager em2 = entityManagerFactory.createEntityManager();
+
+    CriteriaBuilder queryBuilder = em2.getCriteriaBuilder();
+
+    CriteriaQuery<Notification> query = queryBuilder
+        .createQuery(Notification.class);
+
+    Root<Notification> n = query.from(Notification.class);
+
+    Predicate userIdPredicate = queryBuilder.equal(n.get(Notification_.userId),
+        userId);
+    
+    Predicate readPredicate = queryBuilder.equal(n.get(Notification_.read), true);
+    
+    
+    Predicate createdTimePredicate = queryBuilder.greaterThanOrEqualTo(n.get(Notification_.createdTime),  new Date(startTime));
+    
+
+    query.where(userIdPredicate, readPredicate, createdTimePredicate);
+
+
+    TypedQuery<Notification> q = em2.createQuery(query);
+
+    q.setFirstResult(0);
+    q.setMaxResults(10);
+
+    List<Notification> results = q.getResultList();
+
+    assertEquals(5, results.size());
+    assertEquals("message0", results.get(0).getMessage());
+    assertEquals("message2", results.get(1).getMessage());
+    assertEquals("message4", results.get(2).getMessage());
+    assertEquals("message6", results.get(3).getMessage());
+    assertEquals("message8", results.get(4).getMessage());
+    
+    
+    
+    
+    em2 = entityManagerFactory.createEntityManager();
+
+    queryBuilder = em2.getCriteriaBuilder();
+
+    query = queryBuilder
+        .createQuery(Notification.class);
+
+    n = query.from(Notification.class);
+
+    userIdPredicate = queryBuilder.equal(n.get(Notification_.userId),
+        userId);
+
+    query.where(userIdPredicate);
+
+    userIdPredicate = queryBuilder.equal(n.get(Notification_.userId),
+        userId);
+    
+    readPredicate = queryBuilder.equal(n.get(Notification_.read), false);
+    
+    
+    createdTimePredicate = queryBuilder.greaterThanOrEqualTo(n.get(Notification_.createdTime),  new Date(startTime));
+    
+
+    query.where(userIdPredicate, readPredicate, createdTimePredicate);
+
+    q = em2.createQuery(query);
+
+    q.setFirstResult(0);
+    q.setMaxResults(10);
+
+    results = q.getResultList();
+
+    assertEquals(5, results.size());
+    assertEquals("message1", results.get(0).getMessage());
+    assertEquals("message3", results.get(1).getMessage());
+    assertEquals("message5", results.get(2).getMessage());
+    assertEquals("message7", results.get(3).getMessage());
+    assertEquals("message9", results.get(4).getMessage());
+
+
+  }
+	
 	/**
 	 * Test that we get last 5 results when the search range overlaps the result
 	 * set

@@ -1,5 +1,7 @@
 package com.datastax.hectorjpa.meta;
 
+import java.util.List;
+
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.Serializer;
@@ -55,6 +57,11 @@ public class SimpleColumnField extends StringColumnField {
     return name;
   }
 
+  @Override
+  public void addFieldNames(List<String> fields) {
+   fields.add(name);    
+  }
+  
   /**
    * Adds this field to the mutation with the given clock
    * 
@@ -107,5 +114,7 @@ public class SimpleColumnField extends StringColumnField {
 
     return true;
   }
+
+
 
 }

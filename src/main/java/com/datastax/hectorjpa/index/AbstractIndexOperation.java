@@ -127,8 +127,8 @@ public abstract class AbstractIndexOperation {
 
       fields[i] = new QueryIndexField(fmd);
 
-      searchIndexName.append(fieldDirections[i].getName());
-      reverseIndexName.append(fieldDirections[i].getName());
+      searchIndexName.append(fieldDirections[i].getName()).append("_");
+      reverseIndexName.append(fieldDirections[i].getName()).append("_");
       
 
     }
@@ -146,8 +146,10 @@ public abstract class AbstractIndexOperation {
 
       orders[i] = new QueryOrderField(indexOrders[i], fmd);
 
-      searchIndexName.append(indexOrders[i].getName());
-      reverseIndexName.append(indexOrders[i].getName());
+      String order = indexOrders[i].isAscending() ? "Asc" : "Desc";
+      
+      searchIndexName.append(indexOrders[i].getName()).append(order).append("_");
+      reverseIndexName.append(indexOrders[i].getName()).append(order).append("_");
     }
 
     searchIndexName.append("search");

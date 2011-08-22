@@ -60,12 +60,12 @@ public class IndexOperation extends AbstractIndexOperation {
     constructComposites(searchComposite, tombstoneComposite, idAudit, stateManager);
     
     
-
-    mutator.addInsertion(indexName, CF_NAME,
+    //TODO TN remove the realtime insert and add to mutation
+    mutator.insert(indexName, CF_NAME,
         new HColumnImpl<DynamicComposite, byte[]>(searchComposite, HOLDER, clock,
             compositeSerializer, bytesSerializer));
 
-    mutator.addInsertion(reverseIndexName, CF_NAME,
+    mutator.insert(reverseIndexName, CF_NAME,
         new HColumnImpl<DynamicComposite, byte[]>(tombstoneComposite, HOLDER,
             clock, compositeSerializer, bytesSerializer));
 

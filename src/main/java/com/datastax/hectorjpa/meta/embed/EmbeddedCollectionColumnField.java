@@ -1,5 +1,7 @@
 package com.datastax.hectorjpa.meta.embed;
 
+import java.util.List;
+
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
@@ -68,5 +70,11 @@ public class EmbeddedCollectionColumnField extends StringColumnField {
 
     return embeddedDelegate.readField(stateManager, result);
   }
+  
+  @Override
+  public void addFieldNames(List<String> fields) {
+    embeddedDelegate.addFieldNames(fields);
+  }
+  
 
 }

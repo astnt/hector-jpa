@@ -1,6 +1,9 @@
 package com.datastax.hectorjpa.meta.embed;
 
 import static com.datastax.hectorjpa.serializer.CompositeUtils.newComposite;
+
+import java.util.List;
+
 import me.prettyprint.cassandra.model.HColumnImpl;
 import me.prettyprint.cassandra.serializers.DynamicCompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
@@ -110,5 +113,11 @@ public class EmbeddedColumnField extends StringColumnField {
 
     return true;
   }
+  
+  @Override
+  public void addFieldNames(List<String> fields) {
+   fields.add(name);    
+  }
+  
 
 }

@@ -22,8 +22,10 @@ import com.eaio.uuid.UUID;
  */
 @Entity
 @ColumnFamily("NotificationColumnFamily")
-@DiscriminatorValue("Notifiation")
-@Index(fields="userId", order="read, createdTime desc")
+@Indexes({
+@Index(fields="userId", order="read, createdTime desc"),
+@Index(fields="userId, read, createdTime")
+})
 public class Notification extends AbstractEntity {
 
 	@Persistent
