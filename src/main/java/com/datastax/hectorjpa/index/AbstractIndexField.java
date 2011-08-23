@@ -9,7 +9,6 @@ import org.apache.openjpa.util.MetaDataException;
 import org.apache.openjpa.util.UserException;
 
 import com.datastax.hectorjpa.index.field.IndexSerializationStrategy;
-import com.datastax.hectorjpa.index.field.IndexSerializationStrategyFactory;
 import com.datastax.hectorjpa.proxy.ProxyUtils;
 
 /**
@@ -22,7 +21,6 @@ public abstract class AbstractIndexField {
 
   protected FieldMetaData targetField;
 
-  protected IndexSerializationStrategy serializer;
   
   public AbstractIndexField(FieldMetaData owningField, String fieldName) {
     super();
@@ -35,7 +33,6 @@ public abstract class AbstractIndexField {
       throw new MetaDataException(String.format("You specified field '%s' to be used in a order by on class '%s' but couldn't find it", fieldName, owningClass));
     }
         
-    this.serializer = IndexSerializationStrategyFactory.getFieldSerializationStrategy(targetField, true);
   }
   
   
@@ -93,7 +90,7 @@ public abstract class AbstractIndexField {
       current = ProxyUtils.getAdded(instance);
     }
 
-    serializer.addToComponent(composite, current);
+    getSerializationStrategy().addToComponent(composite, current);
 
   }
 
@@ -112,7 +109,7 @@ public abstract class AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      serializer.addToComponent(composite, original);
+      getSerializationStrategy().addToComponent(composite, original);
       return true;
     }
     
@@ -120,7 +117,7 @@ public abstract class AbstractIndexField {
 
     // value was changed, add the old value
     if (original != null) {
-      serializer.addToComponent(composite, original);
+      getSerializationStrategy().addToComponent(composite, original);
       return true;
     }
 
@@ -128,7 +125,7 @@ public abstract class AbstractIndexField {
     // other fields could.
     Object current = ProxyUtils.getAdded(instance);
 
-    serializer.addToComponent(composite, current);
+    getSerializationStrategy().addToComponent(composite, current);
 
     return false;
 
@@ -144,8 +141,8 @@ public abstract class AbstractIndexField {
    */
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public int compare(DynamicComposite first, DynamicComposite second, int index) {
-    Comparable c1Value = (Comparable)serializer.get(first, index);
-    Comparable c2Value = (Comparable)serializer.get(second, index);
+    Comparable c1Value = (Comparable)getSerializationStrategy().get(first, index);
+    Comparable c2Value = (Comparable)getSerializationStrategy().get(second, index);
     
     if (c1Value == null && c2Value == null) {
       return 0;
@@ -169,7 +166,11 @@ public abstract class AbstractIndexField {
    */
   protected abstract ClassMetaData getContainerClassMetaData(FieldMetaData fmd);
   
-  
+  /**
+   * Return the serialization strategy used for indexing this field
+   * @return
+   */
+  protected abstract IndexSerializationStrategy getSerializationStrategy();
 
   
 
@@ -185,7 +186,7 @@ public abstract class AbstractIndexField {
   @Override
   public String toString() {
     return String.format("AbstractIndexField(targetFieldName:%s, targetFieldIndex:%d, serializer: %s)", 
-        new Object[]{targetField.getName(), targetField.getIndex(), serializer.getClass().getName()});
+        new Object[]{targetField.getName(), targetField.getIndex(), getSerializationStrategy().getClass().getName()});
   }
   
   

@@ -24,7 +24,6 @@ import com.datastax.hectorjpa.store.MappingUtils;
 public class FieldSerializerStrategy implements IndexSerializationStrategy {
 
   protected Serializer<Object> serializer;
-  // protected FieldMetaData targetField;
   protected String compositeComparator;
   
   

@@ -19,29 +19,37 @@ import com.datastax.hectorjpa.proxy.ProxyUtils;
 public abstract class AbstractOrderField extends AbstractIndexField {
 
   private Order order;
-  
+
   private int invert;
-  
+
   private IndexSerializationStrategy orderSerializer;
-  
+
   /**
    * 
-   * @param order The order object
-   * @param fmd The field meta data
-   * @param index The 0 based position in the index
+   * @param order
+   *          The order object
+   * @param fmd
+   *          The field meta data
+   * @param index
+   *          The 0 based position in the index
    */
   public AbstractOrderField(Order order, FieldMetaData fmd) {
     super(fmd, order.getName());
     this.order = order;
-    
-    //used for in-memory comparison of types
+
+    // used for in-memory comparison of types
     invert = this.order.isAscending() ? 1 : -1;
-    
-    if(!Comparable.class.isAssignableFrom(targetField.getDeclaredType())){
-      throw new MetaDataException(String.format("You specified the field '%s' on class '%s' as an order field, but it does not implement the '%s' interface ", fmd.getName(), fmd.getDeclaringMetaData().getDescribedType(), Comparable.class));
+
+    if (!Comparable.class.isAssignableFrom(targetField.getDeclaredType())) {
+      throw new MetaDataException(
+          String
+              .format(
+                  "You specified the field '%s' on class '%s' as an order field, but it does not implement the '%s' interface ",
+                  fmd.getName(), fmd.getDeclaringMetaData().getDescribedType(),
+                  Comparable.class));
     }
-    
-    orderSerializer = IndexSerializationStrategyFactory.getFieldSerializationStrategy(fmd, order.isAscending());
+
+    orderSerializer = IndexSerializationStrategyFactory.getFieldSerializationStrategy(targetField, order.isAscending());
 
   }
 
@@ -58,11 +66,11 @@ public abstract class AbstractOrderField extends AbstractIndexField {
   public void addFieldWrite(DynamicComposite composite, Object instance) {
     // write the current value from the proxy
     Object current = null;
-    
-    if(instance != null){
+
+    if (instance != null) {
       current = ProxyUtils.getAdded(instance);
     }
-    
+
     orderSerializer.addToComponent(composite, current);
   }
 
@@ -84,7 +92,7 @@ public abstract class AbstractOrderField extends AbstractIndexField {
       orderSerializer.addToComponent(composite, original);
       return true;
     }
-    
+
     original = ProxyUtils.getChanged(instance);
 
     // value was changed, add the old value
@@ -103,11 +111,14 @@ public abstract class AbstractOrderField extends AbstractIndexField {
 
   }
 
-@Override
+  @Override
   public int compare(DynamicComposite first, DynamicComposite second, int index) {
-    return super.compare(first, second, index)*invert;
+    return super.compare(first, second, index) * invert;
   }
 
-
+  @Override
+  protected IndexSerializationStrategy getSerializationStrategy() {
+    return orderSerializer;
+  }
 
 }
