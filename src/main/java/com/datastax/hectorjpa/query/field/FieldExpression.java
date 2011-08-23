@@ -114,39 +114,6 @@ public abstract class FieldExpression {
     return field;
   }
 
-  /**
-   * This is a temp hack until inclusive and exclusive bits are set in the
-   * DynamicCompositeType. It sucks and doesn't support much, but it will be
-   * gone soon after Ed and Sylvain's changes
-   * 
-   * @param value
-   * @return
-   */
-  private Object increment(Object value) {
-    if (value instanceof String) {
-      return ((String) value) + "\u0000";
-    }
-
-    if (value instanceof Long) {
-      return ((Long) value) + 1;
-    }
-
-    if (value instanceof Integer) {
-      return ((Integer) value) + 1;
-    }
-
-    if (value instanceof Float) {
-      return ((Float) value) + .1;
-    }
-
-    if (value instanceof Double) {
-      return ((Double) value) + .1;
-    }
-
-    throw new UnsupportedException(String.format(
-        "Sorry the type %s could not be incremement to generate a slice query",
-        value.getClass()));
-  }
 
   @Override
   public String toString() {

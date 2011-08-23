@@ -9,7 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Performs all writes and deletes in a worker thread each
+ * Performs all writes and deletes in a worker thread each.  Uses a linked blocking queue.  Using this class could result
+ * in lost audits/deletes if a node were to crash before pending operations have completed
  * 
  * @author Todd Nine
  * 

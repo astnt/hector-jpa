@@ -19,22 +19,16 @@ import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.SliceQuery;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.datastax.hectorjpa.store.CassandraStoreConfiguration;
 
 /**
- * Simple implementation of the indexing service that cleans indexes via a
- * blocking queue
+ * Simple implementation of the indexing service that cleans indexes
  * 
  * @author Todd Nine
  * 
  */
 public abstract class InMemoryIndexingService implements IndexingService {
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(InMemoryIndexingService.class);
 
   private static final DynamicCompositeSerializer compositeSerializer = new DynamicCompositeSerializer();
 
@@ -206,7 +200,6 @@ public abstract class InMemoryIndexingService implements IndexingService {
 
     ColumnSlice<DynamicComposite, byte[]> slice = null;
 
-    HColumn<DynamicComposite, byte[]> maxColumn = null;
 
     Mutator<byte[]> mutator = createMutator();
 

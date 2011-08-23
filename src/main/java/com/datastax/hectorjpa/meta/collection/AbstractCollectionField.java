@@ -1,9 +1,9 @@
 package com.datastax.hectorjpa.meta.collection;
 
+import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
+
 import java.nio.ByteBuffer;
 import java.util.Collection;
-
-import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
 
 import me.prettyprint.cassandra.model.thrift.ThriftSliceQuery;
 import me.prettyprint.cassandra.serializers.ByteBufferSerializer;

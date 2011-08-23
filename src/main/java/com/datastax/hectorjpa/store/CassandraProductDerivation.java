@@ -38,6 +38,7 @@ public class CassandraProductDerivation extends AbstractProductDerivation
    * org.apache.openjpa.conf.OpenJPAProductDerivation#putBrokerFactoryAliases
    * (java.util.Map)
    */
+  @SuppressWarnings("rawtypes")
   @Override
   public void putBrokerFactoryAliases(Map aliases) {
   }

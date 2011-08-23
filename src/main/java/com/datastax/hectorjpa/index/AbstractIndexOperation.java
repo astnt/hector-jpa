@@ -370,11 +370,9 @@ public abstract class AbstractIndexOperation {
       size = c1.getComponents().size();
 
       int c1StartIndex = size - orders.length - 1; // c1.getComponents().size()
-      // -
-      // orders.length-2;
-      int c2StartIndex = size - orders.length - 1; // c1.getComponents().size()
-      // -
-      // orders.length-2;
+     
+//      int c2StartIndex = size - orders.length - 1; // c1.getComponents().size()
+
 
       for (int i = 0; i < orders.length; i++) {
 

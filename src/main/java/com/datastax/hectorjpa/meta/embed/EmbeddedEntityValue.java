@@ -1,6 +1,5 @@
 package com.datastax.hectorjpa.meta.embed;
 
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 

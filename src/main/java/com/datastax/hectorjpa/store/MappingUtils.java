@@ -26,8 +26,6 @@ import me.prettyprint.hector.api.query.SliceQuery;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.meta.JavaTypes;
 import org.apache.openjpa.util.MetaDataException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.meta.key.CompositeKeyStrategy;
 import com.datastax.hectorjpa.meta.key.KeyStrategy;
@@ -43,7 +41,6 @@ import com.datastax.hectorjpa.serializer.TimeUUIDSerializer;
  * 
  */
 public class MappingUtils {
-  private static final Logger log = LoggerFactory.getLogger(MappingUtils.class);
 
   private static final Map<Integer, Serializer<?>> typeSerializerMap = new HashMap<Integer, Serializer<?>>();
   private static final Map<Class<?>, Serializer<?>> classSerializerMap = new HashMap<Class<?>, Serializer<?>>();
@@ -90,6 +87,7 @@ public class MappingUtils {
         .get(javaType) : ObjectSerializer.get();
   }
 
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public static Serializer<Object> getSerializer(FieldMetaData fieldMetaData) {
     Serializer serializer = getSerializer(fieldMetaData.getTypeCode());
     if (serializer instanceof ObjectSerializer) {
@@ -102,6 +100,7 @@ public class MappingUtils {
   }
   
 
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public static SliceQuery<byte[], String, byte[]> buildSliceQuery(byte[] key,
       List<String> columns, String cfName, Keyspace keyspace) {
     SliceQuery<byte[], String, byte[]> query = new ThriftSliceQuery(keyspace,
@@ -170,6 +169,7 @@ public class MappingUtils {
    * @see {@link SerializerTypeInferer} for specifics.
    * @param idObj
    */
+  @SuppressWarnings("rawtypes")
   public static Serializer getSerializer(Object target) {
 
 //    Object target = getTargetObject(idObj);

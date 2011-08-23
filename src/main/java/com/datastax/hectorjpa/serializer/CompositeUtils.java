@@ -20,7 +20,8 @@ import me.prettyprint.hector.api.ddl.ComparatorType;
  */
 public class CompositeUtils {
 
-	private static Map<Class<? extends Serializer>, String> mapping = new HashMap<Class<? extends Serializer>, String>();
+	@SuppressWarnings("rawtypes")
+  private static Map<Class<? extends Serializer>, String> mapping = new HashMap<Class<? extends Serializer>, String>();
 
 	static {
 		DynamicComposite dynamic = new DynamicComposite();

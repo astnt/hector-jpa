@@ -72,7 +72,7 @@ public class CassandraStoreManager extends AbstractStoreManager {
 
 	
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	protected Collection flush(Collection pNew, Collection pNewUpdated,
 			Collection pNewFlushedDeleted, Collection pDirty,
@@ -109,7 +109,8 @@ public class CassandraStoreManager extends AbstractStoreManager {
 	 * @param clock
 	 * @param queue 
 	 */
-	private void writeEntities(Collection writes, Mutator mutator, long clock, IndexQueue queue) {
+	@SuppressWarnings("rawtypes")
+  private void writeEntities(Collection writes, Mutator mutator, long clock, IndexQueue queue) {
 
 		OpenJPAStateManager sm = null;
 
@@ -128,7 +129,8 @@ public class CassandraStoreManager extends AbstractStoreManager {
 	 * @param clock
 	 * @param queue 
 	 */
-	private void deleteEntities(Collection deletes, Mutator mutator, long clock, IndexQueue queue) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+  private void deleteEntities(Collection deletes, Mutator mutator, long clock, IndexQueue queue) {
 		for (Iterator itr = deletes.iterator(); itr.hasNext();) {
 			// create new object data for instance
 			OpenJPAStateManager sm = (OpenJPAStateManager) itr.next();
@@ -213,7 +215,8 @@ public class CassandraStoreManager extends AbstractStoreManager {
 		log.debug("in CSM.open()");
 	}
 
-	protected Collection getUnsupportedOptions() {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+  protected Collection getUnsupportedOptions() {
 		Collection c = super.getUnsupportedOptions();
 
 		// remove options we do support but the abstract store doesn't

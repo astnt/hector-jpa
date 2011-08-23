@@ -7,8 +7,6 @@ import static com.datastax.hectorjpa.serializer.CompositeUtils.getCassType;
 
 import java.math.BigDecimal;
 
-import org.apache.openjpa.meta.Order;
-
 import me.prettyprint.cassandra.serializers.BigIntegerSerializer;
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 import me.prettyprint.hector.api.beans.DynamicComposite;

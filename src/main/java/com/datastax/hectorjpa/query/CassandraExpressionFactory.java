@@ -6,8 +6,6 @@ package com.datastax.hectorjpa.query;
 import org.apache.openjpa.kernel.exps.Expression;
 import org.apache.openjpa.kernel.exps.InMemoryExpressionFactory;
 import org.apache.openjpa.kernel.exps.Value;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.query.ast.AndExpression;
 import com.datastax.hectorjpa.query.ast.EqualExpression;
@@ -26,8 +24,6 @@ import com.datastax.hectorjpa.query.ast.OrExpression;
  */
 public class CassandraExpressionFactory extends InMemoryExpressionFactory {
 
-  private static final Logger log = LoggerFactory
-      .getLogger(CassandraExpressionFactory.class);
 
   @Override
   public Expression equal(Value v1, Value v2) {

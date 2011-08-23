@@ -11,8 +11,6 @@ import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.mutation.Mutator;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.datastax.hectorjpa.query.IndexQuery;
 import com.datastax.hectorjpa.query.field.FieldExpression;
@@ -29,7 +27,7 @@ import com.datastax.hectorjpa.store.CassandraClassMetaData;
  * 
  */
 public class IndexOperation extends AbstractIndexOperation {
-  private static Logger log = LoggerFactory.getLogger(IndexOperation.class);
+ 
 
   public IndexOperation(CassandraClassMetaData metaData,
       IndexDefinition indexDef) {

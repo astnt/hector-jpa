@@ -3,8 +3,6 @@
  */
 package com.datastax.hectorjpa.meta;
 
-import java.util.List;
-
 import me.prettyprint.hector.api.mutation.Mutator;
 
 import org.apache.openjpa.kernel.OpenJPAStateManager;

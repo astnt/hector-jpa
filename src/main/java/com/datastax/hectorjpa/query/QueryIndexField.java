@@ -1,7 +1,5 @@
 package com.datastax.hectorjpa.query;
 
-import java.util.Comparator;
-
 import me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality;
 import me.prettyprint.hector.api.beans.DynamicComposite;
 

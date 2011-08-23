@@ -41,7 +41,7 @@ public class DiscriminatorColumn implements ObjectTypeColumnStrategy {
 		this.value = discriminatorValue;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void write(Mutator<byte[]> mutator, long clock, byte[] key,
 			String cfName) {

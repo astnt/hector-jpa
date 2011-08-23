@@ -6,14 +6,8 @@ package com.datastax.hectorjpa.query;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.NoSuchElementException;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.beans.DynamicComposite;
 
 import org.apache.openjpa.kernel.ExpressionStoreQuery;
 import org.apache.openjpa.kernel.exps.ExpressionFactory;
@@ -30,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import com.datastax.hectorjpa.index.AbstractIndexOperation;
 import com.datastax.hectorjpa.index.FieldOrder;
 import com.datastax.hectorjpa.index.IndexOrder;
-import com.datastax.hectorjpa.index.AbstractIndexOperation.ResultComparator;
 import com.datastax.hectorjpa.query.field.FieldExpression;
 import com.datastax.hectorjpa.query.iterator.ResultCompiler;
 import com.datastax.hectorjpa.store.CassandraClassMetaData;

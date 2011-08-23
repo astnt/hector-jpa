@@ -39,7 +39,7 @@ public class StaticColumn implements ObjectTypeColumnStrategy {
 		columns.add(EMPTY_COL);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void write(Mutator<byte[]> mutator, long clock, byte[] key,
 			String cfName) {

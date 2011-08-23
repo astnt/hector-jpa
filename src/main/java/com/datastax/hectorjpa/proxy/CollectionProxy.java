@@ -26,6 +26,7 @@ public class CollectionProxy extends AbstractLRSProxyCollection {
   
   //TODO TN Update this to return real values
   
+  @SuppressWarnings("rawtypes")
   public CollectionProxy(Class elementType, boolean ordered, OrderedCollectionField field) {
     super(elementType, ordered);
     
@@ -36,6 +37,7 @@ public class CollectionProxy extends AbstractLRSProxyCollection {
   /* (non-Javadoc)
    * @see org.apache.openjpa.util.AbstractLRSProxyCollection#itr()
    */
+  @SuppressWarnings("rawtypes")
   @Override
   protected Iterator itr() {
    return new CollectionIterator(field);
@@ -58,8 +60,10 @@ public class CollectionProxy extends AbstractLRSProxyCollection {
   }
 
   
+  @SuppressWarnings("rawtypes")
   private class CollectionIterator implements Iterator{
 
+    @SuppressWarnings("unused")
     private OrderedCollectionField field;
     
     public CollectionIterator(OrderedCollectionField field){

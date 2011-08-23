@@ -4,8 +4,6 @@
 package com.datastax.hectorjpa.query.ast;
 
 import org.apache.openjpa.kernel.exps.Expression;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Todd Nine
@@ -13,8 +11,6 @@ import org.slf4j.LoggerFactory;
  */
 public class AndExpression extends BooleanExpression {
 
-  private static final Logger log = LoggerFactory
-      .getLogger(AndExpression.class);
 
   /**
    * 
