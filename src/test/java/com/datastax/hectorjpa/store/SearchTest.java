@@ -20,21 +20,13 @@ import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import com.datastax.hectorjpa.bean.*;
 import org.joda.time.DateTime;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import com.datastax.hectorjpa.ManagedEntityTestBase;
-import com.datastax.hectorjpa.bean.Customer;
-import com.datastax.hectorjpa.bean.Foo1;
-import com.datastax.hectorjpa.bean.Invoice_;
-import com.datastax.hectorjpa.bean.Phone;
 import com.datastax.hectorjpa.bean.Phone.PhoneType;
-import com.datastax.hectorjpa.bean.Invoice;
-import com.datastax.hectorjpa.bean.Sale;
-import com.datastax.hectorjpa.bean.Sale_;
-import com.datastax.hectorjpa.bean.Store;
-import com.datastax.hectorjpa.bean.Store_;
 import com.datastax.hectorjpa.bean.inheritance.Client;
 import com.datastax.hectorjpa.bean.inheritance.Manager;
 import com.datastax.hectorjpa.bean.inheritance.Person;
@@ -1530,6 +1522,64 @@ public class SearchTest extends ManagedEntityTestBase {
 		em2.getTransaction().commit();
 		em2.close();
 	}
+
+    @Test
+    public void searchRangeIncludeMinExcludeMaxWithLong() {
+        EntityManager em1 = entityManagerFactory.createEntityManager();
+		em1.getTransaction().begin();
+
+        em1.persist(new Foo2(100L));
+        em1.persist(new Foo2(200L));
+        em1.persist(new Foo2(300L));
+        em1.persist(new Foo2(400L));
+        em1.persist(new Foo2(500L));
+
+		em1.getTransaction().commit();
+		em1.close();
+
+        EntityManager em1request = entityManagerFactory.createEntityManager();
+		em1request.getTransaction().begin();
+
+        TypedQuery<Foo2> query = em1request.createNamedQuery(
+				"searchRangeIncludeMinExcludeMaxWithLong", Foo2.class);
+		query.setParameter("otherLow", 200L);
+		query.setParameter("otherHigh", 450L);
+
+        List<Foo2> result1 = query.getResultList();
+
+        System.out.println("result1=" + result1.size());
+        assertEquals(3, result1.size());
+
+        em1request.getTransaction().commit();
+		em1request.close();
+
+        EntityManager em2 = entityManagerFactory.createEntityManager();
+		em2.getTransaction().begin();
+
+        em2.persist(new Foo2(new DateTime(2011, 8, 20, 0, 0, 0, 0).getMillis()));
+        em2.persist(new Foo2(new DateTime(2011, 8, 21, 0, 0, 0, 0).getMillis()));
+        em2.persist(new Foo2(new DateTime(2011, 8, 22, 0, 0, 0, 0).getMillis()));
+        em2.persist(new Foo2(new DateTime(2011, 8, 23, 0, 0, 0, 0).getMillis()));
+
+		em2.getTransaction().commit();
+		em2.close();
+
+        EntityManager em2request = entityManagerFactory.createEntityManager();
+		em2request.getTransaction().begin();
+
+        TypedQuery<Foo2> query2 = em2request.createNamedQuery(
+				"searchRangeIncludeMinExcludeMaxWithLong", Foo2.class);
+		query2.setParameter("otherLow", new DateTime(2011, 7, 21, 0, 0, 0, 0).getMillis());
+		query2.setParameter("otherHigh", new DateTime(2011, 8, 22, 0, 0, 0, 0).getMillis());
+
+        List<Foo2> result2 = query2.getResultList();
+
+        System.out.println("result2=" + result2.size());
+        assertEquals(3, result2.size());
+
+        em2request.getTransaction().commit();
+		em2request.close();
+    }
 
 	@Test
 	public void subclassSearchTest() {
